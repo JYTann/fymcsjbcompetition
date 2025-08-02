@@ -1183,8 +1183,8 @@
             // 拖拽上传
             imageUploadContainer.addEventListener('dragover', function(e) {
                 e.preventDefault();
-                this.style.borderColor = var(--secondary-color);
-                this.style.backgroundColor = 'rgba(52, 152, 219, 0.1)';
+                this.style.borderColor = getComputedStyle(document.documentElement).getPropertyValue('--secondary-color').trim();
+                this.style.backgroundColor = 'rgba(52, 152, 219, 0.1)'; 
             });
             
             imageUploadContainer.addEventListener('dragleave', function(e) {
