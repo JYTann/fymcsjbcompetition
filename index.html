@@ -1010,6 +1010,20 @@
     display: none;
     box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.1);
 }
+                                    /* Google图标样式调整 */
+.btn .fa-google {
+    color: #4285F4; /* Google蓝色 */
+}
+
+.btn-outline-light .fa-google {
+    color: white; /* 导航栏按钮上的图标保持白色 */
+}
+
+/* 欢迎区域按钮图标调整 */
+#welcomeLoginButton .fa-google {
+    color: #4285F4; /* Google蓝色 */
+    font-size: 1.2em; /* 稍微放大图标 */
+}
 
 /* 响应式调整 */
 @media (max-width: 768px) {
@@ -1115,7 +1129,10 @@
             <div class="welcome-section">
                 <h1>欢迎参加宽柔中学电脑协会常识比赛</h1>
                 <p>测试您的知识水平，与同学们一较高下！请使用Google账号登录后开始答题。</p>
-                <button class="btn btn-light btn-lg px-4 py-2" id="welcomeLoginButton">使用Google账号登录</button>
+                <!-- 欢迎区域登录按钮 -->
+<button class="btn btn-light btn-lg px-4 py-2" id="welcomeLoginButton">
+    <i class="fab fa-google me-2"></i> 使用Google登录
+</button>
             </div>
             
             <div class="row">
