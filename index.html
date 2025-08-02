@@ -1611,26 +1611,33 @@ function hideLoading() {
         
         // 初始化用户答题
         function initializeUserQuiz() {
-            userAnswers = quizData.questions.map(question => ({
-                questionId: question.id,
-                selectedOptions: [],
-                answerText: '', // 用于问答题和申论题
-                isCorrect: null
-            }));
-            
-            currentQuestionIndex = 0;
-            quizStartTime = new Date().getTime();
-            timeRemaining = quizData.settings.duration * 60;
-            
-            // 保存初始答题状态
-            saveUserProgress();
-            
-            // 开始计时器
-            startTimer();
-            
-            // 显示第一题
-            displayQuestion(currentQuestionIndex);
-        }
+    // 确保题目数据已加载
+    if (!quizData.questions || quizData.questions.length === 0) {
+        Swal.fire('错误', '题目数据未加载，请稍后再试', 'error');
+        return;
+    }
+    
+    // 初始化用户答案数组
+    userAnswers = quizData.questions.map(question => ({
+        questionId: question.id,
+        selectedOptions: [],
+        answerText: '',
+        isCorrect: null
+    }));
+    
+    currentQuestionIndex = 0;
+    quizStartTime = new Date().getTime();
+    timeRemaining = quizData.settings.duration * 60;
+    
+    // 保存初始答题状态
+    saveUserProgress();
+    
+    // 开始计时器
+    startTimer();
+    
+    // 显示第一题
+    displayQuestion(currentQuestionIndex);
+}
         
         // 加载用户进度
         function loadUserProgress(answerData) {
@@ -1688,88 +1695,83 @@ function hideLoading() {
         
         // 显示题目
         function displayQuestion(index) {
-            if (index < 0 || index >= quizData.questions.length) return;
-            
-            currentQuestionIndex = index;
-            saveUserProgress();
-            
-            // 更新导航按钮状态
-            prevQuestionBtn.disabled = index === 0;
-            nextQuestionBtn.disabled = index === quizData.questions.length - 1;
-            
-            const question = quizData.questions[index];
-            const userAnswer = userAnswers[index];
-            
-            // 创建题目HTML
-            let questionHTML = `
-                <div class="question-card">
-                    <h4>题目 ${index + 1}/${quizData.questions.length} (${question.points}分)</h4>
-                    <div class="question-content">${question.text}</div>
-            `;
-            
-            // 显示题目图片
-            if (question.imageUrl) {
-                questionHTML += `
-                    <div class="text-center my-3">
-                        <img src="${question.imageUrl}" class="img-fluid rounded" style="max-height: 300px;">
-                    </div>
-                `;
-            }
-            
-            // 根据题目类型显示不同答题区域
-            if (question.type === 'single' || question.type === 'multiple') {
-                // 选择题
-                questionHTML += `
-                    <div class="options-list mt-3">
-                `;
-                
-                // 添加选项
-                question.options.forEach((option, i) => {
-                    const isSelected = userAnswer.selectedOptions.includes(i);
-                    questionHTML += `
-                        <div class="option-item ${isSelected ? 'selected' : ''}" data-option="${i}">
-                            ${String.fromCharCode(65 + i)}. ${option.text}
-                        </div>
-                    `;
-                });
-                
-                questionHTML += `
-                    </div>
-                `;
-            } else {
-                // 问答题或申论题
-                questionHTML += `
-                    <div class="form-group mt-3">
-                        <textarea class="form-control answer-textarea" rows="${question.type === 'short_answer' ? 3 : 8}" 
-                            placeholder="${question.type === 'short_answer' ? '请输入您的答案...' : '请详细回答...'}"
-                            data-question-index="${index}">${userAnswer.answerText || ''}</textarea>
-                    </div>
-                `;
-            }
-            
+    // 检查边界
+    if (index < 0 || index >= quizData.questions.length) {
+        console.error("无效的题目索引:", index);
+        return;
+    }
+    
+    const question = quizData.questions[index];
+    const userAnswer = userAnswers[index] || {
+        selectedOptions: [],
+        answerText: '',
+        isCorrect: null
+    };
+    
+    // 构建题目HTML
+    let questionHTML = `
+        <div class="question-card">
+            <h4>题目 ${index + 1}/${quizData.questions.length} (${question.points}分)</h4>
+            <div class="question-content">${question.text}</div>
+    `;
+    
+    // 显示图片（如果有）
+    if (question.imageUrl) {
+        questionHTML += `
+            <div class="text-center my-3">
+                <img src="${question.imageUrl}" class="img-fluid rounded" style="max-height: 300px;">
+            </div>
+        `;
+    }
+    
+    // 根据题目类型显示不同内容
+    if (question.type === 'single' || question.type === 'multiple') {
+        questionHTML += `<div class="options-list mt-3">`;
+        
+        // 显示选项
+        question.options.forEach((option, i) => {
+            const isSelected = userAnswer.selectedOptions.includes(i);
             questionHTML += `
+                <div class="option-item ${isSelected ? 'selected' : ''}" data-option="${i}">
+                    ${String.fromCharCode(65 + i)}. ${option.text}
                 </div>
             `;
-            
-            quizQuestionsContainer.innerHTML = questionHTML;
-            
-            // 添加事件监听器
-            if (question.type === 'single' || question.type === 'multiple') {
-                // 选择题选项点击事件
-                document.querySelectorAll('.option-item').forEach(item => {
-                    item.addEventListener('click', function() {
-                        const optionIndex = parseInt(this.getAttribute('data-option'));
-                        selectOption(index, optionIndex);
-                    });
-                });
-            } else {
-                // 问答题/申论题文本变化事件
-                document.querySelector('.answer-textarea').addEventListener('input', function() {
-                    userAnswers[index].answerText = this.value;
-                    saveUserProgress();
-                });
-            }
-        }
+        });
+        
+        questionHTML += `</div>`;
+    } else {
+        // 问答题/申论题
+        questionHTML += `
+            <div class="form-group mt-3">
+                <textarea class="form-control answer-textarea" rows="${question.type === 'short_answer' ? 3 : 8}" 
+                    placeholder="${question.type === 'short_answer' ? '请输入您的答案...' : '请详细回答...'}"
+                    data-question-index="${index}">${userAnswer.answerText || ''}</textarea>
+            </div>
+        `;
+    }
+    
+    questionHTML += `</div>`;
+    quizQuestionsContainer.innerHTML = questionHTML;
+    
+    // 添加事件监听
+    if (question.type === 'single' || question.type === 'multiple') {
+        document.querySelectorAll('.option-item').forEach(item => {
+            item.addEventListener('click', function() {
+                const optionIndex = parseInt(this.getAttribute('data-option'));
+                selectOption(index, optionIndex);
+            });
+        });
+    } else {
+        document.querySelector('.answer-textarea').addEventListener('input', function() {
+            userAnswers[index].answerText = this.value;
+            saveUserProgress();
+        });
+    }
+    
+    // 更新导航按钮状态
+    prevQuestionBtn.disabled = index === 0;
+    nextQuestionBtn.disabled = index === quizData.questions.length - 1;
+}
         
         // 选择选项
         function selectOption(questionIndex, optionIndex) {
@@ -2224,47 +2226,53 @@ function hideLoading() {
             }
         }
         
-        // 加载比赛数据
         function loadQuizData() {
-            database.ref('quiz').once('value').then(snapshot => {
-                if (snapshot.exists()) {
-                    quizData = snapshot.val();
-                    
-                    // 更新UI
-                    if (quizData.settings) {
-                        quizTitle.value = quizData.settings.title || '';
-                        quizDuration.value = quizData.settings.duration || 60;
-                        
-                        if (quizData.settings.startTime) {
-                            const startDate = new Date(quizData.settings.startTime);
-                            quizStartTimeInput.value = startDate.toISOString().slice(0, 16);
-                        }
-                        
-                        if (quizData.settings.endTime) {
-                            const endDate = new Date(quizData.settings.endTime);
-                            quizEndTimeInput.value = endDate.toISOString().slice(0, 16);
-                        }
-                        
-                        showResultsImmediately.checked = quizData.settings.showResultsImmediately || false;
-                        allowRetake.checked = quizData.settings.allowRetake || false;
-                        
-                        // 更新比赛状态显示
-                        updateQuizStatusDisplay(quizData.settings.status || 'not_started');
-                    }
-                    
-                    // 更新题目列表
-                    updateQuestionList();
-                    
-                    // 更新参赛者列表
-                    updateParticipantList();
-                    
-                    // 更新成绩统计
-                    updateResultsStatistics();
-                }
-            }).catch(error => {
-                console.error("加载比赛数据错误:", error);
-            });
+    // 并行加载设置和题目数据
+    Promise.all([
+        database.ref('quiz/settings').once('value'),
+        database.ref('questions').once('value')
+    ]).then(([settingsSnapshot, questionsSnapshot]) => {
+        if (settingsSnapshot.exists()) {
+            quizData.settings = settingsSnapshot.val();
+            
+            // 更新UI设置
+            quizTitle.value = quizData.settings.title || '';
+            quizDuration.value = quizData.settings.duration || 60;
+            
+            if (quizData.settings.startTime) {
+                quizStartTimeInput.value = new Date(quizData.settings.startTime).toISOString().slice(0, 16);
+            }
+            
+            if (quizData.settings.endTime) {
+                quizEndTimeInput.value = new Date(quizData.settings.endTime).toISOString().slice(0, 16);
+            }
+            
+            showResultsImmediately.checked = quizData.settings.showResultsImmediately || false;
+            allowRetake.checked = quizData.settings.allowRetake || false;
+            updateQuizStatusDisplay(quizData.settings.status || 'not_started');
         }
+        
+        // 处理题目数据
+        if (questionsSnapshot.exists()) {
+            // 将题目数据转换为数组并保存到quizData
+            quizData.questions = Object.values(questionsSnapshot.val());
+            
+            // 更新题目列表UI
+            updateQuestionList();
+        } else {
+            quizData.questions = [];
+            questionListBody.innerHTML = '<tr><td colspan="5" class="text-center">暂无题目</td></tr>';
+        }
+        
+        // 更新其他数据
+        updateParticipantList();
+        updateResultsStatistics();
+        
+    }).catch(error => {
+        console.error("加载比赛数据错误:", error);
+        Swal.fire('错误', '加载比赛数据失败', 'error');
+    });
+}
         
         // 更新比赛状态显示
         function updateQuizStatusDisplay(status) {
