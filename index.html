@@ -1866,57 +1866,77 @@ function hideLoading() {
         }
         
         // 提交答卷
-        function submitQuiz() {
-            // 检查比赛是否已结束
+      function submitQuiz() {
+    // 检查比赛是否已结束
     if (quizData.settings.status === 'ended') {
         Swal.fire('错误', '比赛已结束，无法提交答案', 'error');
         return;
     }
-    
+
     // 检查是否超过结束时间
     if (quizData.settings.endTime && new Date().getTime() > quizData.settings.endTime) {
         Swal.fire('错误', '比赛时间已结束，无法提交答案', 'error');
         return;
     }
-            submitConfirmModal.hide();
-            
-            // 停止计时器
-            clearInterval(quizTimer);
-            
-            // 计算得分
-            calculateScore();
-            
-            // 保存结果
-            const resultData = {
-                answers: userAnswers,
-                startTime: quizStartTime,
-                endTime: new Date().getTime(),
-                submitted: true,
-                userId: currentUser.uid,
-                userInfo: userInfo,
-                score: calculateTotalScore(),
-                correctCount: userAnswers.filter(a => a.isCorrect).length,
-                wrongCount: userAnswers.filter(a => a.isCorrect === false).length,
-                unansweredCount: userAnswers.filter(a => {
-                    const question = quizData.questions.find(q => q.id === a.questionId);
-                    if (!question) return true;
-                    
-                    if (question.type === 'single' || question.type === 'multiple') {
-                        return a.selectedOptions.length === 0;
-                    } else {
-                        return !a.answerText || a.answerText.trim() === '';
-                    }
-                }).length
-            };
-            
-            database.ref('userAnswers/' + currentUser.uid).set(resultData).then(() => {
-                showResultView();
-                displayResults();
-            }).catch(error => {
-                console.error("提交答卷错误:", error);
-                Swal.fire('错误', '提交答卷失败', 'error');
-            });
+
+    submitConfirmModal.hide();
+
+    // 停止计时器
+    clearInterval(quizTimer);
+
+    // ✅ 自动判断题目对错
+    userAnswers.forEach(answer => {
+        const question = quizData.questions.find(q => q.id === answer.questionId);
+        if (!question) return;
+
+        if (question.type === 'single' || question.type === 'multiple') {
+            const selected = Array.isArray(answer.selectedOptions) ? answer.selectedOptions.slice().sort() : [];
+            const correct = Array.isArray(question.correctAnswers) ? question.correctAnswers.slice().sort() : [];
+
+            answer.isCorrect = (
+                selected.length === correct.length &&
+                selected.every((v, i) => v === correct[i])
+            );
+        } else {
+            answer.isCorrect = null; // 主观题默认不评分
         }
+    });
+
+    // 计算得分
+    calculateScore();
+
+    // 保存结果
+    const resultData = {
+        answers: userAnswers,
+        startTime: quizStartTime,
+        endTime: new Date().getTime(),
+        submitted: true,
+        userId: currentUser.uid,
+        userInfo: userInfo,
+        score: calculateTotalScore(),
+        correctCount: userAnswers.filter(a => a.isCorrect).length,
+        wrongCount: userAnswers.filter(a => a.isCorrect === false).length,
+        unansweredCount: userAnswers.filter(a => {
+            const question = quizData.questions.find(q => q.id === a.questionId);
+            if (!question) return true;
+
+            if (question.type === 'single' || question.type === 'multiple') {
+                return a.selectedOptions.length === 0;
+            } else {
+                return !a.answerText || a.answerText.trim() === '';
+            }
+        }).length
+    };
+
+    database.ref('userAnswers/' + currentUser.uid).set(resultData).then(() => {
+        showResultView();
+        displayResults();
+    }).catch(error => {
+        console.error("提交答卷错误:", error);
+        Swal.fire('错误', '提交答卷失败', 'error');
+    });
+}
+
         
         // 计算得分
         function calculateScore() {
