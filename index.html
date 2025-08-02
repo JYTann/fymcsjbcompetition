@@ -1549,30 +1549,65 @@ imageUpload.addEventListener('change', function(e) {
             });
         }
         
-        // 检查用户答题状态
-        function checkUserQuizStatus() {
-            database.ref('userAnswers/' + currentUser.uid).once('value').then(snapshot => {
-                if (snapshot.exists()) {
-                    const answerData = snapshot.val();
-                    if (answerData.submitted) {
-                        // 用户已提交答案
-                        showResultView();
-                        loadUserResults();
-                    } else {
-                        // 用户有未提交的答案
-                        showQuizView();
-                        loadUserProgress(answerData);
-                    }
-                } else {
-                    // 用户尚未开始答题
-                    showQuizView();
-                    initializeUserQuiz();
-                }
-            }).catch(error => {
-                console.error("获取用户答题状态错误:", error);
-                Swal.fire('错误', '获取答题状态失败' + error.message, 'error');
-            });
+        async function checkUserQuizStatus() {
+    try {
+        // 1. 确保用户已登录
+        if (!currentUser || !currentUser.uid) {
+            throw new Error('用户未登录');
         }
+
+        // 2. 添加加载指示器
+        showLoading('正在获取答题状态...');
+
+        // 3. 使用优化后的查询
+        const snapshot = await database.ref('userAnswers/' + currentUser.uid).once('value');
+        
+        if (!snapshot.exists()) {
+            // 用户尚未开始答题
+            initializeUserQuiz();
+            return;
+        }
+
+        const answerData = snapshot.val();
+        
+        // 4. 添加数据验证
+        if (!answerData || typeof answerData !== 'object') {
+            throw new Error('无效的答题数据');
+        }
+
+        if (answerData.submitted) {
+            // 用户已提交答案
+            await loadUserResults();
+            showResultView();
+        } else {
+            // 用户有未提交的答案
+            loadUserProgress(answerData);
+            showQuizView();
+        }
+    } catch (error) {
+        console.error("获取答题状态失败:", error);
+        Swal.fire('错误', `获取答题状态失败: ${error.message}`, 'error');
+        
+        // 5. 回退到欢迎界面
+        showWelcomeView();
+    } finally {
+        hideLoading();
+    }
+}
+
+// 添加辅助函数
+function showLoading(message) {
+    Swal.fire({
+        title: '请稍候',
+        html: message,
+        allowOutsideClick: false,
+        didOpen: () => Swal.showLoading()
+    });
+}
+
+function hideLoading() {
+    Swal.close();
+}
         
         // 初始化用户答题
         function initializeUserQuiz() {
