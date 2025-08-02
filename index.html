@@ -2108,21 +2108,31 @@ userAnswers = userAnswers.map((ua, index) => {
 
         
         // 加载用户结果
-        function loadUserResults() {
-            database.ref('userAnswers/' + currentUser.uid).once('value').then(snapshot => {
-                if (snapshot.exists()) {
-                    const resultData = snapshot.val();
-                    userAnswers = resultData.answers || [];
-                    
-                    // 显示结果
-                    showResultView();
-                    displayResults();
-                }
-            }).catch(error => {
-                console.error("加载用户结果错误:", error);
-                Swal.fire('错误', '加载结果失败', 'error');
-            });
+        async function loadUserResults() {
+    try {
+        // 等待 quizData.questions 加载完成
+        if (!Array.isArray(quizData.questions) || quizData.questions.length === 0) {
+            console.warn("题目尚未加载，延迟加载用户结果");
+            setTimeout(loadUserResults, 300); // 每300ms重试一次
+            return;
         }
+
+        const snapshot = await database.ref('userAnswers/' + currentUser.uid).once('value');
+
+        if (!snapshot.exists()) {
+            Swal.fire('提示', '没有找到用户的答题记录', 'info');
+            return;
+        }
+
+        const data = snapshot.val();
+        userAnswers = Array.isArray(data.answers) ? data.answers : [];
+        displayResults();
+    } catch (error) {
+        console.error("查看参赛者答案错误:", error);
+        Swal.fire('错误', `查看参赛者答案错误: ${error.message}`, 'error');
+    }
+}
+
         
         // 加载排名数据
         function loadRankingData() {
