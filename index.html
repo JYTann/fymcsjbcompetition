@@ -2779,70 +2779,53 @@ function saveParticipantScores(userId, questions) {
             }
         }
         
-        // 编辑题目
-        function editQuestion(id) {
-            const question = quizData.questions.find(q => q.id === id);
-            if (!question) return;
-            
-            // 填充表单
-            questionId.value = question.id;
-            quill.root.innerHTML = question.text;
-            questionText.value = question.text;
-            questionType.value = question.type;
-            questionPoints.value = question.points;
-            
-            // 显示题目图片
-            if (question.imageUrl) {
-                imagePreview.src = question.imageUrl;
+       function editQuestion(id) {
+    database.ref('questions/' + id).once('value').then(snapshot => {
+        if (snapshot.exists()) {
+            const q = snapshot.val();
+
+            questionId.value = q.id;
+            questionType.value = q.type;
+            questionPoints.value = q.points;
+            quill.root.innerHTML = q.text;
+            questionText.value = q.text;
+            currentImageUrl = q.imageUrl || '';
+            if (currentImageUrl) {
+                imagePreview.src = currentImageUrl;
                 imagePreview.style.display = 'block';
-                currentImageUrl = question.imageUrl;
             } else {
-                imagePreview.src = '';
                 imagePreview.style.display = 'none';
-                currentImageUrl = null;
             }
-            
-            // 根据题目类型更新UI
+
+            // 重新渲染选项和正确答案
             updateQuestionTypeUI();
-            
-            // 清空选项容器
-            optionsContainer.innerHTML = '';
-            
-            // 如果是选择题，添加选项
-            if (question.type === 'single' || question.type === 'multiple') {
-                question.options.forEach((option, index) => {
-                    const optionHTML = `
-                        <div class="input-group mb-2 option-item" data-index="${index}">
-                            <span class="input-group-text">${String.fromCharCode(65 + index)}</span>
-                            <input type="text" class="form-control option-text" placeholder="选项内容" value="${option.text}" required>
-                            <button class="btn btn-outline-danger remove-option" type="button">×</button>
-                        </div>
-                    `;
-                    
-                    optionsContainer.insertAdjacentHTML('beforeend', optionHTML);
-                    
-                    // 添加删除选项事件
-                    const removeBtn = optionsContainer.lastElementChild.querySelector('.remove-option');
-                    removeBtn.addEventListener('click', function() {
-                        this.closest('.option-item').remove();
-                        updateOptionIndexes();
-                        updateCorrectAnswersUI();
-                    });
+
+            if (q.options) {
+                optionsContainer.innerHTML = '';
+                q.options.forEach((opt, index) => {
+                    const input = document.createElement('input');
+                    input.type = 'text';
+                    input.className = 'form-control my-1';
+                    input.value = opt.text;
+                    optionsContainer.appendChild(input);
                 });
-                
-                // 更新正确答案UI
-                updateCorrectAnswersUI();
-                
-                // 设置正确答案
-                if (question.type === 'single') {
-                    document.querySelector(`input[name="correctAnswer"][value="${question.correctAnswers[0]}"]`).checked = true;
-                } else {
-                    question.correctAnswers.forEach(answerIndex => {
-                        document.querySelector(`#correctAnswersContainer input[value="${answerIndex}"]`).checked = true;
-                    });
-                }
             }
+
+            if (q.correctAnswers) {
+                const inputs = correctAnswersContainer.querySelectorAll('input');
+                inputs.forEach((input, i) => {
+                    input.checked = q.correctAnswers.includes(i);
+                });
+            }
+
+        } else {
+            Swal.fire('错误', '题目不存在', 'error');
         }
+    }).catch(error => {
+        console.error("编辑题目失败：", error);
+    });
+}
+
         
         // 取消编辑
         function cancelEditQuestion() {
@@ -2976,31 +2959,27 @@ function saveParticipantScores(userId, questions) {
 
 
         
-        // 删除题目
         function deleteQuestion(id) {
-            Swal.fire({
-                title: '确认删除',
-                text: '您确定要删除这个题目吗？此操作无法撤销。',
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonText: '删除',
-                cancelButtonText: '取消'
-            }).then(result => {
-                if (result.isConfirmed) {
-                    // 从quizData中删除
-                    quizData.questions = quizData.questions.filter(q => q.id !== id);
-                    
-                    // 更新Firebase
-                    database.ref('quiz/questions').set(quizData.questions).then(() => {
-                        Swal.fire('成功', '题目已删除', 'success');
-                        updateQuestionList();
-                    }).catch(error => {
-                        console.error("删除题目错误:", error);
-                        Swal.fire('错误', '删除题目失败', 'error');
-                    });
-                }
+    Swal.fire({
+        title: '确认删除？',
+        text: '删除后将无法恢复该题目！',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: '删除',
+        cancelButtonText: '取消'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            database.ref('questions/' + id).remove().then(() => {
+                Swal.fire('已删除', '题目已成功删除', 'success');
+                loadQuestions();
+            }).catch(error => {
+                console.error("删除题目失败：", error);
+                Swal.fire('错误', '删除题目失败: ' + error.message, 'error');
             });
         }
+    });
+}
+
         
         // 保存比赛设置
         function saveQuizSettings(e) {
