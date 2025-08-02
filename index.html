@@ -22,6 +22,8 @@
             --info-color: #2980b9;
             --background-color: #f8f9fa;
             --card-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            --border-radius: 12px;
+            --transition: all 0.3s ease;
         }
         
         body {
@@ -29,6 +31,15 @@
             background-color: var(--background-color);
             color: var(--dark-color);
             line-height: 1.6;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .navbar {
+            background: linear-gradient(135deg, var(--primary-color), var(--dark-color));
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            padding: 0.8rem 1.5rem;
         }
         
         .navbar-brand {
@@ -36,70 +47,99 @@
             font-size: 1.5rem;
             display: flex;
             align-items: center;
+            color: white;
+            transition: var(--transition);
         }
         
-        .navbar {
-            background-color: var(--primary-color);
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            padding: 0.8rem 1rem;
+        .navbar-brand:hover {
+            color: rgba(255, 255, 255, 0.9);
         }
         
         .btn {
-            border-radius: 8px;
-            padding: 8px 16px;
-            font-weight: 500;
-            transition: all 0.3s ease;
+            border-radius: var(--border-radius);
+            padding: 10px 20px;
+            font-weight: 600;
+            transition: var(--transition);
+            border: none;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
         }
         
         .btn-primary {
-            background-color: var(--secondary-color);
-            border-color: var(--secondary-color);
+            background-color: var(--primary-color);
         }
         
         .btn-primary:hover {
             background-color: #2980b9;
-            border-color: #2980b9;
+        }
+        
+        .btn-secondary {
+            background-color: #6c757d;
+        }
+        
+        .btn-success {
+            background-color: var(--secondary-color);
+        }
+        
+        .btn-success:hover {
+            background-color: #27ae60;
         }
         
         .btn-danger {
             background-color: var(--accent-color);
-            border-color: var(--accent-color);
         }
         
         .btn-danger:hover {
             background-color: #c0392b;
-            border-color: #c0392b;
+        }
+        
+        .btn-outline-light {
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            background-color: transparent;
+            color: white;
+        }
+        
+        .btn-outline-light:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.3);
         }
         
         .card {
             border: none;
-            border-radius: 12px;
+            border-radius: var(--border-radius);
             box-shadow: var(--card-shadow);
             margin-bottom: 24px;
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            transition: var(--transition);
             overflow: hidden;
+            background-color: white;
         }
         
         .card:hover {
             transform: translateY(-5px);
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
         }
         
         .card-header {
-            background-color: var(--primary-color);
+            background: linear-gradient(135deg, var(--primary-color), var(--info-color));
             color: white;
-            border-radius: 12px 12px 0 0 !important;
-            font-weight: 500;
+            border-radius: var(--border-radius) var(--border-radius) 0 0 !important;
+            font-weight: 600;
             padding: 1rem 1.5rem;
+            border-bottom: none;
         }
         
         .question-card {
             background-color: white;
-            padding: 24px;
-            margin-bottom: 24px;
-            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            border-radius: var(--border-radius);
             box-shadow: var(--card-shadow);
             animation: fadeIn 0.5s ease forwards;
+            border-left: 4px solid var(--primary-color);
         }
         
         @keyframes fadeIn {
@@ -108,32 +148,39 @@
         }
         
         .option-item {
-            padding: 12px 16px;
-            margin: 8px 0;
-            background-color: var(--light-color);
+            padding: 12px 20px;
+            margin: 10px 0;
+            background-color: white;
             border-radius: 8px;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: var(--transition);
+            border: 1px solid #e0e0e0;
+            font-weight: 500;
+            position: relative;
         }
         
         .option-item:hover {
-            background-color: #d6eaf8;
+            background-color: #f0f7ff;
+            border-color: var(--primary-color);
             transform: translateX(5px);
         }
         
         .option-item.selected {
-            background-color: var(--secondary-color);
+            background-color: var(--primary-color);
             color: white;
+            border-color: var(--primary-color);
         }
         
         .option-item.correct {
             background-color: var(--success-color);
             color: white;
+            border-color: var(--success-color);
         }
         
         .option-item.incorrect {
             background-color: var(--accent-color);
             color: white;
+            border-color: var(--accent-color);
         }
         
         .timer {
@@ -142,174 +189,186 @@
             color: var(--accent-color);
             text-align: center;
             margin: 20px 0;
-        }
-        
-        .admin-panel {
-            background-color: #f8f9fa;
-            padding: 24px;
-            border-radius: 12px;
-            margin-top: 24px;
-        }
-        
-        .participant-list {
-            max-height: 500px;
-            overflow-y: auto;
-        }
-        
-        .participant-item {
-            padding: 12px;
-            border-bottom: 1px solid #eee;
-            transition: background-color 0.2s;
-        }
-        
-        .participant-item:hover {
-            background-color: #f0f0f0;
-        }
-        
-        .score-badge {
-            font-size: 0.9rem;
-            padding: 5px 10px;
-            border-radius: 20px;
+            padding: 10px 20px;
+            background-color: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--card-shadow);
+            display: inline-block;
         }
         
         .ranking-table {
             width: 100%;
-            border-collapse: collapse;
+            border-collapse: separate;
+            border-spacing: 0;
+            border-radius: var(--border-radius);
+            overflow: hidden;
         }
         
         .ranking-table th, .ranking-table td {
             padding: 12px 15px;
             text-align: left;
-            border-bottom: 1px solid #ddd;
+            border-bottom: 1px solid #e0e0e0;
         }
         
         .ranking-table th {
             background-color: var(--primary-color);
             color: white;
+            font-weight: 600;
         }
         
         .ranking-table tr:nth-child(even) {
-            background-color: #f2f2f2;
+            background-color: #f8f9fa;
         }
         
         .ranking-table tr:hover {
-            background-color: #e9e9e9;
-        }
-        
-        .top-rank {
-            background-color: #fff3cd !important;
-            font-weight: bold;
+            background-color: #f0f7ff;
         }
         
         .first-place {
-            background-color: #d4edda !important;
+            background-color: #e8f5e9 !important;
         }
         
         .second-place {
-            background-color: #e2e3e5 !important;
+            background-color: #e3f2fd !important;
         }
         
         .third-place {
-            background-color: #f8d7da !important;
+            background-color: #fce4ec !important;
         }
         
         .logo {
             height: 40px;
             margin-right: 10px;
+            filter: brightness(0) invert(1);
         }
         
         .welcome-section {
-            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            background: linear-gradient(135deg, var(--primary-color), var(--dark-color));
             color: white;
-            padding: 80px 0;
-            border-radius: 16px;
-            margin-bottom: 40px;
+            padding: 5rem 0;
+            border-radius: var(--border-radius);
+            margin-bottom: 2.5rem;
             text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .welcome-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('https://i.postimg.cc/qqV3NyJB/logo-01.png') no-repeat;
+            background-size: 30%;
+            background-position: right bottom;
+            opacity: 0.05;
         }
         
         .welcome-section h1 {
-            font-weight: 700;
-            margin-bottom: 24px;
-            font-size: 2.5rem;
-        }
-        
-        .welcome-section p {
-            font-size: 1.2rem;
-            max-width: 800px;
-            margin: 0 auto 40px;
-            opacity: 0.9;
+            font-weight: 800;
+            margin-bottom: 1.5rem;
+            font-size: 2.8rem;
+            position: relative;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
         
         .section-title {
-            color: var(--primary-color);
+            color: var(--dark-color);
             font-weight: 700;
-            margin-bottom: 24px;
-            padding-bottom: 12px;
-            border-bottom: 3px solid var(--secondary-color);
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 3px solid var(--primary-color);
             font-size: 1.8rem;
+            position: relative;
+            display: inline-block;
+        }
+        
+        .section-title::after {
+            content: '';
+            position: absolute;
+            bottom: -3px;
+            left: 0;
+            width: 50px;
+            height: 3px;
+            background-color: var(--secondary-color);
         }
         
         .tab-content {
-            padding: 24px;
+            padding: 1.5rem;
             background-color: white;
-            border-radius: 0 0 12px 12px;
+            border-radius: 0 0 var(--border-radius) var(--border-radius);
             box-shadow: var(--card-shadow);
+            border: 1px solid #e0e0e0;
+            border-top: none;
+        }
+        
+        .nav-tabs {
+            border-bottom: 2px solid #e0e0e0;
         }
         
         .nav-tabs .nav-link {
             color: var(--dark-color);
-            font-weight: 500;
-            border-radius: 8px 8px 0 0 !important;
-            padding: 12px 20px;
-            transition: all 0.3s ease;
+            font-weight: 600;
+            border-radius: var(--border-radius) var(--border-radius) 0 0 !important;
+            padding: 12px 24px;
+            transition: var(--transition);
+            border: none;
+            margin-right: 5px;
+            background-color: #f8f9fa;
+        }
+        
+        .nav-tabs .nav-link:hover {
+            border-color: transparent;
+            background-color: #e9ecef;
         }
         
         .nav-tabs .nav-link.active {
-            color: var(--secondary-color);
+            color: white;
             font-weight: 700;
-            border-bottom: 3px solid var(--secondary-color);
-            background-color: rgba(52, 152, 219, 0.1);
-        }
-        
-        .form-control:focus, .form-select:focus {
-            border-color: var(--secondary-color);
-            box-shadow: 0 0 0 0.25rem rgba(52, 152, 219, 0.25);
+            background-color: var(--primary-color);
+            border-bottom: none;
         }
         
         .progress {
-            height: 10px;
-            margin-bottom: 24px;
-            border-radius: 5px;
+            height: 12px;
+            margin-bottom: 1.5rem;
+            border-radius: 6px;
+            background-color: #e9ecef;
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
         }
         
         .progress-bar {
-            background-color: var(--secondary-color);
-            border-radius: 5px;
+            background-color: var(--primary-color);
+            border-radius: 6px;
             transition: width 0.6s ease;
         }
         
         .result-summary {
             text-align: center;
-            padding: 40px;
+            padding: 2.5rem;
             background-color: white;
-            border-radius: 16px;
+            border-radius: var(--border-radius);
             box-shadow: var(--card-shadow);
-            margin-bottom: 40px;
+            margin-bottom: 2.5rem;
+            border-top: 5px solid var(--primary-color);
         }
         
         .result-score {
-            font-size: 3.5rem;
-            font-weight: 700;
-            color: var(--secondary-color);
-            margin: 24px 0;
+            font-size: 4rem;
+            font-weight: 800;
+            color: var(--primary-color);
+            margin: 1.5rem 0;
+            text-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
         }
         
         .result-details {
             text-align: left;
-            margin-top: 24px;
+            margin-top: 1.5rem;
             background-color: #f8f9fa;
-            padding: 20px;
-            border-radius: 12px;
+            padding: 1.5rem;
+            border-radius: var(--border-radius);
         }
         
         .result-details-item {
@@ -317,57 +376,88 @@
             border-bottom: 1px solid #eee;
             display: flex;
             justify-content: space-between;
+            font-weight: 500;
+        }
+        
+        .result-details-item:last-child {
+            border-bottom: none;
         }
         
         .footer {
-            background-color: var(--primary-color);
+            background: linear-gradient(135deg, var(--dark-color), var(--primary-color));
             color: white;
-            padding: 30px 0;
-            margin-top: 60px;
+            padding: 2rem 0;
+            margin-top: auto;
             text-align: center;
         }
         
         /* 富文本编辑器样式 */
         .ql-toolbar {
-            border-radius: 8px 8px 0 0 !important;
-            border-color: #dee2e6 !important;
+            border-radius: var(--border-radius) var(--border-radius) 0 0 !important;
+            border-color: #e0e0e0 !important;
         }
         
         .ql-container {
-            border-radius: 0 0 8px 8px !important;
-            border-color: #dee2e6 !important;
+            border-radius: 0 0 var(--border-radius) var(--border-radius) !important;
+            border-color: #e0e0e0 !important;
             height: 200px;
             font-family: 'Noto Sans SC', sans-serif;
         }
         
         /* 图片上传样式 */
         .image-upload-container {
-            margin-top: 20px;
-            padding: 20px;
-            border: 2px dashed #dee2e6;
-            border-radius: 8px;
+            margin-top: 1rem;
+            padding: 2rem;
+            border: 2px dashed #e0e0e0;
+            border-radius: var(--border-radius);
             text-align: center;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: var(--transition);
+            background-color: #f8f9fa;
         }
         
         .image-upload-container:hover {
-            border-color: var(--secondary-color);
+            border-color: var(--primary-color);
             background-color: rgba(52, 152, 219, 0.05);
         }
         
         .image-preview {
             max-width: 100%;
             max-height: 200px;
-            margin-top: 15px;
-            border-radius: 8px;
+            margin-top: 1rem;
+            border-radius: var(--border-radius);
             display: none;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* 模态框样式 */
+        .modal-content {
+            border-radius: var(--border-radius);
+            border: none;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        }
+        
+        .modal-header {
+            background: linear-gradient(135deg, var(--primary-color), var(--info-color));
+            color: white;
+            border-radius: var(--border-radius) var(--border-radius) 0 0 !important;
+            border-bottom: none;
+        }
+        
+        .modal-title {
+            font-weight: 700;
+        }
+        
+        .modal-footer {
+            border-top: none;
+            background-color: #f8f9fa;
+            border-radius: 0 0 var(--border-radius) var(--border-radius);
         }
         
         /* 响应式调整 */
         @media (max-width: 768px) {
             .welcome-section {
-                padding: 60px 20px;
+                padding: 3rem 1rem;
             }
             
             .welcome-section h1 {
@@ -379,7 +469,35 @@
             }
             
             .result-summary {
-                padding: 30px 20px;
+                padding: 1.5rem;
+            }
+            
+            .result-score {
+                font-size: 3rem;
+            }
+            
+            .nav-tabs .nav-link {
+                padding: 10px 15px;
+                font-size: 0.9rem;
+            }
+        }
+        
+        @media (max-width: 576px) {
+            .navbar-brand {
+                font-size: 1.2rem;
+            }
+            
+            .logo {
+                height: 30px;
+            }
+            
+            .welcome-section h1 {
+                font-size: 1.8rem;
+            }
+            
+            .btn {
+                padding: 8px 16px;
+                font-size: 0.9rem;
             }
         }
     </style>
@@ -426,1480 +544,9 @@
             <div class="welcome-section">
                 <h1>欢迎参加宽柔中学电脑协会常识比赛</h1>
                 <p>测试您的知识水平，与同学们一较高下！请使用Google账号登录后开始答题。</p>
-                <button class="btn btn-light btn-lg px-4 py-2" id="welcomeLoginButton">使用Google账号登录</button>
-            </div>
-            
-            <div class="row">
-                <div class="col-md-6">
-                    <div class="card">
-                        <div class="card-header">
-                            <i class="fas fa-clipboard-list me-2"></i>比赛规则
-                        </div>
-                        <div class="card-body">
-                            <ul class="list-group list-group-flush">
-                                <li class="list-group-item">比赛时间为60分钟</li>
-                                <li class="list-group-item">题目分为单选题、多选题、问答题和申论题</li>
-                                <li class="list-group-item">答对得分，答错不扣分</li>
-                                <li class="list-group-item">比赛结束后系统自动计算成绩</li>
-                                <li class="list-group-item">禁止使用任何外部辅助工具</li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="card">
-                        <div class="card-header">
-                            <i class="fas fa-info-circle me-2"></i>比赛信息
-                        </div>
-                        <div class="card-body">
-                            <ul class="list-group list-group-flush">
-                                <li class="list-group-item"><strong>主办单位：</strong>宽柔中学电脑协会</li>
-                                <li class="list-group-item"><strong>参赛对象：</strong>宽柔中学在校学生</li>
-                                <li class="list-group-item"><strong>比赛时间：</strong>2023年11月15日</li>
-                                <li class="list-group-item"><strong>比赛地点：</strong>线上进行</li>
-                                <li class="list-group-item"><strong>奖项设置：</strong>初中组和高中组各设冠亚季军</li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- 参赛者答题界面 -->
-        <div id="quizView" class="d-none">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h2 class="section-title">常识比赛答题系统</h2>
-                <div class="timer" id="quizTimer">剩余时间: 60:00</div>
-            </div>
-            
-            <div class="progress">
-                <div class="progress-bar" id="quizProgress" role="progressbar" style="width: 0%"></div>
-            </div>
-            
-            <div id="quizQuestionsContainer"></div>
-            
-            <div class="d-flex justify-content-between mt-4">
-                <button class="btn btn-secondary" id="prevQuestionBtn" disabled>上一题</button>
-                <button class="btn btn-primary" id="nextQuestionBtn">下一题</button>
-                <button class="btn btn-success" id="submitQuizBtn">提交答卷</button>
-            </div>
-        </div>
-
-        <!-- 参赛者结果界面 -->
-        <div id="resultView" class="d-none">
-            <div class="result-summary">
-                <h2 class="section-title">比赛结果</h2>
-                <div class="result-score" id="finalScore">0/100</div>
-                <p class="lead">感谢您的参与！以下是您的答题详情：</p>
-                
-                <div class="result-details">
-                    <div class="result-details-item">
-                        <span>正确题数：</span>
-                        <span id="correctCount">0</span>
-                    </div>
-                    <div class="result-details-item">
-                        <span>错误题数：</span>
-                        <span id="wrongCount">0</span>
-                    </div>
-                    <div class="result-details-item">
-                        <span>未答题数：</span>
-                        <span id="unansweredCount">0</span>
-                    </div>
-                    <div class="result-details-item">
-                        <span>总得分：</span>
-                        <span id="totalScore">0</span>
-                    </div>
-                    <div class="result-details-item">
-                        <span>组别排名：</span>
-                        <span id="groupRank">-</span>
-                    </div>
-                    <div class="result-details-item">
-                        <span>总排名：</span>
-                        <span id="overallRank">-</span>
-                    </div>
-                </div>
-            </div>
-            
-            <h3 class="section-title">答题详情</h3>
-            <div id="resultQuestionsContainer"></div>
-            
-            <div class="text-center mt-4">
-                <button class="btn btn-primary" id="viewRankingBtn">查看完整排名</button>
-            </div>
-        </div>
-
-        <!-- 排名界面 -->
-        <div id="rankingView" class="d-none">
-            <h2 class="section-title">比赛排名</h2>
-            
-            <ul class="nav nav-tabs" id="rankingTabs" role="tablist">
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link active" id="highschool-tab" data-bs-toggle="tab" data-bs-target="#highschool" type="button">高中组</button>
-                </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="middleschool-tab" data-bs-toggle="tab" data-bs-target="#middleschool" type="button">初中组</button>
-                </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="overall-tab" data-bs-toggle="tab" data-bs-target="#overall" type="button">总排名</button>
-                </li>
-            </ul>
-            
-            <div class="tab-content" id="rankingTabContent">
-                <div class="tab-pane fade show active" id="highschool" role="tabpanel">
-                    <div class="table-responsive">
-                        <table class="ranking-table">
-                            <thead>
-                                <tr>
-                                    <th>排名</th>
-                                    <th>姓名</th>
-                                    <th>班级</th>
-                                    <th>正确题数</th>
-                                    <th>错误题数</th>
-                                    <th>得分</th>
-                                    <th>用时</th>
-                                </tr>
-                            </thead>
-                            <tbody id="highschoolRankingBody">
-                                <!-- 高中组排名数据将通过JavaScript动态填充 -->
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-                <div class="tab-pane fade" id="middleschool" role="tabpanel">
-                    <div class="table-responsive">
-                        <table class="ranking-table">
-                            <thead>
-                                <tr>
-                                    <th>排名</th>
-                                    <th>姓名</th>
-                                    <th>班级</th>
-                                    <th>正确题数</th>
-                                    <th>错误题数</th>
-                                    line-height: 1.6;
-    color: var(--dark-color);
-    background-color: var(--light-color);
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-}
-
-/* 容器与布局优化 */
-.container {
-    max-width: 1200px;
-    padding: 0 1.5rem;
-    margin: 0 auto;
-}
-
-/* 导航栏优化 */
-.navbar {
-    background-color: var(--primary-color);
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-    padding: 1rem 0;
-}
-
-.navbar-brand {
-    font-weight: 700;
-    font-size: 1.25rem;
-    display: flex;
-    align-items: center;
-    color: white;
-}
-
-.navbar-brand:hover {
-    color: rgba(255, 255, 255, 0.9);
-}
-
-/* 按钮样式优化 */
-.btn {
-    border-radius: var(--border-radius);
-    padding: 0.5rem 1rem;
-    font-weight: 500;
-    transition: var(--transition);
-    border: none;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-}
-
-.btn-primary {
-    background-color: var(--secondary-color);
-    color: white;
-}
-
-.btn-primary:hover {
-    background-color: #2185d0;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 8px rgba(52, 152, 219, 0.3);
-}
-
-.btn-outline-light {
-    border: 1px solid rgba(255, 255, 255, 0.5);
-    color: white;
-    background: transparent;
-}
-
-.btn-outline-light:hover {
-    background: rgba(255, 255, 255, 0.1);
-    border-color: white;
-}
-
-/* 卡片设计优化 */
-.card {
-    border: none;
-    border-radius: var(--border-radius);
-    box-shadow: var(--box-shadow);
-    margin-bottom: 1.5rem;
-    transition: var(--transition);
-    overflow: hidden;
-    background: white;
-}
-
-.card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 1rem 2rem rgba(0, 0, 0, 0.15);
-}
-
-.card-header {
-    background-color: var(--primary-color);
-    color: white;
-    padding: 1rem 1.5rem;
-    font-weight: 600;
-    border-bottom: none;
-}
-
-.card-body {
-    padding: 1.5rem;
-}
-
-/* 题目卡片优化 */
-.question-card {
-    background: white;
-    padding: 1.5rem;
-    margin-bottom: 1.5rem;
-    border-radius: var(--border-radius);
-    box-shadow: var(--box-shadow);
-    animation: fadeIn 0.5s ease forwards;
-}
-
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(20px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-/* 选项列表优化 */
-.options-list {
-    margin: 1rem 0;
-}
-
-.option-item {
-    padding: 0.75rem 1rem;
-    margin: 0.5rem 0;
-    background-color: rgba(52, 152, 219, 0.1);
-    border-radius: var(--border-radius);
-    cursor: pointer;
-    transition: var(--transition);
-    border-left: 3px solid transparent;
-}
-
-.option-item:hover {
-    background-color: rgba(52, 152, 219, 0.2);
-    transform: translateX(5px);
-    border-left-color: var(--secondary-color);
-}
-
-.option-item.selected {
-    background-color: var(--secondary-color);
-    color: white;
-    border-left-color: var(--primary-color);
-}
-
-.option-item.correct {
-    background-color: var(--success-color);
-    color: white;
-}
-
-.option-item.incorrect {
-    background-color: var(--accent-color);
-    color: white;
-}
-
-/* 计时器优化 */
-.timer {
-    font-size: 1.25rem;
-    font-weight: 700;
-    color: var(--accent-color);
-    text-align: center;
-    margin: 1.5rem 0;
-    padding: 0.5rem 1rem;
-    background: rgba(231, 76, 60, 0.1);
-    border-radius: var(--border-radius);
-    display: inline-block;
-}
-
-/* 进度条优化 */
-.progress {
-    height: 8px;
-    margin-bottom: 1.5rem;
-    border-radius: 4px;
-    background-color: #e9ecef;
-    overflow: hidden;
-}
-
-.progress-bar {
-    background-color: var(--secondary-color);
-    transition: width 0.6s ease;
-}
-
-/* 表格优化 */
-.table {
-    width: 100%;
-    margin-bottom: 1rem;
-    color: var(--dark-color);
-    border-collapse: collapse;
-}
-
-.table th, .table td {
-    padding: 0.75rem;
-    vertical-align: top;
-    border-top: 1px solid #dee2e6;
-}
-
-.table thead th {
-    vertical-align: bottom;
-    border-bottom: 2px solid #dee2e6;
-    background-color: var(--primary-color);
-    color: white;
-}
-
-.table tbody tr:nth-child(even) {
-    background-color: rgba(0, 0, 0, 0.02);
-}
-
-.table tbody tr:hover {
-    background-color: rgba(0, 0, 0, 0.05);
-}
-
-/* 排名特殊样式 */
-.first-place {
-    background-color: rgba(40, 167, 69, 0.1) !important;
-    border-left: 3px solid var(--success-color);
-}
-
-.second-place {
-    background-color: rgba(255, 193, 7, 0.1) !important;
-    border-left: 3px solid var(--warning-color);
-}
-
-.third-place {
-    background-color: rgba(220, 53, 69, 0.1) !important;
-    border-left: 3px solid #dc3545;
-}
-
-/* 欢迎区域优化 */
-.welcome-section {
-    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-    color: white;
-    padding: 4rem 0;
-    border-radius: var(--border-radius);
-    margin-bottom: 2rem;
-    text-align: center;
-    position: relative;
-    overflow: hidden;
-}
-
-.welcome-section::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: url('https://i.postimg.cc/qqV3NyJB/logo-01.png') no-repeat center/contain;
-    opacity: 0.05;
-    pointer-events: none;
-}
-
-.welcome-section h1 {
-    font-weight: 700;
-    margin-bottom: 1.5rem;
-    font-size: 2.25rem;
-    position: relative;
-}
-
-.welcome-section p {
-    font-size: 1.1rem;
-    max-width: 800px;
-    margin: 0 auto 2rem;
-    opacity: 0.9;
-    position: relative;
-}
-
-/* 部分标题优化 */
-.section-title {
-    color: var(--primary-color);
-    font-weight: 700;
-    margin-bottom: 1.5rem;
-    padding-bottom: 0.75rem;
-    border-bottom: 3px solid var(--secondary-color);
-    font-size: 1.5rem;
-    position: relative;
-}
-
-.section-title::after {
-    content: '';
-    position: absolute;
-    bottom: -3px;
-    left: 0;
-    width: 50px;
-    height: 3px;
-    background-color: var(--accent-color);
-}
-
-/* 标签页优化 */
-.nav-tabs {
-    border-bottom: 1px solid #dee2e6;
-}
-
-.nav-tabs .nav-link {
-    color: var(--dark-color);
-    font-weight: 500;
-    border: none;
-    padding: 0.75rem 1.25rem;
-    transition: var(--transition);
-    margin-right: 0.5rem;
-    border-radius: var(--border-radius) var(--border-radius) 0 0;
-    position: relative;
-}
-
-.nav-tabs .nav-link:hover {
-    color: var(--secondary-color);
-    background-color: rgba(52, 152, 219, 0.05);
-}
-
-.nav-tabs .nav-link.active {
-    color: var(--secondary-color);
-    font-weight: 600;
-    background-color: transparent;
-    border-bottom: 3px solid var(--secondary-color);
-}
-
-.tab-content {
-    padding: 1.5rem;
-    background-color: white;
-    border-radius: 0 0 var(--border-radius) var(--border-radius);
-    box-shadow: var(--box-shadow);
-    border: 1px solid #dee2e6;
-    border-top: none;
-}
-
-/* 表单控件优化 */
-.form-control, .form-select {
-    border-radius: var(--border-radius);
-    padding: 0.5rem 0.75rem;
-    border: 1px solid #ced4da;
-    transition: var(--transition);
-}
-
-.form-control:focus, .form-select:focus {
-    border-color: var(--secondary-color);
-    box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25);
-}
-
-/* 结果摘要优化 */
-.result-summary {
-    text-align: center;
-    padding: 2rem;
-    background: white;
-    border-radius: var(--border-radius);
-    box-shadow: var(--box-shadow);
-    margin-bottom: 2rem;
-    position: relative;
-    overflow: hidden;
-}
-
-.result-score {
-    font-size: 3rem;
-    font-weight: 700;
-    color: var(--secondary-color);
-    margin: 1.5rem 0;
-    position: relative;
-    display: inline-block;
-}
-
-.result-score::after {
-    content: '';
-    position: absolute;
-    bottom: -10px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 50px;
-    height: 3px;
-    background-color: var(--secondary-color);
-}
-
-.result-details {
-    text-align: left;
-    margin-top: 1.5rem;
-    background-color: rgba(248, 249, 250, 0.8);
-    padding: 1.25rem;
-    border-radius: var(--border-radius);
-    border: 1px solid rgba(0, 0, 0, 0.05);
-}
-
-.result-details-item {
-    padding: 0.75rem 0;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-    display: flex;
-    justify-content: space-between;
-}
-
-.result-details-item:last-child {
-    border-bottom: none;
-}
-
-/* 页脚优化 */
-.footer {
-    background-color: var(--primary-color);
-    color: white;
-    padding: 2rem 0;
-    margin-top: 3rem;
-    text-align: center;
-}
-
-.footer p {
-    margin-bottom: 0;
-    opacity: 0.8;
-}
-
-/* 富文本编辑器优化 */
-.ql-toolbar {
-    border-radius: var(--border-radius) var(--border-radius) 0 0 !important;
-    border-color: #dee2e6 !important;
-}
-
-.ql-container {
-    border-radius: 0 0 var(--border-radius) var(--border-radius) !important;
-    border-color: #dee2e6 !important;
-    height: 200px;
-    font-family: inherit;
-}
-
-/* 图片上传区域优化 */
-.image-upload-container {
-    margin-top: 1rem;
-    padding: 1.5rem;
-    border: 2px dashed #dee2e6;
-    border-radius: var(--border-radius);
-    text-align: center;
-    cursor: pointer;
-    transition: var(--transition);
-    background-color: rgba(248, 249, 250, 0.5);
-}
-
-.image-upload-container:hover {
-    border-color: var(--secondary-color);
-    background-color: rgba(52, 152, 219, 0.05);
-}
-
-.image-preview {
-    max-width: 100%;
-    max-height: 200px;
-    margin-top: 1rem;
-    border-radius: var(--border-radius);
-    display: none;
-    box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.1);
-}
-                                    /* Google图标样式调整 */
-.btn .fa-google {
-    color: #4285F4; /* Google蓝色 */
-}
-
-.btn-outline-light .fa-google {
-    color: white; /* 导航栏按钮上的图标保持白色 */
-}
-
-/* 欢迎区域按钮图标调整 */
-#welcomeLoginButton .fa-google {
-    color: #4285F4; /* Google蓝色 */
-    font-size: 1.2em; /* 稍微放大图标 */
-}
-
-/* 响应式调整 */
-@media (max-width: 768px) {
-    .welcome-section {
-        padding: 3rem 1rem;
-    }
-    
-    .welcome-section h1 {
-        font-size: 1.75rem;
-    }
-    
-    .section-title {
-        font-size: 1.25rem;
-    }
-    
-    .result-summary {
-        padding: 1.5rem;
-    }
-    
-    .card-body, .tab-content {
-        padding: 1rem;
-    }
-    
-    .navbar-brand {
-        font-size: 1rem;
-    }
-    
-    .btn {
-        padding: 0.4rem 0.8rem;
-        font-size: 0.9rem;
-    }
-}
-
-/* 实用类 */
-.text-center { text-align: center; }
-.text-right { text-align: right; }
-.mt-1 { margin-top: 0.25rem; }
-.mt-2 { margin-top: 0.5rem; }
-.mt-3 { margin-top: 1rem; }
-.mt-4 { margin-top: 1.5rem; }
-.mt-5 { margin-top: 3rem; }
-.mb-1 { margin-bottom: 0.25rem; }
-.mb-2 { margin-bottom: 0.5rem; }
-.mb-3 { margin-bottom: 1rem; }
-.mb-4 { margin-bottom: 1.5rem; }
-.mb-5 { margin-bottom: 3rem; }
-.pt-1 { padding-top: 0.25rem; }
-.pt-2 { padding-top: 0.5rem; }
-.pt-3 { padding-top: 1rem; }
-.pt-4 { padding-top: 1.5rem; }
-.pt-5 { padding-top: 3rem; }
-.pb-1 { padding-bottom: 0.25rem; }
-.pb-2 { padding-bottom: 0.5rem; }
-.pb-3 { padding-bottom: 1rem; }
-.pb-4 { padding-bottom: 1.5rem; }
-.pb-5 { padding-bottom: 3rem; }
-.d-flex { display: flex; }
-.justify-content-between { justify-content: space-between; }
-.align-items-center { align-items: center; }
-.d-none { display: none; }
-        
-    </style>
-</head>
-<body>
-    <!-- 导航栏 -->
-    <nav class="navbar navbar-expand-lg navbar-dark">
-        <div class="container">
-            <a class="navbar-brand" href="#">
-                <img src="https://i.postimg.cc/qqV3NyJB/logo-01.png" class="logo">
-                新山宽柔中学电脑协会常识比赛
-            </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto">
-                    <li class="nav-item" id="loginNavItem">
-                        <button class="btn btn-outline-light" id="loginButton">登录</button>
-                    </li>
-                    <li class="nav-item d-none" id="userNavItem">
-                        <div class="dropdown">
-                            <button class="btn btn-outline-light dropdown-toggle" id="userDropdown" data-bs-toggle="dropdown">
-                                <span id="userName"></span>
-                                <img src="" alt="用户头像" id="userPhoto" style="height: 30px; border-radius: 50%; margin-left: 5px;">
-                            </button>
-                            <ul class="dropdown-menu dropdown-menu-end">
-                                <li><a class="dropdown-item" href="#" id="adminLink">管理员面板</a></li>
-                                <li><a class="dropdown-item" href="#" id="quizLink">答题界面</a></li>
-                                <li><hr class="dropdown-divider"></li>
-                                <li><a class="dropdown-item" href="#" id="logoutButton">退出登录</a></li>
-                            </ul>
-                        </div>
-                    </li>
-                </ul>
-            </div>
-        </div>
-    </nav>
-
-    <!-- 主内容区 -->
-    <div class="container my-5" id="mainContent">
-        <!-- 欢迎界面 -->
-        <div id="welcomeView">
-            <div class="welcome-section">
-                <h1>欢迎参加宽柔中学电脑协会常识比赛</h1>
-                <p>测试您的知识水平，与同学们一较高下！请使用Google账号登录后开始答题。</p>
-                <!-- 欢迎区域登录按钮 -->
-<button class="btn btn-light btn-lg px-4 py-2" id="welcomeLoginButton">
-    <i class="fab fa-google me-2"></i> Sign in with Google
-</button>
-            </div>
-            
-            <div class="row">
-                <div class="col-md-6">
-                    <div class="card">
-                        <div class="card-header">
-                            <i class="fas fa-clipboard-list me-2"></i>比赛规则
-                        </div>
-                        <div class="card-body">
-                            <ul class="list-group list-group-flush">
-                                <li class="list-group-item">比赛时间为60分钟</li>
-                                <li class="list-group-item">题目分为单选题、多选题、问答题和申论题</li>
-                                <li class="list-group-item">答对得分，答错不扣分</li>
-                                <li class="list-group-item">比赛结束后系统自动计算成绩</li>
-                                <li class="list-group-item">禁止使用任何外部辅助工具</li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="card">
-                        <div class="card-header">
-                            <i class="fas fa-info-circle me-2"></i>比赛信息
-                        </div>
-                        <div class="card-body">
-                            <ul class="list-group list-group-flush">
-                                <li class="list-group-item"><strong>主办单位：</strong>宽柔中学电脑协会</li>
-                                <li class="list-group-item"><strong>参赛对象：</strong>宽柔中学在校学生</li>
-                                <li class="list-group-item"><strong>比赛时间：</strong>2023年11月15日</li>
-                                <li class="list-group-item"><strong>比赛地点：</strong>线上进行</li>
-                                <li class="list-group-item"><strong>奖项设置：</strong>初中组和高中组各设冠亚季军</li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- 参赛者答题界面 -->
-        <div id="quizView" class="d-none">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h2 class="section-title">常识比赛答题系统</h2>
-                <div class="timer" id="quizTimer">剩余时间: 60:00</div>
-            </div>
-            
-            <div class="progress">
-                <div class="progress-bar" id="quizProgress" role="progressbar" style="width: 0%"></div>
-            </div>
-            
-            <div id="quizQuestionsContainer"></div>
-            
-            <div class="d-flex justify-content-between mt-4">
-                <button class="btn btn-secondary" id="prevQuestionBtn" disabled>上一题</button>
-                <button class="btn btn-primary" id="nextQuestionBtn">下一题</button>
-                <button class="btn btn-success" id="submitQuizBtn">提交答卷</button>
-            </div>
-        </div>
-
-        <!-- 参赛者结果界面 -->
-        <div id="resultView" class="d-none">
-            <div class="result-summary">
-                <h2 class="section-title">比赛结果</h2>
-                <div class="result-score" id="finalScore">0/100</div>
-                <p class="lead">感谢您的参与！以下是您的答题详情：</p>
-                
-                <div class="result-details">
-                    <div class="result-details-item">
-                        <span>正确题数：</span>
-                        <span id="correctCount">0</span>
-                    </div>
-                    <div class="result-details-item">
-                        <span>错误题数：</span>
-                        <span id="wrongCount">0</span>
-                    </div>
-                    <div class="result-details-item">
-                        <span>未答题数：</span>
-                        <span id="unansweredCount">0</span>
-                    </div>
-                    <div class="result-details-item">
-                        <span>总得分：</span>
-                        <span id="totalScore">0</span>
-                    </div>
-                    <div class="result-details-item">
-                        <span>组别排名：</span>
-                        <span id="groupRank">-</span>
-                    </div>
-                    <div class="result-details-item">
-                        <span>总排名：</span>
-                        <span id="overallRank">-</span>
-                    </div>
-                </div>
-            </div>
-            
-            <h3 class="section-title">答题详情</h3>
-            <div id="resultQuestionsContainer"></div>
-            
-            <div class="text-center mt-4">
-                <button class="btn btn-primary" id="viewRankingBtn">查看完整排名</button>
-            </div>
-        </div>
-
-        <!-- 排名界面 -->
-        <div id="rankingView" class="d-none">
-            <h2 class="section-title">比赛排名</h2>
-            
-            <ul class="nav nav-tabs" id="rankingTabs" role="tablist">
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link active" id="highschool-tab" data-bs-toggle="tab" data-bs-target="#highschool" type="button">高中组</button>
-                </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="middleschool-tab" data-bs-toggle="tab" data-bs-target="#middleschool" type="button">初中组</button>
-                </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="overall-tab" data-bs-toggle="tab" data-bs-target="#overall" type="button">总排名</button>
-                </li>
-            </ul>
-            
-            <div class="tab-content" id="rankingTabContent">
-                <div class="tab-pane fade show active" id="highschool" role="tabpanel">
-                    <div class="table-responsive">
-                        <table class="ranking-table">
-                            <thead>
-                                <tr>
-                                    <th>排名</th>
-                                    <th>姓名</th>
-                                    <th>班级</th>
-                                    <th>正确题数</th>
-                                    <th>错误题数</th>
-                                    <th>得分</th>
-                                    <th>用时</th>
-                                </tr>
-                            </thead>
-                            <tbody id="highschoolRankingBody">
-                                <!-- 高中组排名数据将通过JavaScript动态填充 -->
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-                <div class="tab-pane fade" id="middleschool" role="tabpanel">
-                    <div class="table-responsive">
-                        <table class="ranking-table">
-                            <thead>
-                                <tr>
-                                    <th>排名</th>
-                                    <th>姓名</th>
-                                    <th>班级</th>
-                                    <th>正确题数</th>
-                                    <th>错误题数</th>
-                                    }
-    
-    .navbar {
-        background: linear-gradient(135deg, var(--primary-color), var(--dark-color));
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-        padding: 0.8rem 1.5rem;
-    }
-    
-    .navbar-brand {
-        font-weight: 700;
-        font-size: 1.5rem;
-        display: flex;
-        align-items: center;
-        color: white;
-        transition: var(--transition);
-    }
-    
-    .navbar-brand:hover {
-        color: rgba(255, 255, 255, 0.9);
-    }
-    
-    .navbar-toggler {
-        border: none;
-        padding: 0.5rem;
-    }
-    
-    .navbar-toggler:focus {
-        box-shadow: none;
-    }
-    
-    .btn {
-        border-radius: var(--border-radius);
-        padding: 10px 20px;
-        font-weight: 600;
-        transition: var(--transition);
-        border: none;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-    }
-    
-    .btn:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
-    }
-    
-    .btn-primary {
-        background-color: var(--primary-color);
-    }
-    
-    .btn-primary:hover {
-        background-color: #2980b9;
-    }
-    
-    .btn-secondary {
-        background-color: #6c757d;
-    }
-    
-    .btn-success {
-        background-color: var(--secondary-color);
-    }
-    
-    .btn-success:hover {
-        background-color: #27ae60;
-    }
-    
-    .btn-danger {
-        background-color: var(--accent-color);
-    }
-    
-    .btn-danger:hover {
-        background-color: #c0392b;
-    }
-    
-    .btn-outline-light {
-        border: 2px solid rgba(255, 255, 255, 0.2);
-        background-color: transparent;
-        color: white;
-    }
-    
-    .btn-outline-light:hover {
-        background-color: rgba(255, 255, 255, 0.1);
-        border-color: rgba(255, 255, 255, 0.3);
-    }
-    
-    .card {
-        border: none;
-        border-radius: var(--border-radius);
-        box-shadow: var(--card-shadow);
-        margin-bottom: 24px;
-        transition: var(--transition);
-        overflow: hidden;
-        background-color: white;
-    }
-    
-    .card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
-    }
-    
-    .card-header {
-        background: linear-gradient(135deg, var(--primary-color), var(--info-color));
-        color: white;
-        border-radius: var(--border-radius) var(--border-radius) 0 0 !important;
-        font-weight: 600;
-        padding: 1rem 1.5rem;
-        border-bottom: none;
-    }
-    
-    .card-body {
-        padding: 1.5rem;
-    }
-    
-    .question-card {
-        background-color: white;
-        padding: 1.5rem;
-        margin-bottom: 1.5rem;
-        border-radius: var(--border-radius);
-        box-shadow: var(--card-shadow);
-        animation: fadeIn 0.5s ease forwards;
-        border-left: 4px solid var(--primary-color);
-    }
-    
-    @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(20px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-    
-    .option-item {
-        padding: 12px 20px;
-        margin: 10px 0;
-        background-color: white;
-        border-radius: 8px;
-        cursor: pointer;
-        transition: var(--transition);
-        border: 1px solid #e0e0e0;
-        font-weight: 500;
-        position: relative;
-    }
-    
-    .option-item:hover {
-        background-color: #f0f7ff;
-        border-color: var(--primary-color);
-        transform: translateX(5px);
-    }
-    
-    .option-item.selected {
-        background-color: var(--primary-color);
-        color: white;
-        border-color: var(--primary-color);
-    }
-    
-    .option-item.correct {
-        background-color: var(--success-color);
-        color: white;
-        border-color: var(--success-color);
-    }
-    
-    .option-item.incorrect {
-        background-color: var(--accent-color);
-        color: white;
-        border-color: var(--accent-color);
-    }
-    
-    .timer {
-        font-size: 1.5rem;
-        font-weight: bold;
-        color: var(--accent-color);
-        text-align: center;
-        margin: 20px 0;
-        padding: 10px 20px;
-        background-color: white;
-        border-radius: var(--border-radius);
-        box-shadow: var(--card-shadow);
-        display: inline-block;
-    }
-    
-    .admin-panel {
-        background-color: white;
-        padding: 1.5rem;
-        border-radius: var(--border-radius);
-        margin-top: 1.5rem;
-        box-shadow: var(--card-shadow);
-    }
-    
-    .participant-list {
-        max-height: 500px;
-        overflow-y: auto;
-        border-radius: var(--border-radius);
-    }
-    
-    .participant-item {
-        padding: 12px;
-        border-bottom: 1px solid #eee;
-        transition: background-color 0.2s;
-    }
-    
-    .participant-item:hover {
-        background-color: #f5f5f5;
-    }
-    
-    .score-badge {
-        font-size: 0.9rem;
-        padding: 5px 10px;
-        border-radius: 20px;
-        font-weight: 600;
-    }
-    
-    .ranking-table {
-        width: 100%;
-        border-collapse: separate;
-        border-spacing: 0;
-        border-radius: var(--border-radius);
-        overflow: hidden;
-    }
-    
-    .ranking-table th, .ranking-table td {
-        padding: 12px 15px;
-        text-align: left;
-        border-bottom: 1px solid #e0e0e0;
-    }
-    
-    .ranking-table th {
-        background-color: var(--primary-color);
-        color: white;
-        font-weight: 600;
-    }
-    
-    .ranking-table tr:nth-child(even) {
-        background-color: #f8f9fa;
-    }
-    
-    .ranking-table tr:hover {
-        background-color: #f0f7ff;
-    }
-    
-    .top-rank {
-        background-color: #fff8e1 !important;
-        font-weight: bold;
-    }
-    
-    .first-place {
-        background-color: #e8f5e9 !important;
-    }
-    
-    .second-place {
-        background-color: #e3f2fd !important;
-    }
-    
-    .third-place {
-        background-color: #fce4ec !important;
-    }
-    
-    .logo {
-        height: 40px;
-        margin-right: 10px;
-        filter: brightness(0) invert(1);
-    }
-    
-    .welcome-section {
-        background: linear-gradient(135deg, var(--primary-color), var(--dark-color));
-        color: white;
-        padding: 5rem 0;
-        border-radius: var(--border-radius);
-        margin-bottom: 2.5rem;
-        text-align: center;
-        position: relative;
-        overflow: hidden;
-    }
-    
-    .welcome-section::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: url('https://i.postimg.cc/qqV3NyJB/logo-01.png') no-repeat;
-        background-size: 30%;
-        background-position: right bottom;
-        opacity: 0.05;
-    }
-    
-    .welcome-section h1 {
-        font-weight: 800;
-        margin-bottom: 1.5rem;
-        font-size: 2.8rem;
-        position: relative;
-        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    }
-    
-    .welcome-section p {
-        font-size: 1.2rem;
-        max-width: 800px;
-        margin: 0 auto 2.5rem;
-        opacity: 0.9;
-        position: relative;
-    }
-    
-    .section-title {
-        color: var(--dark-color);
-        font-weight: 700;
-        margin-bottom: 1.5rem;
-        padding-bottom: 0.75rem;
-        border-bottom: 3px solid var(--primary-color);
-        font-size: 1.8rem;
-        position: relative;
-        display: inline-block;
-    }
-    
-    .section-title::after {
-        content: '';
-        position: absolute;
-        bottom: -3px;
-        left: 0;
-        width: 50px;
-        height: 3px;
-        background-color: var(--secondary-color);
-    }
-    
-    .tab-content {
-        padding: 1.5rem;
-        background-color: white;
-        border-radius: 0 0 var(--border-radius) var(--border-radius);
-        box-shadow: var(--card-shadow);
-        border: 1px solid #e0e0e0;
-        border-top: none;
-    }
-    
-    .nav-tabs {
-        border-bottom: 2px solid #e0e0e0;
-    }
-    
-    .nav-tabs .nav-link {
-        color: var(--dark-color);
-        font-weight: 600;
-        border-radius: var(--border-radius) var(--border-radius) 0 0 !important;
-        padding: 12px 24px;
-        transition: var(--transition);
-        border: none;
-        margin-right: 5px;
-        background-color: #f8f9fa;
-    }
-    
-    .nav-tabs .nav-link:hover {
-        border-color: transparent;
-        background-color: #e9ecef;
-    }
-    
-    .nav-tabs .nav-link.active {
-        color: white;
-        font-weight: 700;
-        background-color: var(--primary-color);
-        border-bottom: none;
-    }
-    
-    .form-control, .form-select {
-        border-radius: var(--border-radius);
-        padding: 10px 15px;
-        border: 1px solid #e0e0e0;
-        transition: var(--transition);
-    }
-    
-    .form-control:focus, .form-select:focus {
-        border-color: var(--primary-color);
-        box-shadow: 0 0 0 0.25rem rgba(52, 152, 219, 0.25);
-    }
-    
-    .progress {
-        height: 12px;
-        margin-bottom: 1.5rem;
-        border-radius: 6px;
-        background-color: #e9ecef;
-        box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
-    }
-    
-    .progress-bar {
-        background-color: var(--primary-color);
-        border-radius: 6px;
-        transition: width 0.6s ease;
-    }
-    
-    .result-summary {
-        text-align: center;
-        padding: 2.5rem;
-        background-color: white;
-        border-radius: var(--border-radius);
-        box-shadow: var(--card-shadow);
-        margin-bottom: 2.5rem;
-        border-top: 5px solid var(--primary-color);
-    }
-    
-    .result-score {
-        font-size: 4rem;
-        font-weight: 800;
-        color: var(--primary-color);
-        margin: 1.5rem 0;
-        text-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
-    }
-    
-    .result-details {
-        text-align: left;
-        margin-top: 1.5rem;
-        background-color: #f8f9fa;
-        padding: 1.5rem;
-        border-radius: var(--border-radius);
-    }
-    
-    .result-details-item {
-        padding: 12px 0;
-        border-bottom: 1px solid #eee;
-        display: flex;
-        justify-content: space-between;
-        font-weight: 500;
-    }
-    
-    .result-details-item:last-child {
-        border-bottom: none;
-    }
-    
-    .footer {
-        background: linear-gradient(135deg, var(--dark-color), var(--primary-color));
-        color: white;
-        padding: 2rem 0;
-        margin-top: auto;
-        text-align: center;
-    }
-    
-    .footer p {
-        margin-bottom: 0;
-        font-weight: 500;
-    }
-    
-    /* 富文本编辑器样式 */
-    .ql-toolbar {
-        border-radius: var(--border-radius) var(--border-radius) 0 0 !important;
-        border-color: #e0e0e0 !important;
-    }
-    
-    .ql-container {
-        border-radius: 0 0 var(--border-radius) var(--border-radius) !important;
-        border-color: #e0e0e0 !important;
-        height: 200px;
-        font-family: 'Noto Sans SC', sans-serif;
-    }
-    
-    /* 图片上传样式 */
-    .image-upload-container {
-        margin-top: 1rem;
-        padding: 2rem;
-        border: 2px dashed #e0e0e0;
-        border-radius: var(--border-radius);
-        text-align: center;
-        cursor: pointer;
-        transition: var(--transition);
-        background-color: #f8f9fa;
-    }
-    
-    .image-upload-container:hover {
-        border-color: var(--primary-color);
-        background-color: rgba(52, 152, 219, 0.05);
-    }
-    
-    .image-preview {
-        max-width: 100%;
-        max-height: 200px;
-        margin-top: 1rem;
-        border-radius: var(--border-radius);
-        display: none;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    }
-    
-    /* 模态框样式 */
-    .modal-content {
-        border-radius: var(--border-radius);
-        border: none;
-        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
-    }
-    
-    .modal-header {
-        background: linear-gradient(135deg, var(--primary-color), var(--info-color));
-        color: white;
-        border-radius: var(--border-radius) var(--border-radius) 0 0 !important;
-        border-bottom: none;
-    }
-    
-    .modal-title {
-        font-weight: 700;
-    }
-    
-    .modal-footer {
-        border-top: none;
-        background-color: #f8f9fa;
-        border-radius: 0 0 var(--border-radius) var(--border-radius);
-    }
-    
-    /* 列表组样式 */
-    .list-group-item {
-        border: 1px solid rgba(0, 0, 0, 0.05);
-        padding: 1rem 1.25rem;
-        font-weight: 500;
-    }
-    
-    .list-group-item:first-child {
-        border-top-left-radius: var(--border-radius) !important;
-        border-top-right-radius: var(--border-radius) !important;
-    }
-    
-    .list-group-item:last-child {
-        border-bottom-left-radius: var(--border-radius) !important;
-        border-bottom-right-radius: var(--border-radius) !important;
-    }
-    
-    /* 表格样式 */
-    .table {
-        border-radius: var(--border-radius);
-        overflow: hidden;
-    }
-    
-    .table th {
-        background-color: var(--primary-color);
-        color: white;
-        font-weight: 600;
-    }
-    
-    .table-hover tbody tr:hover {
-        background-color: #f0f7ff;
-    }
-    
-    /* 响应式调整 */
-    @media (max-width: 768px) {
-        .welcome-section {
-            padding: 3rem 1rem;
-        }
-        
-        .welcome-section h1 {
-            font-size: 2rem;
-        }
-        
-        .section-title {
-            font-size: 1.5rem;
-        }
-        
-        .result-summary {
-            padding: 1.5rem;
-        }
-        
-        .result-score {
-            font-size: 3rem;
-        }
-        
-        .nav-tabs .nav-link {
-            padding: 10px 15px;
-            font-size: 0.9rem;
-        }
-    }
-    
-    @media (max-width: 576px) {
-        .navbar-brand {
-            font-size: 1.2rem;
-        }
-        
-        .logo {
-            height: 30px;
-        }
-        
-        .welcome-section h1 {
-            font-size: 1.8rem;
-        }
-        
-        .btn {
-            padding: 8px 16px;
-            font-size: 0.9rem;
-        }
-    }
-</style>        
-    
-</head>
-<body>
-    <!-- 导航栏 -->
-    <nav class="navbar navbar-expand-lg navbar-dark">
-        <div class="container">
-            <a class="navbar-brand" href="#">
-                <img src="https://i.postimg.cc/qqV3NyJB/logo-01.png" class="logo">
-                新山宽柔中学电脑协会常识比赛
-            </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto">
-                    <li class="nav-item" id="loginNavItem">
-                        <button class="btn btn-outline-light" id="loginButton">登录</button>
-                    </li>
-                    <li class="nav-item d-none" id="userNavItem">
-                        <div class="dropdown">
-                            <button class="btn btn-outline-light dropdown-toggle" id="userDropdown" data-bs-toggle="dropdown">
-                                <span id="userName"></span>
-                                <img src="" alt="用户头像" id="userPhoto" style="height: 30px; border-radius: 50%; margin-left: 5px;">
-                            </button>
-                            <ul class="dropdown-menu dropdown-menu-end">
-                                <li><a class="dropdown-item" href="#" id="adminLink">管理员面板</a></li>
-                                <li><a class="dropdown-item" href="#" id="quizLink">答题界面</a></li>
-                                <li><hr class="dropdown-divider"></li>
-                                <li><a class="dropdown-item" href="#" id="logoutButton">退出登录</a></li>
-                            </ul>
-                        </div>
-                    </li>
-                </ul>
-            </div>
-        </div>
-    </nav>
-
-    <!-- 主内容区 -->
-    <div class="container my-5" id="mainContent">
-        <!-- 欢迎界面 -->
-        <div id="welcomeView">
-            <div class="welcome-section">
-                <h1>欢迎参加宽柔中学电脑协会常识比赛</h1>
-                <p>测试您的知识水平，与同学们一较高下！请使用Google账号登录后开始答题。</p>
-                <button class="btn btn-light btn-lg px-4 py-2" id="welcomeLoginButton">使用Google账号登录</button>
+                <button class="btn btn-light btn-lg px-4 py-2" id="welcomeLoginButton">
+                    <i class="fab fa-google me-2"></i> 使用Google账号登录
+                </button>
             </div>
             
             <div class="row">
@@ -2493,16 +1140,15 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     
     <script>
-        
         // Firebase 配置
         const firebaseConfig = {
-    apiKey: "AIzaSyBnlTYP3Tkt0SKbPlW2sMbZCo33GoPhK2M",
-    authDomain: "fymcsjb-competition.firebaseapp.com",
-    projectId: "fymcsjb-competition",
-    storageBucket: "fymcsjb-competition.appspot.com",  // 修正这里
-    messagingSenderId: "231117222555",
-    appId: "1:231117222555:web:a7106a8006774272ec0c3e"
-};
+            apiKey: "AIzaSyBnlTYP3Tkt0SKbPlW2sMbZCo33GoPhK2M",
+            authDomain: "fymcsjb-competition.firebaseapp.com",
+            projectId: "fymcsjb-competition",
+            storageBucket: "fymcsjb-competition.appspot.com",
+            messagingSenderId: "231117222555",
+            appId: "1:231117222555:web:a7106a8006774272ec0c3e"
+        };
 
         // 初始化 Firebase
         firebase.initializeApp(firebaseConfig);
@@ -2730,32 +1376,31 @@
         }
         
         // Google登录
-        // 更新后的signInWithGoogle函数
-function signInWithGoogle() {
-    const provider = new firebase.auth.GoogleAuthProvider();
-    // 添加scope请求
-    provider.addScope('profile');
-    provider.addScope('email');
-    
-    auth.signInWithPopup(provider)
-        .then((result) => {
-            // 登录成功处理
-            console.log("登录成功", result.user);
-        })
-        .catch((error) => {
-            console.error("登录错误:", error);
-            // 显示更详细的错误信息
-            let errorMessage = "登录失败";
-            if (error.code === 'auth/popup-closed-by-user') {
-                errorMessage = "您关闭了登录窗口，请重新尝试";
-            } else if (error.code === 'auth/network-request-failed') {
-                errorMessage = "网络连接失败，请检查您的网络";
-            } else {
-                errorMessage = `登录失败: ${error.message}`;
-            }
-            Swal.fire('错误', errorMessage, 'error');
-        });
-}
+        function signInWithGoogle() {
+            const provider = new firebase.auth.GoogleAuthProvider();
+            // 添加scope请求
+            provider.addScope('profile');
+            provider.addScope('email');
+            
+            auth.signInWithPopup(provider)
+                .then((result) => {
+                    // 登录成功处理
+                    console.log("登录成功", result.user);
+                })
+                .catch((error) => {
+                    console.error("登录错误:", error);
+                    // 显示更详细的错误信息
+                    let errorMessage = "登录失败";
+                    if (error.code === 'auth/popup-closed-by-user') {
+                        errorMessage = "您关闭了登录窗口，请重新尝试";
+                    } else if (error.code === 'auth/network-request-failed') {
+                        errorMessage = "网络连接失败，请检查您的网络";
+                    } else {
+                        errorMessage = `登录失败: ${error.message}`;
+                    }
+                    Swal.fire('错误', errorMessage, 'error');
+                });
+        }
         
         // 退出登录
         function signOut() {
@@ -3414,7 +2059,6 @@ function signInWithGoogle() {
                 if (index === 0) rowClass = 'first-place';
                 else if (index === 1) rowClass = 'second-place';
                 else if (index === 2) rowClass = 'third-place';
-                else if (index < 10) rowClass = 'top-rank';
                 
                 highschoolRankingBody.innerHTML += `
                     <tr class="${rowClass}">
@@ -3439,7 +2083,6 @@ function signInWithGoogle() {
                 if (index === 0) rowClass = 'first-place';
                 else if (index === 1) rowClass = 'second-place';
                 else if (index === 2) rowClass = 'third-place';
-                else if (index < 10) rowClass = 'top-rank';
                 
                 middleschoolRankingBody.innerHTML += `
                     <tr class="${rowClass}">
@@ -3464,7 +2107,6 @@ function signInWithGoogle() {
                 if (index === 0) rowClass = 'first-place';
                 else if (index === 1) rowClass = 'second-place';
                 else if (index === 2) rowClass = 'third-place';
-                else if (index < 10) rowClass = 'top-rank';
                 
                 overallRankingBody.innerHTML += `
                     <tr class="${rowClass}">
@@ -4276,7 +2918,7 @@ function signInWithGoogle() {
                     
                     // 保存到Firebase
                     database.ref('quiz/settings').set(settings).then(() => {
-                        Swal.fire('成功', '比赛已暂停', 'success');
+                       Swal.fire('成功', '比赛已暂停', 'success');
                         updateQuizStatusDisplay('paused');
                     }).catch(error => {
                         console.error("暂停比赛错误:", error);
