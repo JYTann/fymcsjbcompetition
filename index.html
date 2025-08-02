@@ -1570,7 +1570,7 @@ imageUpload.addEventListener('change', function(e) {
                 }
             }).catch(error => {
                 console.error("获取用户答题状态错误:", error);
-                Swal.fire('错误', '获取答题状态失败', 'error');
+                Swal.fire('错误', '获取答题状态失败' + error.message, 'error');
             });
         }
         
