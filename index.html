@@ -2243,66 +2243,25 @@ function hideLoading() {
             }
         }
         
-        function loadQuizData() {
-    // 显示加载指示器
-    const loadingSwal = Swal.fire({
-        title: '加载比赛数据',
-        html: '正在获取题目和设置...',
-        allowOutsideClick: false,
-        didOpen: () => {
-            Swal.showLoading();
-        }
-    });
-
-    // 并行加载设置和题目数据
-    Promise.all([
-        database.ref('quiz/settings').once('value'),
-        database.ref('questions').once('value')
-    ]).then(([settingsSnapshot, questionsSnapshot]) => {
-        loadingSwal.close();
-        
-        // 处理设置数据
-        if (settingsSnapshot.exists()) {
-            quizData.settings = settingsSnapshot.val();
-        } else {
-            // 初始化默认设置
-            quizData.settings = {
-                title: "宽柔中学电脑协会常识比赛",
-                duration: 60,
-                startTime: null,
-                endTime: null,
-                showResultsImmediately: true,
-                allowRetake: false,
-                status: "not_started"
-            };
-            database.ref('quiz/settings').set(quizData.settings);
-        }
-        
-        // 处理题目数据
-        if (questionsSnapshot.exists()) {
-            quizData.questions = Object.values(questionsSnapshot.val());
-            if (quizData.questions.length === 0) {
-                showNoQuestionsMessage();
-            }
-        } else {
-            quizData.questions = [];
-            showNoQuestionsMessage();
-        }
-        
-        // 更新UI
-        updateQuizSettingsUI();
-        updateQuestionList();
-        updateParticipantList();
-        updateResultsStatistics();
-        
-    }).catch(error => {
-        loadingSwal.close();
-        console.error("加载比赛数据错误:", error);
-        Swal.fire('错误', '加载比赛数据失败: ' + error.message, 'error');
-        quizData.questions = []; // 确保有默认空数组
-        updateQuestionList();
+       function loadQuizData() {
+  firebase.database().ref('quiz/questions').once('value')
+    .then(snapshot => {
+      const data = snapshot.val();
+      if (data) {
+        quizData.questions = data;
+        console.log('题目加载成功:', quizData.questions);
+        // 可以在这里调用显示第一题或其他初始化操作
+      } else {
+        console.error('未找到题目数据');
+        Swal.fire('错误', '题目数据未加载，请确认题目是否存在', 'error');
+      }
+    })
+    .catch(error => {
+      console.error('加载题目出错:', error);
+      Swal.fire('错误', '加载题目失败，请稍后重试', 'error');
     });
 }
+
 
 function showNoQuestionsMessage() {
     questionListBody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">暂无题目数据</td></tr>';
