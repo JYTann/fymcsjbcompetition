@@ -1982,8 +1982,10 @@ imageUpload.addEventListener('change', function(e) {
                     
                     resultsHTML += `
                         </div>
-                        ${isCorrect === false ? `<div class="mt-2 text-success">正确答案: ${question.correctAnswers.map(a => String.fromCharCode(65 + a)).join(', ')}</div>` : ''}
-                    `;
+                        ${isCorrect === false && Array.isArray(question.correctAnswers) 
+    ? `<div class="mt-2 text-success">正确答案: ${question.correctAnswers.map(a => String.fromCharCode(65 + a)).join(', ')}</div>` 
+    : ''}
+
                 } else {
                     // 问答题/申论题结果
                     resultsHTML += `
