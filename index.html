@@ -22,8 +22,6 @@
             --info-color: #2980b9;
             --background-color: #f8f9fa;
             --card-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-            --border-radius: 12px;
-            --transition: all 0.3s ease;
         }
         
         body {
@@ -31,15 +29,6 @@
             background-color: var(--background-color);
             color: var(--dark-color);
             line-height: 1.6;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
-        
-        .navbar {
-            background: linear-gradient(135deg, var(--primary-color), var(--dark-color));
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-            padding: 0.8rem 1.5rem;
         }
         
         .navbar-brand {
@@ -47,99 +36,70 @@
             font-size: 1.5rem;
             display: flex;
             align-items: center;
-            color: white;
-            transition: var(--transition);
         }
         
-        .navbar-brand:hover {
-            color: rgba(255, 255, 255, 0.9);
+        .navbar {
+            background-color: var(--primary-color);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 0.8rem 1rem;
         }
         
         .btn {
-            border-radius: var(--border-radius);
-            padding: 10px 20px;
-            font-weight: 600;
-            transition: var(--transition);
-            border: none;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-        }
-        
-        .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            padding: 8px 16px;
+            font-weight: 500;
+            transition: all 0.3s ease;
         }
         
         .btn-primary {
-            background-color: var(--primary-color);
+            background-color: var(--secondary-color);
+            border-color: var(--secondary-color);
         }
         
         .btn-primary:hover {
             background-color: #2980b9;
-        }
-        
-        .btn-secondary {
-            background-color: #6c757d;
-        }
-        
-        .btn-success {
-            background-color: var(--secondary-color);
-        }
-        
-        .btn-success:hover {
-            background-color: #27ae60;
+            border-color: #2980b9;
         }
         
         .btn-danger {
             background-color: var(--accent-color);
+            border-color: var(--accent-color);
         }
         
         .btn-danger:hover {
             background-color: #c0392b;
-        }
-        
-        .btn-outline-light {
-            border: 2px solid rgba(255, 255, 255, 0.2);
-            background-color: transparent;
-            color: white;
-        }
-        
-        .btn-outline-light:hover {
-            background-color: rgba(255, 255, 255, 0.1);
-            border-color: rgba(255, 255, 255, 0.3);
+            border-color: #c0392b;
         }
         
         .card {
             border: none;
-            border-radius: var(--border-radius);
+            border-radius: 12px;
             box-shadow: var(--card-shadow);
             margin-bottom: 24px;
-            transition: var(--transition);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
             overflow: hidden;
-            background-color: white;
         }
         
         .card:hover {
             transform: translateY(-5px);
-            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
         }
         
         .card-header {
-            background: linear-gradient(135deg, var(--primary-color), var(--info-color));
+            background-color: var(--primary-color);
             color: white;
-            border-radius: var(--border-radius) var(--border-radius) 0 0 !important;
-            font-weight: 600;
+            border-radius: 12px 12px 0 0 !important;
+            font-weight: 500;
             padding: 1rem 1.5rem;
-            border-bottom: none;
         }
         
         .question-card {
             background-color: white;
-            padding: 1.5rem;
-            margin-bottom: 1.5rem;
-            border-radius: var(--border-radius);
+            padding: 24px;
+            margin-bottom: 24px;
+            border-radius: 12px;
             box-shadow: var(--card-shadow);
             animation: fadeIn 0.5s ease forwards;
-            border-left: 4px solid var(--primary-color);
         }
         
         @keyframes fadeIn {
@@ -148,39 +108,32 @@
         }
         
         .option-item {
-            padding: 12px 20px;
-            margin: 10px 0;
-            background-color: white;
+            padding: 12px 16px;
+            margin: 8px 0;
+            background-color: var(--light-color);
             border-radius: 8px;
             cursor: pointer;
-            transition: var(--transition);
-            border: 1px solid #e0e0e0;
-            font-weight: 500;
-            position: relative;
+            transition: all 0.3s ease;
         }
         
         .option-item:hover {
-            background-color: #f0f7ff;
-            border-color: var(--primary-color);
+            background-color: #d6eaf8;
             transform: translateX(5px);
         }
         
         .option-item.selected {
-            background-color: var(--primary-color);
+            background-color: var(--secondary-color);
             color: white;
-            border-color: var(--primary-color);
         }
         
         .option-item.correct {
             background-color: var(--success-color);
             color: white;
-            border-color: var(--success-color);
         }
         
         .option-item.incorrect {
             background-color: var(--accent-color);
             color: white;
-            border-color: var(--accent-color);
         }
         
         .timer {
@@ -189,186 +142,174 @@
             color: var(--accent-color);
             text-align: center;
             margin: 20px 0;
-            padding: 10px 20px;
-            background-color: white;
-            border-radius: var(--border-radius);
-            box-shadow: var(--card-shadow);
-            display: inline-block;
+        }
+        
+        .admin-panel {
+            background-color: #f8f9fa;
+            padding: 24px;
+            border-radius: 12px;
+            margin-top: 24px;
+        }
+        
+        .participant-list {
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        
+        .participant-item {
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+            transition: background-color 0.2s;
+        }
+        
+        .participant-item:hover {
+            background-color: #f0f0f0;
+        }
+        
+        .score-badge {
+            font-size: 0.9rem;
+            padding: 5px 10px;
+            border-radius: 20px;
         }
         
         .ranking-table {
             width: 100%;
-            border-collapse: separate;
-            border-spacing: 0;
-            border-radius: var(--border-radius);
-            overflow: hidden;
+            border-collapse: collapse;
         }
         
         .ranking-table th, .ranking-table td {
             padding: 12px 15px;
             text-align: left;
-            border-bottom: 1px solid #e0e0e0;
+            border-bottom: 1px solid #ddd;
         }
         
         .ranking-table th {
             background-color: var(--primary-color);
             color: white;
-            font-weight: 600;
         }
         
         .ranking-table tr:nth-child(even) {
-            background-color: #f8f9fa;
+            background-color: #f2f2f2;
         }
         
         .ranking-table tr:hover {
-            background-color: #f0f7ff;
+            background-color: #e9e9e9;
+        }
+        
+        .top-rank {
+            background-color: #fff3cd !important;
+            font-weight: bold;
         }
         
         .first-place {
-            background-color: #e8f5e9 !important;
+            background-color: #d4edda !important;
         }
         
         .second-place {
-            background-color: #e3f2fd !important;
+            background-color: #e2e3e5 !important;
         }
         
         .third-place {
-            background-color: #fce4ec !important;
+            background-color: #f8d7da !important;
         }
         
         .logo {
             height: 40px;
             margin-right: 10px;
-            filter: brightness(0) invert(1);
         }
         
         .welcome-section {
-            background: linear-gradient(135deg, var(--primary-color), var(--dark-color));
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
             color: white;
-            padding: 5rem 0;
-            border-radius: var(--border-radius);
-            margin-bottom: 2.5rem;
+            padding: 80px 0;
+            border-radius: 16px;
+            margin-bottom: 40px;
             text-align: center;
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .welcome-section::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: url('https://i.postimg.cc/qqV3NyJB/logo-01.png') no-repeat;
-            background-size: 30%;
-            background-position: right bottom;
-            opacity: 0.05;
         }
         
         .welcome-section h1 {
-            font-weight: 800;
-            margin-bottom: 1.5rem;
-            font-size: 2.8rem;
-            position: relative;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            font-weight: 700;
+            margin-bottom: 24px;
+            font-size: 2.5rem;
+        }
+        
+        .welcome-section p {
+            font-size: 1.2rem;
+            max-width: 800px;
+            margin: 0 auto 40px;
+            opacity: 0.9;
         }
         
         .section-title {
-            color: var(--dark-color);
+            color: var(--primary-color);
             font-weight: 700;
-            margin-bottom: 1.5rem;
-            padding-bottom: 0.75rem;
-            border-bottom: 3px solid var(--primary-color);
+            margin-bottom: 24px;
+            padding-bottom: 12px;
+            border-bottom: 3px solid var(--secondary-color);
             font-size: 1.8rem;
-            position: relative;
-            display: inline-block;
-        }
-        
-        .section-title::after {
-            content: '';
-            position: absolute;
-            bottom: -3px;
-            left: 0;
-            width: 50px;
-            height: 3px;
-            background-color: var(--secondary-color);
         }
         
         .tab-content {
-            padding: 1.5rem;
+            padding: 24px;
             background-color: white;
-            border-radius: 0 0 var(--border-radius) var(--border-radius);
+            border-radius: 0 0 12px 12px;
             box-shadow: var(--card-shadow);
-            border: 1px solid #e0e0e0;
-            border-top: none;
-        }
-        
-        .nav-tabs {
-            border-bottom: 2px solid #e0e0e0;
         }
         
         .nav-tabs .nav-link {
             color: var(--dark-color);
-            font-weight: 600;
-            border-radius: var(--border-radius) var(--border-radius) 0 0 !important;
-            padding: 12px 24px;
-            transition: var(--transition);
-            border: none;
-            margin-right: 5px;
-            background-color: #f8f9fa;
-        }
-        
-        .nav-tabs .nav-link:hover {
-            border-color: transparent;
-            background-color: #e9ecef;
+            font-weight: 500;
+            border-radius: 8px 8px 0 0 !important;
+            padding: 12px 20px;
+            transition: all 0.3s ease;
         }
         
         .nav-tabs .nav-link.active {
-            color: white;
+            color: var(--secondary-color);
             font-weight: 700;
-            background-color: var(--primary-color);
-            border-bottom: none;
+            border-bottom: 3px solid var(--secondary-color);
+            background-color: rgba(52, 152, 219, 0.1);
+        }
+        
+        .form-control:focus, .form-select:focus {
+            border-color: var(--secondary-color);
+            box-shadow: 0 0 0 0.25rem rgba(52, 152, 219, 0.25);
         }
         
         .progress {
-            height: 12px;
-            margin-bottom: 1.5rem;
-            border-radius: 6px;
-            background-color: #e9ecef;
-            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+            height: 10px;
+            margin-bottom: 24px;
+            border-radius: 5px;
         }
         
         .progress-bar {
-            background-color: var(--primary-color);
-            border-radius: 6px;
+            background-color: var(--secondary-color);
+            border-radius: 5px;
             transition: width 0.6s ease;
         }
         
         .result-summary {
             text-align: center;
-            padding: 2.5rem;
+            padding: 40px;
             background-color: white;
-            border-radius: var(--border-radius);
+            border-radius: 16px;
             box-shadow: var(--card-shadow);
-            margin-bottom: 2.5rem;
-            border-top: 5px solid var(--primary-color);
+            margin-bottom: 40px;
         }
         
         .result-score {
-            font-size: 4rem;
-            font-weight: 800;
-            color: var(--primary-color);
-            margin: 1.5rem 0;
-            text-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
+            font-size: 3.5rem;
+            font-weight: 700;
+            color: var(--secondary-color);
+            margin: 24px 0;
         }
         
         .result-details {
             text-align: left;
-            margin-top: 1.5rem;
+            margin-top: 24px;
             background-color: #f8f9fa;
-            padding: 1.5rem;
-            border-radius: var(--border-radius);
+            padding: 20px;
+            border-radius: 12px;
         }
         
         .result-details-item {
@@ -376,88 +317,57 @@
             border-bottom: 1px solid #eee;
             display: flex;
             justify-content: space-between;
-            font-weight: 500;
-        }
-        
-        .result-details-item:last-child {
-            border-bottom: none;
         }
         
         .footer {
-            background: linear-gradient(135deg, var(--dark-color), var(--primary-color));
+            background-color: var(--primary-color);
             color: white;
-            padding: 2rem 0;
-            margin-top: auto;
+            padding: 30px 0;
+            margin-top: 60px;
             text-align: center;
         }
         
         /* 富文本编辑器样式 */
         .ql-toolbar {
-            border-radius: var(--border-radius) var(--border-radius) 0 0 !important;
-            border-color: #e0e0e0 !important;
+            border-radius: 8px 8px 0 0 !important;
+            border-color: #dee2e6 !important;
         }
         
         .ql-container {
-            border-radius: 0 0 var(--border-radius) var(--border-radius) !important;
-            border-color: #e0e0e0 !important;
+            border-radius: 0 0 8px 8px !important;
+            border-color: #dee2e6 !important;
             height: 200px;
             font-family: 'Noto Sans SC', sans-serif;
         }
         
         /* 图片上传样式 */
         .image-upload-container {
-            margin-top: 1rem;
-            padding: 2rem;
-            border: 2px dashed #e0e0e0;
-            border-radius: var(--border-radius);
+            margin-top: 20px;
+            padding: 20px;
+            border: 2px dashed #dee2e6;
+            border-radius: 8px;
             text-align: center;
             cursor: pointer;
-            transition: var(--transition);
-            background-color: #f8f9fa;
+            transition: all 0.3s ease;
         }
         
         .image-upload-container:hover {
-            border-color: var(--primary-color);
+            border-color: var(--secondary-color);
             background-color: rgba(52, 152, 219, 0.05);
         }
         
         .image-preview {
             max-width: 100%;
             max-height: 200px;
-            margin-top: 1rem;
-            border-radius: var(--border-radius);
+            margin-top: 15px;
+            border-radius: 8px;
             display: none;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-        }
-        
-        /* 模态框样式 */
-        .modal-content {
-            border-radius: var(--border-radius);
-            border: none;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
-        }
-        
-        .modal-header {
-            background: linear-gradient(135deg, var(--primary-color), var(--info-color));
-            color: white;
-            border-radius: var(--border-radius) var(--border-radius) 0 0 !important;
-            border-bottom: none;
-        }
-        
-        .modal-title {
-            font-weight: 700;
-        }
-        
-        .modal-footer {
-            border-top: none;
-            background-color: #f8f9fa;
-            border-radius: 0 0 var(--border-radius) var(--border-radius);
         }
         
         /* 响应式调整 */
         @media (max-width: 768px) {
             .welcome-section {
-                padding: 3rem 1rem;
+                padding: 60px 20px;
             }
             
             .welcome-section h1 {
@@ -469,35 +379,7 @@
             }
             
             .result-summary {
-                padding: 1.5rem;
-            }
-            
-            .result-score {
-                font-size: 3rem;
-            }
-            
-            .nav-tabs .nav-link {
-                padding: 10px 15px;
-                font-size: 0.9rem;
-            }
-        }
-        
-        @media (max-width: 576px) {
-            .navbar-brand {
-                font-size: 1.2rem;
-            }
-            
-            .logo {
-                height: 30px;
-            }
-            
-            .welcome-section h1 {
-                font-size: 1.8rem;
-            }
-            
-            .btn {
-                padding: 8px 16px;
-                font-size: 0.9rem;
+                padding: 30px 20px;
             }
         }
     </style>
@@ -544,9 +426,1480 @@
             <div class="welcome-section">
                 <h1>欢迎参加宽柔中学电脑协会常识比赛</h1>
                 <p>测试您的知识水平，与同学们一较高下！请使用Google账号登录后开始答题。</p>
-                <button class="btn btn-light btn-lg px-4 py-2" id="welcomeLoginButton">
-                    <i class="fab fa-google me-2"></i> 使用Google账号登录
-                </button>
+                <button class="btn btn-light btn-lg px-4 py-2" id="welcomeLoginButton">使用Google账号登录</button>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <i class="fas fa-clipboard-list me-2"></i>比赛规则
+                        </div>
+                        <div class="card-body">
+                            <ul class="list-group list-group-flush">
+                                <li class="list-group-item">比赛时间为60分钟</li>
+                                <li class="list-group-item">题目分为单选题、多选题、问答题和申论题</li>
+                                <li class="list-group-item">答对得分，答错不扣分</li>
+                                <li class="list-group-item">比赛结束后系统自动计算成绩</li>
+                                <li class="list-group-item">禁止使用任何外部辅助工具</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <i class="fas fa-info-circle me-2"></i>比赛信息
+                        </div>
+                        <div class="card-body">
+                            <ul class="list-group list-group-flush">
+                                <li class="list-group-item"><strong>主办单位：</strong>宽柔中学电脑协会</li>
+                                <li class="list-group-item"><strong>参赛对象：</strong>宽柔中学在校学生</li>
+                                <li class="list-group-item"><strong>比赛时间：</strong>2023年11月15日</li>
+                                <li class="list-group-item"><strong>比赛地点：</strong>线上进行</li>
+                                <li class="list-group-item"><strong>奖项设置：</strong>初中组和高中组各设冠亚季军</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 参赛者答题界面 -->
+        <div id="quizView" class="d-none">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2 class="section-title">常识比赛答题系统</h2>
+                <div class="timer" id="quizTimer">剩余时间: 60:00</div>
+            </div>
+            
+            <div class="progress">
+                <div class="progress-bar" id="quizProgress" role="progressbar" style="width: 0%"></div>
+            </div>
+            
+            <div id="quizQuestionsContainer"></div>
+            
+            <div class="d-flex justify-content-between mt-4">
+                <button class="btn btn-secondary" id="prevQuestionBtn" disabled>上一题</button>
+                <button class="btn btn-primary" id="nextQuestionBtn">下一题</button>
+                <button class="btn btn-success" id="submitQuizBtn">提交答卷</button>
+            </div>
+        </div>
+
+        <!-- 参赛者结果界面 -->
+        <div id="resultView" class="d-none">
+            <div class="result-summary">
+                <h2 class="section-title">比赛结果</h2>
+                <div class="result-score" id="finalScore">0/100</div>
+                <p class="lead">感谢您的参与！以下是您的答题详情：</p>
+                
+                <div class="result-details">
+                    <div class="result-details-item">
+                        <span>正确题数：</span>
+                        <span id="correctCount">0</span>
+                    </div>
+                    <div class="result-details-item">
+                        <span>错误题数：</span>
+                        <span id="wrongCount">0</span>
+                    </div>
+                    <div class="result-details-item">
+                        <span>未答题数：</span>
+                        <span id="unansweredCount">0</span>
+                    </div>
+                    <div class="result-details-item">
+                        <span>总得分：</span>
+                        <span id="totalScore">0</span>
+                    </div>
+                    <div class="result-details-item">
+                        <span>组别排名：</span>
+                        <span id="groupRank">-</span>
+                    </div>
+                    <div class="result-details-item">
+                        <span>总排名：</span>
+                        <span id="overallRank">-</span>
+                    </div>
+                </div>
+            </div>
+            
+            <h3 class="section-title">答题详情</h3>
+            <div id="resultQuestionsContainer"></div>
+            
+            <div class="text-center mt-4">
+                <button class="btn btn-primary" id="viewRankingBtn">查看完整排名</button>
+            </div>
+        </div>
+
+        <!-- 排名界面 -->
+        <div id="rankingView" class="d-none">
+            <h2 class="section-title">比赛排名</h2>
+            
+            <ul class="nav nav-tabs" id="rankingTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="highschool-tab" data-bs-toggle="tab" data-bs-target="#highschool" type="button">高中组</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="middleschool-tab" data-bs-toggle="tab" data-bs-target="#middleschool" type="button">初中组</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="overall-tab" data-bs-toggle="tab" data-bs-target="#overall" type="button">总排名</button>
+                </li>
+            </ul>
+            
+            <div class="tab-content" id="rankingTabContent">
+                <div class="tab-pane fade show active" id="highschool" role="tabpanel">
+                    <div class="table-responsive">
+                        <table class="ranking-table">
+                            <thead>
+                                <tr>
+                                    <th>排名</th>
+                                    <th>姓名</th>
+                                    <th>班级</th>
+                                    <th>正确题数</th>
+                                    <th>错误题数</th>
+                                    <th>得分</th>
+                                    <th>用时</th>
+                                </tr>
+                            </thead>
+                            <tbody id="highschoolRankingBody">
+                                <!-- 高中组排名数据将通过JavaScript动态填充 -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="tab-pane fade" id="middleschool" role="tabpanel">
+                    <div class="table-responsive">
+                        <table class="ranking-table">
+                            <thead>
+                                <tr>
+                                    <th>排名</th>
+                                    <th>姓名</th>
+                                    <th>班级</th>
+                                    <th>正确题数</th>
+                                    <th>错误题数</th>
+                                    line-height: 1.6;
+    color: var(--dark-color);
+    background-color: var(--light-color);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* 容器与布局优化 */
+.container {
+    max-width: 1200px;
+    padding: 0 1.5rem;
+    margin: 0 auto;
+}
+
+/* 导航栏优化 */
+.navbar {
+    background-color: var(--primary-color);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    padding: 1rem 0;
+}
+
+.navbar-brand {
+    font-weight: 700;
+    font-size: 1.25rem;
+    display: flex;
+    align-items: center;
+    color: white;
+}
+
+.navbar-brand:hover {
+    color: rgba(255, 255, 255, 0.9);
+}
+
+/* 按钮样式优化 */
+.btn {
+    border-radius: var(--border-radius);
+    padding: 0.5rem 1rem;
+    font-weight: 500;
+    transition: var(--transition);
+    border: none;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+}
+
+.btn-primary {
+    background-color: var(--secondary-color);
+    color: white;
+}
+
+.btn-primary:hover {
+    background-color: #2185d0;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(52, 152, 219, 0.3);
+}
+
+.btn-outline-light {
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    color: white;
+    background: transparent;
+}
+
+.btn-outline-light:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: white;
+}
+
+/* 卡片设计优化 */
+.card {
+    border: none;
+    border-radius: var(--border-radius);
+    box-shadow: var(--box-shadow);
+    margin-bottom: 1.5rem;
+    transition: var(--transition);
+    overflow: hidden;
+    background: white;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 1rem 2rem rgba(0, 0, 0, 0.15);
+}
+
+.card-header {
+    background-color: var(--primary-color);
+    color: white;
+    padding: 1rem 1.5rem;
+    font-weight: 600;
+    border-bottom: none;
+}
+
+.card-body {
+    padding: 1.5rem;
+}
+
+/* 题目卡片优化 */
+.question-card {
+    background: white;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    border-radius: var(--border-radius);
+    box-shadow: var(--box-shadow);
+    animation: fadeIn 0.5s ease forwards;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* 选项列表优化 */
+.options-list {
+    margin: 1rem 0;
+}
+
+.option-item {
+    padding: 0.75rem 1rem;
+    margin: 0.5rem 0;
+    background-color: rgba(52, 152, 219, 0.1);
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    transition: var(--transition);
+    border-left: 3px solid transparent;
+}
+
+.option-item:hover {
+    background-color: rgba(52, 152, 219, 0.2);
+    transform: translateX(5px);
+    border-left-color: var(--secondary-color);
+}
+
+.option-item.selected {
+    background-color: var(--secondary-color);
+    color: white;
+    border-left-color: var(--primary-color);
+}
+
+.option-item.correct {
+    background-color: var(--success-color);
+    color: white;
+}
+
+.option-item.incorrect {
+    background-color: var(--accent-color);
+    color: white;
+}
+
+/* 计时器优化 */
+.timer {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--accent-color);
+    text-align: center;
+    margin: 1.5rem 0;
+    padding: 0.5rem 1rem;
+    background: rgba(231, 76, 60, 0.1);
+    border-radius: var(--border-radius);
+    display: inline-block;
+}
+
+/* 进度条优化 */
+.progress {
+    height: 8px;
+    margin-bottom: 1.5rem;
+    border-radius: 4px;
+    background-color: #e9ecef;
+    overflow: hidden;
+}
+
+.progress-bar {
+    background-color: var(--secondary-color);
+    transition: width 0.6s ease;
+}
+
+/* 表格优化 */
+.table {
+    width: 100%;
+    margin-bottom: 1rem;
+    color: var(--dark-color);
+    border-collapse: collapse;
+}
+
+.table th, .table td {
+    padding: 0.75rem;
+    vertical-align: top;
+    border-top: 1px solid #dee2e6;
+}
+
+.table thead th {
+    vertical-align: bottom;
+    border-bottom: 2px solid #dee2e6;
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.table tbody tr:nth-child(even) {
+    background-color: rgba(0, 0, 0, 0.02);
+}
+
+.table tbody tr:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+}
+
+/* 排名特殊样式 */
+.first-place {
+    background-color: rgba(40, 167, 69, 0.1) !important;
+    border-left: 3px solid var(--success-color);
+}
+
+.second-place {
+    background-color: rgba(255, 193, 7, 0.1) !important;
+    border-left: 3px solid var(--warning-color);
+}
+
+.third-place {
+    background-color: rgba(220, 53, 69, 0.1) !important;
+    border-left: 3px solid #dc3545;
+}
+
+/* 欢迎区域优化 */
+.welcome-section {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    color: white;
+    padding: 4rem 0;
+    border-radius: var(--border-radius);
+    margin-bottom: 2rem;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.welcome-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url('https://i.postimg.cc/qqV3NyJB/logo-01.png') no-repeat center/contain;
+    opacity: 0.05;
+    pointer-events: none;
+}
+
+.welcome-section h1 {
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+    font-size: 2.25rem;
+    position: relative;
+}
+
+.welcome-section p {
+    font-size: 1.1rem;
+    max-width: 800px;
+    margin: 0 auto 2rem;
+    opacity: 0.9;
+    position: relative;
+}
+
+/* 部分标题优化 */
+.section-title {
+    color: var(--primary-color);
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 3px solid var(--secondary-color);
+    font-size: 1.5rem;
+    position: relative;
+}
+
+.section-title::after {
+    content: '';
+    position: absolute;
+    bottom: -3px;
+    left: 0;
+    width: 50px;
+    height: 3px;
+    background-color: var(--accent-color);
+}
+
+/* 标签页优化 */
+.nav-tabs {
+    border-bottom: 1px solid #dee2e6;
+}
+
+.nav-tabs .nav-link {
+    color: var(--dark-color);
+    font-weight: 500;
+    border: none;
+    padding: 0.75rem 1.25rem;
+    transition: var(--transition);
+    margin-right: 0.5rem;
+    border-radius: var(--border-radius) var(--border-radius) 0 0;
+    position: relative;
+}
+
+.nav-tabs .nav-link:hover {
+    color: var(--secondary-color);
+    background-color: rgba(52, 152, 219, 0.05);
+}
+
+.nav-tabs .nav-link.active {
+    color: var(--secondary-color);
+    font-weight: 600;
+    background-color: transparent;
+    border-bottom: 3px solid var(--secondary-color);
+}
+
+.tab-content {
+    padding: 1.5rem;
+    background-color: white;
+    border-radius: 0 0 var(--border-radius) var(--border-radius);
+    box-shadow: var(--box-shadow);
+    border: 1px solid #dee2e6;
+    border-top: none;
+}
+
+/* 表单控件优化 */
+.form-control, .form-select {
+    border-radius: var(--border-radius);
+    padding: 0.5rem 0.75rem;
+    border: 1px solid #ced4da;
+    transition: var(--transition);
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: var(--secondary-color);
+    box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25);
+}
+
+/* 结果摘要优化 */
+.result-summary {
+    text-align: center;
+    padding: 2rem;
+    background: white;
+    border-radius: var(--border-radius);
+    box-shadow: var(--box-shadow);
+    margin-bottom: 2rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.result-score {
+    font-size: 3rem;
+    font-weight: 700;
+    color: var(--secondary-color);
+    margin: 1.5rem 0;
+    position: relative;
+    display: inline-block;
+}
+
+.result-score::after {
+    content: '';
+    position: absolute;
+    bottom: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 50px;
+    height: 3px;
+    background-color: var(--secondary-color);
+}
+
+.result-details {
+    text-align: left;
+    margin-top: 1.5rem;
+    background-color: rgba(248, 249, 250, 0.8);
+    padding: 1.25rem;
+    border-radius: var(--border-radius);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.result-details-item {
+    padding: 0.75rem 0;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    display: flex;
+    justify-content: space-between;
+}
+
+.result-details-item:last-child {
+    border-bottom: none;
+}
+
+/* 页脚优化 */
+.footer {
+    background-color: var(--primary-color);
+    color: white;
+    padding: 2rem 0;
+    margin-top: 3rem;
+    text-align: center;
+}
+
+.footer p {
+    margin-bottom: 0;
+    opacity: 0.8;
+}
+
+/* 富文本编辑器优化 */
+.ql-toolbar {
+    border-radius: var(--border-radius) var(--border-radius) 0 0 !important;
+    border-color: #dee2e6 !important;
+}
+
+.ql-container {
+    border-radius: 0 0 var(--border-radius) var(--border-radius) !important;
+    border-color: #dee2e6 !important;
+    height: 200px;
+    font-family: inherit;
+}
+
+/* 图片上传区域优化 */
+.image-upload-container {
+    margin-top: 1rem;
+    padding: 1.5rem;
+    border: 2px dashed #dee2e6;
+    border-radius: var(--border-radius);
+    text-align: center;
+    cursor: pointer;
+    transition: var(--transition);
+    background-color: rgba(248, 249, 250, 0.5);
+}
+
+.image-upload-container:hover {
+    border-color: var(--secondary-color);
+    background-color: rgba(52, 152, 219, 0.05);
+}
+
+.image-preview {
+    max-width: 100%;
+    max-height: 200px;
+    margin-top: 1rem;
+    border-radius: var(--border-radius);
+    display: none;
+    box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.1);
+}
+                                    /* Google图标样式调整 */
+.btn .fa-google {
+    color: #4285F4; /* Google蓝色 */
+}
+
+.btn-outline-light .fa-google {
+    color: white; /* 导航栏按钮上的图标保持白色 */
+}
+
+/* 欢迎区域按钮图标调整 */
+#welcomeLoginButton .fa-google {
+    color: #4285F4; /* Google蓝色 */
+    font-size: 1.2em; /* 稍微放大图标 */
+}
+
+/* 响应式调整 */
+@media (max-width: 768px) {
+    .welcome-section {
+        padding: 3rem 1rem;
+    }
+    
+    .welcome-section h1 {
+        font-size: 1.75rem;
+    }
+    
+    .section-title {
+        font-size: 1.25rem;
+    }
+    
+    .result-summary {
+        padding: 1.5rem;
+    }
+    
+    .card-body, .tab-content {
+        padding: 1rem;
+    }
+    
+    .navbar-brand {
+        font-size: 1rem;
+    }
+    
+    .btn {
+        padding: 0.4rem 0.8rem;
+        font-size: 0.9rem;
+    }
+}
+
+/* 实用类 */
+.text-center { text-align: center; }
+.text-right { text-align: right; }
+.mt-1 { margin-top: 0.25rem; }
+.mt-2 { margin-top: 0.5rem; }
+.mt-3 { margin-top: 1rem; }
+.mt-4 { margin-top: 1.5rem; }
+.mt-5 { margin-top: 3rem; }
+.mb-1 { margin-bottom: 0.25rem; }
+.mb-2 { margin-bottom: 0.5rem; }
+.mb-3 { margin-bottom: 1rem; }
+.mb-4 { margin-bottom: 1.5rem; }
+.mb-5 { margin-bottom: 3rem; }
+.pt-1 { padding-top: 0.25rem; }
+.pt-2 { padding-top: 0.5rem; }
+.pt-3 { padding-top: 1rem; }
+.pt-4 { padding-top: 1.5rem; }
+.pt-5 { padding-top: 3rem; }
+.pb-1 { padding-bottom: 0.25rem; }
+.pb-2 { padding-bottom: 0.5rem; }
+.pb-3 { padding-bottom: 1rem; }
+.pb-4 { padding-bottom: 1.5rem; }
+.pb-5 { padding-bottom: 3rem; }
+.d-flex { display: flex; }
+.justify-content-between { justify-content: space-between; }
+.align-items-center { align-items: center; }
+.d-none { display: none; }
+        
+    </style>
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <img src="https://i.postimg.cc/qqV3NyJB/logo-01.png" class="logo">
+                新山宽柔中学电脑协会常识比赛
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item" id="loginNavItem">
+                        <button class="btn btn-outline-light" id="loginButton">登录</button>
+                    </li>
+                    <li class="nav-item d-none" id="userNavItem">
+                        <div class="dropdown">
+                            <button class="btn btn-outline-light dropdown-toggle" id="userDropdown" data-bs-toggle="dropdown">
+                                <span id="userName"></span>
+                                <img src="" alt="用户头像" id="userPhoto" style="height: 30px; border-radius: 50%; margin-left: 5px;">
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li><a class="dropdown-item" href="#" id="adminLink">管理员面板</a></li>
+                                <li><a class="dropdown-item" href="#" id="quizLink">答题界面</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="#" id="logoutButton">退出登录</a></li>
+                            </ul>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主内容区 -->
+    <div class="container my-5" id="mainContent">
+        <!-- 欢迎界面 -->
+        <div id="welcomeView">
+            <div class="welcome-section">
+                <h1>欢迎参加宽柔中学电脑协会常识比赛</h1>
+                <p>测试您的知识水平，与同学们一较高下！请使用Google账号登录后开始答题。</p>
+                <!-- 欢迎区域登录按钮 -->
+<button class="btn btn-light btn-lg px-4 py-2" id="welcomeLoginButton">
+    <i class="fab fa-google me-2"></i> Sign in with Google
+</button>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <i class="fas fa-clipboard-list me-2"></i>比赛规则
+                        </div>
+                        <div class="card-body">
+                            <ul class="list-group list-group-flush">
+                                <li class="list-group-item">比赛时间为60分钟</li>
+                                <li class="list-group-item">题目分为单选题、多选题、问答题和申论题</li>
+                                <li class="list-group-item">答对得分，答错不扣分</li>
+                                <li class="list-group-item">比赛结束后系统自动计算成绩</li>
+                                <li class="list-group-item">禁止使用任何外部辅助工具</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <i class="fas fa-info-circle me-2"></i>比赛信息
+                        </div>
+                        <div class="card-body">
+                            <ul class="list-group list-group-flush">
+                                <li class="list-group-item"><strong>主办单位：</strong>宽柔中学电脑协会</li>
+                                <li class="list-group-item"><strong>参赛对象：</strong>宽柔中学在校学生</li>
+                                <li class="list-group-item"><strong>比赛时间：</strong>2023年11月15日</li>
+                                <li class="list-group-item"><strong>比赛地点：</strong>线上进行</li>
+                                <li class="list-group-item"><strong>奖项设置：</strong>初中组和高中组各设冠亚季军</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 参赛者答题界面 -->
+        <div id="quizView" class="d-none">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2 class="section-title">常识比赛答题系统</h2>
+                <div class="timer" id="quizTimer">剩余时间: 60:00</div>
+            </div>
+            
+            <div class="progress">
+                <div class="progress-bar" id="quizProgress" role="progressbar" style="width: 0%"></div>
+            </div>
+            
+            <div id="quizQuestionsContainer"></div>
+            
+            <div class="d-flex justify-content-between mt-4">
+                <button class="btn btn-secondary" id="prevQuestionBtn" disabled>上一题</button>
+                <button class="btn btn-primary" id="nextQuestionBtn">下一题</button>
+                <button class="btn btn-success" id="submitQuizBtn">提交答卷</button>
+            </div>
+        </div>
+
+        <!-- 参赛者结果界面 -->
+        <div id="resultView" class="d-none">
+            <div class="result-summary">
+                <h2 class="section-title">比赛结果</h2>
+                <div class="result-score" id="finalScore">0/100</div>
+                <p class="lead">感谢您的参与！以下是您的答题详情：</p>
+                
+                <div class="result-details">
+                    <div class="result-details-item">
+                        <span>正确题数：</span>
+                        <span id="correctCount">0</span>
+                    </div>
+                    <div class="result-details-item">
+                        <span>错误题数：</span>
+                        <span id="wrongCount">0</span>
+                    </div>
+                    <div class="result-details-item">
+                        <span>未答题数：</span>
+                        <span id="unansweredCount">0</span>
+                    </div>
+                    <div class="result-details-item">
+                        <span>总得分：</span>
+                        <span id="totalScore">0</span>
+                    </div>
+                    <div class="result-details-item">
+                        <span>组别排名：</span>
+                        <span id="groupRank">-</span>
+                    </div>
+                    <div class="result-details-item">
+                        <span>总排名：</span>
+                        <span id="overallRank">-</span>
+                    </div>
+                </div>
+            </div>
+            
+            <h3 class="section-title">答题详情</h3>
+            <div id="resultQuestionsContainer"></div>
+            
+            <div class="text-center mt-4">
+                <button class="btn btn-primary" id="viewRankingBtn">查看完整排名</button>
+            </div>
+        </div>
+
+        <!-- 排名界面 -->
+        <div id="rankingView" class="d-none">
+            <h2 class="section-title">比赛排名</h2>
+            
+            <ul class="nav nav-tabs" id="rankingTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="highschool-tab" data-bs-toggle="tab" data-bs-target="#highschool" type="button">高中组</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="middleschool-tab" data-bs-toggle="tab" data-bs-target="#middleschool" type="button">初中组</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="overall-tab" data-bs-toggle="tab" data-bs-target="#overall" type="button">总排名</button>
+                </li>
+            </ul>
+            
+            <div class="tab-content" id="rankingTabContent">
+                <div class="tab-pane fade show active" id="highschool" role="tabpanel">
+                    <div class="table-responsive">
+                        <table class="ranking-table">
+                            <thead>
+                                <tr>
+                                    <th>排名</th>
+                                    <th>姓名</th>
+                                    <th>班级</th>
+                                    <th>正确题数</th>
+                                    <th>错误题数</th>
+                                    <th>得分</th>
+                                    <th>用时</th>
+                                </tr>
+                            </thead>
+                            <tbody id="highschoolRankingBody">
+                                <!-- 高中组排名数据将通过JavaScript动态填充 -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="tab-pane fade" id="middleschool" role="tabpanel">
+                    <div class="table-responsive">
+                        <table class="ranking-table">
+                            <thead>
+                                <tr>
+                                    <th>排名</th>
+                                    <th>姓名</th>
+                                    <th>班级</th>
+                                    <th>正确题数</th>
+                                    <th>错误题数</th>
+                                    }
+    
+    .navbar {
+        background: linear-gradient(135deg, var(--primary-color), var(--dark-color));
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        padding: 0.8rem 1.5rem;
+    }
+    
+    .navbar-brand {
+        font-weight: 700;
+        font-size: 1.5rem;
+        display: flex;
+        align-items: center;
+        color: white;
+        transition: var(--transition);
+    }
+    
+    .navbar-brand:hover {
+        color: rgba(255, 255, 255, 0.9);
+    }
+    
+    .navbar-toggler {
+        border: none;
+        padding: 0.5rem;
+    }
+    
+    .navbar-toggler:focus {
+        box-shadow: none;
+    }
+    
+    .btn {
+        border-radius: var(--border-radius);
+        padding: 10px 20px;
+        font-weight: 600;
+        transition: var(--transition);
+        border: none;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    }
+    
+    .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+    }
+    
+    .btn-primary {
+        background-color: var(--primary-color);
+    }
+    
+    .btn-primary:hover {
+        background-color: #2980b9;
+    }
+    
+    .btn-secondary {
+        background-color: #6c757d;
+    }
+    
+    .btn-success {
+        background-color: var(--secondary-color);
+    }
+    
+    .btn-success:hover {
+        background-color: #27ae60;
+    }
+    
+    .btn-danger {
+        background-color: var(--accent-color);
+    }
+    
+    .btn-danger:hover {
+        background-color: #c0392b;
+    }
+    
+    .btn-outline-light {
+        border: 2px solid rgba(255, 255, 255, 0.2);
+        background-color: transparent;
+        color: white;
+    }
+    
+    .btn-outline-light:hover {
+        background-color: rgba(255, 255, 255, 0.1);
+        border-color: rgba(255, 255, 255, 0.3);
+    }
+    
+    .card {
+        border: none;
+        border-radius: var(--border-radius);
+        box-shadow: var(--card-shadow);
+        margin-bottom: 24px;
+        transition: var(--transition);
+        overflow: hidden;
+        background-color: white;
+    }
+    
+    .card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
+    }
+    
+    .card-header {
+        background: linear-gradient(135deg, var(--primary-color), var(--info-color));
+        color: white;
+        border-radius: var(--border-radius) var(--border-radius) 0 0 !important;
+        font-weight: 600;
+        padding: 1rem 1.5rem;
+        border-bottom: none;
+    }
+    
+    .card-body {
+        padding: 1.5rem;
+    }
+    
+    .question-card {
+        background-color: white;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        border-radius: var(--border-radius);
+        box-shadow: var(--card-shadow);
+        animation: fadeIn 0.5s ease forwards;
+        border-left: 4px solid var(--primary-color);
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .option-item {
+        padding: 12px 20px;
+        margin: 10px 0;
+        background-color: white;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: var(--transition);
+        border: 1px solid #e0e0e0;
+        font-weight: 500;
+        position: relative;
+    }
+    
+    .option-item:hover {
+        background-color: #f0f7ff;
+        border-color: var(--primary-color);
+        transform: translateX(5px);
+    }
+    
+    .option-item.selected {
+        background-color: var(--primary-color);
+        color: white;
+        border-color: var(--primary-color);
+    }
+    
+    .option-item.correct {
+        background-color: var(--success-color);
+        color: white;
+        border-color: var(--success-color);
+    }
+    
+    .option-item.incorrect {
+        background-color: var(--accent-color);
+        color: white;
+        border-color: var(--accent-color);
+    }
+    
+    .timer {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: var(--accent-color);
+        text-align: center;
+        margin: 20px 0;
+        padding: 10px 20px;
+        background-color: white;
+        border-radius: var(--border-radius);
+        box-shadow: var(--card-shadow);
+        display: inline-block;
+    }
+    
+    .admin-panel {
+        background-color: white;
+        padding: 1.5rem;
+        border-radius: var(--border-radius);
+        margin-top: 1.5rem;
+        box-shadow: var(--card-shadow);
+    }
+    
+    .participant-list {
+        max-height: 500px;
+        overflow-y: auto;
+        border-radius: var(--border-radius);
+    }
+    
+    .participant-item {
+        padding: 12px;
+        border-bottom: 1px solid #eee;
+        transition: background-color 0.2s;
+    }
+    
+    .participant-item:hover {
+        background-color: #f5f5f5;
+    }
+    
+    .score-badge {
+        font-size: 0.9rem;
+        padding: 5px 10px;
+        border-radius: 20px;
+        font-weight: 600;
+    }
+    
+    .ranking-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        border-radius: var(--border-radius);
+        overflow: hidden;
+    }
+    
+    .ranking-table th, .ranking-table td {
+        padding: 12px 15px;
+        text-align: left;
+        border-bottom: 1px solid #e0e0e0;
+    }
+    
+    .ranking-table th {
+        background-color: var(--primary-color);
+        color: white;
+        font-weight: 600;
+    }
+    
+    .ranking-table tr:nth-child(even) {
+        background-color: #f8f9fa;
+    }
+    
+    .ranking-table tr:hover {
+        background-color: #f0f7ff;
+    }
+    
+    .top-rank {
+        background-color: #fff8e1 !important;
+        font-weight: bold;
+    }
+    
+    .first-place {
+        background-color: #e8f5e9 !important;
+    }
+    
+    .second-place {
+        background-color: #e3f2fd !important;
+    }
+    
+    .third-place {
+        background-color: #fce4ec !important;
+    }
+    
+    .logo {
+        height: 40px;
+        margin-right: 10px;
+        filter: brightness(0) invert(1);
+    }
+    
+    .welcome-section {
+        background: linear-gradient(135deg, var(--primary-color), var(--dark-color));
+        color: white;
+        padding: 5rem 0;
+        border-radius: var(--border-radius);
+        margin-bottom: 2.5rem;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .welcome-section::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url('https://i.postimg.cc/qqV3NyJB/logo-01.png') no-repeat;
+        background-size: 30%;
+        background-position: right bottom;
+        opacity: 0.05;
+    }
+    
+    .welcome-section h1 {
+        font-weight: 800;
+        margin-bottom: 1.5rem;
+        font-size: 2.8rem;
+        position: relative;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    
+    .welcome-section p {
+        font-size: 1.2rem;
+        max-width: 800px;
+        margin: 0 auto 2.5rem;
+        opacity: 0.9;
+        position: relative;
+    }
+    
+    .section-title {
+        color: var(--dark-color);
+        font-weight: 700;
+        margin-bottom: 1.5rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 3px solid var(--primary-color);
+        font-size: 1.8rem;
+        position: relative;
+        display: inline-block;
+    }
+    
+    .section-title::after {
+        content: '';
+        position: absolute;
+        bottom: -3px;
+        left: 0;
+        width: 50px;
+        height: 3px;
+        background-color: var(--secondary-color);
+    }
+    
+    .tab-content {
+        padding: 1.5rem;
+        background-color: white;
+        border-radius: 0 0 var(--border-radius) var(--border-radius);
+        box-shadow: var(--card-shadow);
+        border: 1px solid #e0e0e0;
+        border-top: none;
+    }
+    
+    .nav-tabs {
+        border-bottom: 2px solid #e0e0e0;
+    }
+    
+    .nav-tabs .nav-link {
+        color: var(--dark-color);
+        font-weight: 600;
+        border-radius: var(--border-radius) var(--border-radius) 0 0 !important;
+        padding: 12px 24px;
+        transition: var(--transition);
+        border: none;
+        margin-right: 5px;
+        background-color: #f8f9fa;
+    }
+    
+    .nav-tabs .nav-link:hover {
+        border-color: transparent;
+        background-color: #e9ecef;
+    }
+    
+    .nav-tabs .nav-link.active {
+        color: white;
+        font-weight: 700;
+        background-color: var(--primary-color);
+        border-bottom: none;
+    }
+    
+    .form-control, .form-select {
+        border-radius: var(--border-radius);
+        padding: 10px 15px;
+        border: 1px solid #e0e0e0;
+        transition: var(--transition);
+    }
+    
+    .form-control:focus, .form-select:focus {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 0.25rem rgba(52, 152, 219, 0.25);
+    }
+    
+    .progress {
+        height: 12px;
+        margin-bottom: 1.5rem;
+        border-radius: 6px;
+        background-color: #e9ecef;
+        box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+    
+    .progress-bar {
+        background-color: var(--primary-color);
+        border-radius: 6px;
+        transition: width 0.6s ease;
+    }
+    
+    .result-summary {
+        text-align: center;
+        padding: 2.5rem;
+        background-color: white;
+        border-radius: var(--border-radius);
+        box-shadow: var(--card-shadow);
+        margin-bottom: 2.5rem;
+        border-top: 5px solid var(--primary-color);
+    }
+    
+    .result-score {
+        font-size: 4rem;
+        font-weight: 800;
+        color: var(--primary-color);
+        margin: 1.5rem 0;
+        text-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
+    }
+    
+    .result-details {
+        text-align: left;
+        margin-top: 1.5rem;
+        background-color: #f8f9fa;
+        padding: 1.5rem;
+        border-radius: var(--border-radius);
+    }
+    
+    .result-details-item {
+        padding: 12px 0;
+        border-bottom: 1px solid #eee;
+        display: flex;
+        justify-content: space-between;
+        font-weight: 500;
+    }
+    
+    .result-details-item:last-child {
+        border-bottom: none;
+    }
+    
+    .footer {
+        background: linear-gradient(135deg, var(--dark-color), var(--primary-color));
+        color: white;
+        padding: 2rem 0;
+        margin-top: auto;
+        text-align: center;
+    }
+    
+    .footer p {
+        margin-bottom: 0;
+        font-weight: 500;
+    }
+    
+    /* 富文本编辑器样式 */
+    .ql-toolbar {
+        border-radius: var(--border-radius) var(--border-radius) 0 0 !important;
+        border-color: #e0e0e0 !important;
+    }
+    
+    .ql-container {
+        border-radius: 0 0 var(--border-radius) var(--border-radius) !important;
+        border-color: #e0e0e0 !important;
+        height: 200px;
+        font-family: 'Noto Sans SC', sans-serif;
+    }
+    
+    /* 图片上传样式 */
+    .image-upload-container {
+        margin-top: 1rem;
+        padding: 2rem;
+        border: 2px dashed #e0e0e0;
+        border-radius: var(--border-radius);
+        text-align: center;
+        cursor: pointer;
+        transition: var(--transition);
+        background-color: #f8f9fa;
+    }
+    
+    .image-upload-container:hover {
+        border-color: var(--primary-color);
+        background-color: rgba(52, 152, 219, 0.05);
+    }
+    
+    .image-preview {
+        max-width: 100%;
+        max-height: 200px;
+        margin-top: 1rem;
+        border-radius: var(--border-radius);
+        display: none;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+    
+    /* 模态框样式 */
+    .modal-content {
+        border-radius: var(--border-radius);
+        border: none;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+    }
+    
+    .modal-header {
+        background: linear-gradient(135deg, var(--primary-color), var(--info-color));
+        color: white;
+        border-radius: var(--border-radius) var(--border-radius) 0 0 !important;
+        border-bottom: none;
+    }
+    
+    .modal-title {
+        font-weight: 700;
+    }
+    
+    .modal-footer {
+        border-top: none;
+        background-color: #f8f9fa;
+        border-radius: 0 0 var(--border-radius) var(--border-radius);
+    }
+    
+    /* 列表组样式 */
+    .list-group-item {
+        border: 1px solid rgba(0, 0, 0, 0.05);
+        padding: 1rem 1.25rem;
+        font-weight: 500;
+    }
+    
+    .list-group-item:first-child {
+        border-top-left-radius: var(--border-radius) !important;
+        border-top-right-radius: var(--border-radius) !important;
+    }
+    
+    .list-group-item:last-child {
+        border-bottom-left-radius: var(--border-radius) !important;
+        border-bottom-right-radius: var(--border-radius) !important;
+    }
+    
+    /* 表格样式 */
+    .table {
+        border-radius: var(--border-radius);
+        overflow: hidden;
+    }
+    
+    .table th {
+        background-color: var(--primary-color);
+        color: white;
+        font-weight: 600;
+    }
+    
+    .table-hover tbody tr:hover {
+        background-color: #f0f7ff;
+    }
+    
+    /* 响应式调整 */
+    @media (max-width: 768px) {
+        .welcome-section {
+            padding: 3rem 1rem;
+        }
+        
+        .welcome-section h1 {
+            font-size: 2rem;
+        }
+        
+        .section-title {
+            font-size: 1.5rem;
+        }
+        
+        .result-summary {
+            padding: 1.5rem;
+        }
+        
+        .result-score {
+            font-size: 3rem;
+        }
+        
+        .nav-tabs .nav-link {
+            padding: 10px 15px;
+            font-size: 0.9rem;
+        }
+    }
+    
+    @media (max-width: 576px) {
+        .navbar-brand {
+            font-size: 1.2rem;
+        }
+        
+        .logo {
+            height: 30px;
+        }
+        
+        .welcome-section h1 {
+            font-size: 1.8rem;
+        }
+        
+        .btn {
+            padding: 8px 16px;
+            font-size: 0.9rem;
+        }
+    }
+</style>        
+    
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <img src="https://i.postimg.cc/qqV3NyJB/logo-01.png" class="logo">
+                新山宽柔中学电脑协会常识比赛
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item" id="loginNavItem">
+                        <button class="btn btn-outline-light" id="loginButton">登录</button>
+                    </li>
+                    <li class="nav-item d-none" id="userNavItem">
+                        <div class="dropdown">
+                            <button class="btn btn-outline-light dropdown-toggle" id="userDropdown" data-bs-toggle="dropdown">
+                                <span id="userName"></span>
+                                <img src="" alt="用户头像" id="userPhoto" style="height: 30px; border-radius: 50%; margin-left: 5px;">
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li><a class="dropdown-item" href="#" id="adminLink">管理员面板</a></li>
+                                <li><a class="dropdown-item" href="#" id="quizLink">答题界面</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="#" id="logoutButton">退出登录</a></li>
+                            </ul>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主内容区 -->
+    <div class="container my-5" id="mainContent">
+        <!-- 欢迎界面 -->
+        <div id="welcomeView">
+            <div class="welcome-section">
+                <h1>欢迎参加宽柔中学电脑协会常识比赛</h1>
+                <p>测试您的知识水平，与同学们一较高下！请使用Google账号登录后开始答题。</p>
+                <button class="btn btn-light btn-lg px-4 py-2" id="welcomeLoginButton">使用Google账号登录</button>
             </div>
             
             <div class="row">
@@ -1136,20 +2489,20 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
     <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     
     <script>
+        
         // Firebase 配置
         const firebaseConfig = {
-            apiKey: "AIzaSyBnlTYP3Tkt0SKbPlW2sMbZCo33GoPhK2M",
-            authDomain: "fymcsjb-competition.firebaseapp.com",
-            projectId: "fymcsjb-competition",
-            storageBucket: "fymcsjb-competition.appspot.com",
-            messagingSenderId: "231117222555",
-            appId: "1:231117222555:web:a7106a8006774272ec0c3e"
-        };
+    apiKey: "AIzaSyBnlTYP3Tkt0SKbPlW2sMbZCo33GoPhK2M",
+    authDomain: "fymcsjb-competition.firebaseapp.com",
+    projectId: "fymcsjb-competition",
+    storageBucket: "fymcsjb-competition.appspot.com",  // 修正这里
+    messagingSenderId: "231117222555",
+    appId: "1:231117222555:web:a7106a8006774272ec0c3e"
+};
 
         // 初始化 Firebase
         firebase.initializeApp(firebaseConfig);
@@ -1180,7 +2533,6 @@
         let currentImageUrl = null; // 当前题目图片URL
         
         // DOM 元素
-        const storage = firebase.storage();
         const loginButton = document.getElementById('loginButton');
         const welcomeLoginButton = document.getElementById('welcomeLoginButton');
         const logoutButton = document.getElementById('logoutButton');
@@ -1288,35 +2640,18 @@
                 imageUpload.click();
             });
             
-           // 替换 imageUpload 的事件处理
-imageUpload.addEventListener('change', function(e) {
-    const file = e.target.files[0];
-    if (file) {
-        // 上传到 Firebase Storage
-        const storageRef = storage.ref('question-images/' + file.name);
-        const uploadTask = storageRef.put(file);
-        
-        uploadTask.on('state_changed', 
-            (snapshot) => {
-                // 上传进度
-                const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-                console.log('Upload is ' + progress + '% done');
-            },
-            (error) => {
-                console.error("上传错误:", error);
-                Swal.fire('错误', '图片上传失败', 'error');
-            },
-            () => {
-                // 上传完成，获取下载URL
-                uploadTask.snapshot.ref.getDownloadURL().then((downloadURL) => {
-                    imagePreview.src = downloadURL;
-                    imagePreview.style.display = 'block';
-                    currentImageUrl = downloadURL;
-                });
-            }
-        );
-    }
-});
+            imageUpload.addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(event) {
+                        imagePreview.src = event.target.result;
+                        imagePreview.style.display = 'block';
+                        currentImageUrl = event.target.result; // 暂时使用base64，实际应用中应上传到服务器
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
             
             // 拖拽上传
             imageUploadContainer.addEventListener('dragover', function(e) {
@@ -1395,31 +2730,32 @@ imageUpload.addEventListener('change', function(e) {
         }
         
         // Google登录
-        function signInWithGoogle() {
-            const provider = new firebase.auth.GoogleAuthProvider();
-            // 添加scope请求
-            provider.addScope('profile');
-            provider.addScope('email');
-            
-            auth.signInWithPopup(provider)
-                .then((result) => {
-                    // 登录成功处理
-                    console.log("登录成功", result.user);
-                })
-                .catch((error) => {
-                    console.error("登录错误:", error);
-                    // 显示更详细的错误信息
-                    let errorMessage = "登录失败";
-                    if (error.code === 'auth/popup-closed-by-user') {
-                        errorMessage = "您关闭了登录窗口，请重新尝试";
-                    } else if (error.code === 'auth/network-request-failed') {
-                        errorMessage = "网络连接失败，请检查您的网络";
-                    } else {
-                        errorMessage = `登录失败: ${error.message}`;
-                    }
-                    Swal.fire('错误', errorMessage, 'error');
-                });
-        }
+        // 更新后的signInWithGoogle函数
+function signInWithGoogle() {
+    const provider = new firebase.auth.GoogleAuthProvider();
+    // 添加scope请求
+    provider.addScope('profile');
+    provider.addScope('email');
+    
+    auth.signInWithPopup(provider)
+        .then((result) => {
+            // 登录成功处理
+            console.log("登录成功", result.user);
+        })
+        .catch((error) => {
+            console.error("登录错误:", error);
+            // 显示更详细的错误信息
+            let errorMessage = "登录失败";
+            if (error.code === 'auth/popup-closed-by-user') {
+                errorMessage = "您关闭了登录窗口，请重新尝试";
+            } else if (error.code === 'auth/network-request-failed') {
+                errorMessage = "网络连接失败，请检查您的网络";
+            } else {
+                errorMessage = `登录失败: ${error.message}`;
+            }
+            Swal.fire('错误', errorMessage, 'error');
+        });
+}
         
         // 退出登录
         function signOut() {
@@ -1570,7 +2906,7 @@ imageUpload.addEventListener('change', function(e) {
                 }
             }).catch(error => {
                 console.error("获取用户答题状态错误:", error);
-                Swal.fire('错误', '获取答题状态失败' + error.message, 'error');
+                Swal.fire('错误', '获取答题状态失败', 'error');
             });
         }
         
@@ -1811,17 +3147,6 @@ imageUpload.addEventListener('change', function(e) {
         
         // 提交答卷
         function submitQuiz() {
-            // 检查比赛是否已结束
-    if (quizData.settings.status === 'ended') {
-        Swal.fire('错误', '比赛已结束，无法提交答案', 'error');
-        return;
-    }
-    
-    // 检查是否超过结束时间
-    if (quizData.settings.endTime && new Date().getTime() > quizData.settings.endTime) {
-        Swal.fire('错误', '比赛时间已结束，无法提交答案', 'error');
-        return;
-    }
             submitConfirmModal.hide();
             
             // 停止计时器
@@ -1904,128 +3229,119 @@ imageUpload.addEventListener('change', function(e) {
             }, 0);
         }
         
+        // 显示结果
         function displayResults() {
-    const total = calculateTotalScore();
-    const maxScore = quizData.questions.reduce((sum, q) => sum + q.points, 0);
-
-    // 防止 userAnswers 为 undefined
-    if (!Array.isArray(userAnswers)) {
-        console.warn("userAnswers 未定义，自动设为空数组");
-        userAnswers = [];
-    }
-
-    const correct = userAnswers.filter(a => a.isCorrect === true).length;
-    const wrong = userAnswers.filter(a => a.isCorrect === false).length;
-    const unanswered = userAnswers.filter((a) => {
-        const question = quizData.questions.find(q => q.id === a.questionId);
-        if (!question) return true;
-
-        if (question.type === 'single' || question.type === 'multiple') {
-            return !Array.isArray(a.selectedOptions) || a.selectedOptions.length === 0;
-        } else {
-            return !a.answerText || a.answerText.trim() === '';
-        }
-    }).length;
-
-    // 更新结果摘要
-    finalScore.textContent = `${total}/${maxScore}`;
-    correctCount.textContent = correct;
-    wrongCount.textContent = wrong;
-    unansweredCount.textContent = unanswered;
-    totalScore.textContent = total;
-
-    // 显示每道题的结果
-    let resultsHTML = '';
-
-    quizData.questions.forEach((question, index) => {
-        const userAnswer = userAnswers[index] || {};
-        const isCorrect = userAnswer.isCorrect ?? null;
-        const selectedOptions = Array.isArray(userAnswer.selectedOptions) ? userAnswer.selectedOptions : [];
-        const answerText = typeof userAnswer.answerText === 'string' ? userAnswer.answerText : '';
-        const options = Array.isArray(question.options) ? question.options : [];
-        const correctAnswers = Array.isArray(question.correctAnswers) ? question.correctAnswers : [];
-
-        resultsHTML += `
-            <div class="question-card mb-4">
-                <h4>题目 ${index + 1} (${question.points}分) 
-                    <span class="badge ${isCorrect === true ? 'bg-success' : isCorrect === false ? 'bg-danger' : 'bg-secondary'}">
-                        ${isCorrect === true ? '正确' : isCorrect === false ? '错误' : '未作答'}
-                    </span>
-                </h4>
-                <div class="question-content">${question.text || ''}</div>
-        `;
-
-        if (question.imageUrl) {
-            resultsHTML += `
-                <div class="text-center my-3">
-                    <img src="${question.imageUrl}" class="img-fluid rounded" style="max-height: 300px;">
-                </div>
-            `;
-        }
-
-        if (question.type === 'single' || question.type === 'multiple') {
-            resultsHTML += `<div class="options-list mt-3">`;
-
-            options.forEach((option, i) => {
-                const isSelected = selectedOptions.includes(i);
-                const isCorrectOption = correctAnswers.includes(i);
-
-                let optionClass = '';
-                if (isCorrectOption) {
-                    optionClass = 'correct';
-                } else if (isSelected) {
-                    optionClass = 'incorrect';
+            const total = calculateTotalScore();
+            const maxScore = quizData.questions.reduce((sum, q) => sum + q.points, 0);
+            const correct = userAnswers.filter(a => a.isCorrect).length;
+            const wrong = userAnswers.filter(a => a.isCorrect === false).length;
+            const unanswered = userAnswers.filter(a => {
+                const question = quizData.questions.find(q => q.id === a.questionId);
+                if (!question) return true;
+                
+                if (question.type === 'single' || question.type === 'multiple') {
+                    return a.selectedOptions.length === 0;
+                } else {
+                    return !a.answerText || a.answerText.trim() === '';
                 }
-
+            }).length;
+            
+            // 更新结果摘要
+            finalScore.textContent = `${total}/${maxScore}`;
+            correctCount.textContent = correct;
+            wrongCount.textContent = wrong;
+            unansweredCount.textContent = unanswered;
+            totalScore.textContent = total;
+            
+            // 显示每道题的结果
+            let resultsHTML = '';
+            
+            quizData.questions.forEach((question, index) => {
+                const userAnswer = userAnswers[index];
+                const isCorrect = userAnswer.isCorrect;
+                
                 resultsHTML += `
-                    <div class="option-item ${optionClass}">
-                        ${String.fromCharCode(65 + i)}. ${option.text}
-                        ${isSelected ? '<span class="float-end">✓</span>' : ''}
+                    <div class="question-card mb-4">
+                        <h4>题目 ${index + 1} (${question.points}分) 
+                            <span class="badge ${isCorrect ? 'bg-success' : isCorrect === false ? 'bg-danger' : 'bg-secondary'}">
+                                ${isCorrect ? '正确' : isCorrect === false ? '错误' : '未作答'}
+                            </span>
+                        </h4>
+                        <div class="question-content">${question.text}</div>
+                `;
+                
+                // 显示题目图片
+                if (question.imageUrl) {
+                    resultsHTML += `
+                        <div class="text-center my-3">
+                            <img src="${question.imageUrl}" class="img-fluid rounded" style="max-height: 300px;">
+                        </div>
+                    `;
+                }
+                
+                if (question.type === 'single' || question.type === 'multiple') {
+                    // 选择题结果
+                    resultsHTML += `
+                        <div class="options-list mt-3">
+                    `;
+                    
+                    // 添加选项
+                    question.options.forEach((option, i) => {
+                        const isSelected = userAnswer.selectedOptions.includes(i);
+                        const isCorrectOption = question.correctAnswers.includes(i);
+                        
+                        let optionClass = '';
+                        if (isCorrectOption) {
+                            optionClass = 'correct';
+                        } else if (isSelected) {
+                            optionClass = 'incorrect';
+                        }
+                        
+                        resultsHTML += `
+                            <div class="option-item ${optionClass}">
+                                ${String.fromCharCode(65 + i)}. ${option.text}
+                                ${isSelected ? '<span class="float-end">✓</span>' : ''}
+                            </div>
+                        `;
+                    });
+                    
+                    resultsHTML += `
+                        </div>
+                        ${isCorrect === false ? `<div class="mt-2 text-success">正确答案: ${question.correctAnswers.map(a => String.fromCharCode(65 + a)).join(', ')}</div>` : ''}
+                    `;
+                } else {
+                    // 问答题/申论题结果
+                    resultsHTML += `
+                        <div class="mt-3">
+                            <h5>您的答案：</h5>
+                            <div class="p-3 bg-light rounded">
+                                ${userAnswer.answerText || '<span class="text-muted">未作答</span>'}
+                            </div>
+                        </div>
+                    `;
+                    
+                    if (isCorrect === false) {
+                        resultsHTML += `
+                            <div class="mt-3">
+                                <h5>参考答案：</h5>
+                                <div class="p-3 bg-light rounded">
+                                    ${question.correctAnswerText || '<span class="text-muted">暂无参考答案</span>'}
+                                </div>
+                            </div>
+                        `;
+                    }
+                }
+                
+                resultsHTML += `
                     </div>
                 `;
             });
-
-            resultsHTML += `</div>`;
-
-            if (isCorrect === false && correctAnswers.length > 0) {
-                resultsHTML += `
-                    <div class="mt-2 text-success">
-                        正确答案: ${correctAnswers.map(a => String.fromCharCode(65 + a)).join(', ')}
-                    </div>
-                `;
-            }
-        } else {
-            // 问答题 / 申论题
-            resultsHTML += `
-                <div class="mt-3">
-                    <h5>您的答案：</h5>
-                    <div class="p-3 bg-light rounded">
-                        ${answerText || '<span class="text-muted">未作答</span>'}
-                    </div>
-                </div>
-            `;
-
-            if (isCorrect === false) {
-                resultsHTML += `
-                    <div class="mt-3">
-                        <h5>参考答案：</h5>
-                        <div class="p-3 bg-light rounded">
-                            ${question.correctAnswerText || '<span class="text-muted">暂无参考答案</span>'}
-                        </div>
-                    </div>
-                `;
-            }
+            
+            resultQuestionsContainer.innerHTML = resultsHTML;
+            
+            // 加载排名信息
+            loadRankingData();
         }
-
-        resultsHTML += `</div>`; // 结束 card
-    });
-
-    resultQuestionsContainer.innerHTML = resultsHTML;
-
-    // 加载排名信息
-    loadRankingData();
-}
-
         
         // 加载用户结果
         function loadUserResults() {
@@ -2098,6 +3414,7 @@ imageUpload.addEventListener('change', function(e) {
                 if (index === 0) rowClass = 'first-place';
                 else if (index === 1) rowClass = 'second-place';
                 else if (index === 2) rowClass = 'third-place';
+                else if (index < 10) rowClass = 'top-rank';
                 
                 highschoolRankingBody.innerHTML += `
                     <tr class="${rowClass}">
@@ -2122,6 +3439,7 @@ imageUpload.addEventListener('change', function(e) {
                 if (index === 0) rowClass = 'first-place';
                 else if (index === 1) rowClass = 'second-place';
                 else if (index === 2) rowClass = 'third-place';
+                else if (index < 10) rowClass = 'top-rank';
                 
                 middleschoolRankingBody.innerHTML += `
                     <tr class="${rowClass}">
@@ -2146,6 +3464,7 @@ imageUpload.addEventListener('change', function(e) {
                 if (index === 0) rowClass = 'first-place';
                 else if (index === 1) rowClass = 'second-place';
                 else if (index === 2) rowClass = 'third-place';
+                else if (index < 10) rowClass = 'top-rank';
                 
                 overallRankingBody.innerHTML += `
                     <tr class="${rowClass}">
@@ -2435,244 +3754,116 @@ imageUpload.addEventListener('change', function(e) {
             });
         }
         
-       function viewParticipantAnswers(userId) {
-    // 显示加载中提示
-    showLoading('加载参赛者答题详情...');
-    
-    // 并行获取参赛者数据和题目数据
-    Promise.all([
-        database.ref('userAnswers/' + userId).once('value'),
-        database.ref('quiz/questions').once('value')
-    ]).then(([participantSnapshot, questionsSnapshot]) => {
-        if (!participantSnapshot.exists() || !questionsSnapshot.exists()) {
-            throw new Error('找不到参赛者数据或题目数据');
-        }
-
-        const participantData = participantSnapshot.val();
-        const questions = questionsSnapshot.val();
-        const answers = participantData.answers || [];
-        const isAdmin = userInfo && userInfo.isAdmin;
-
-        // 构建答题详情HTML
-        let answersHTML = `
-            <div class="participant-header mb-4">
-                <h4>${participantData.userInfo.name} 的答题详情</h4>
-                <div class="participant-meta">
-                    <span class="badge bg-primary">班级: ${participantData.userInfo.class}</span>
-                    <span class="badge bg-secondary">组别: ${participantData.userInfo.group === 'highschool' ? '高中' : '初中'}</span>
-                    <span class="badge bg-success">得分: ${participantData.score || 0}</span>
-                    <span class="badge bg-info">正确: ${participantData.correctCount || 0}</span>
-                    <span class="badge bg-warning">错误: ${participantData.wrongCount || 0}</span>
-                </div>
-            </div>
-            <hr>
-            <div class="questions-container">
-        `;
-
-        // 处理每道题目
-        questions.forEach((question, index) => {
-            const userAnswer = answers.find(a => a.questionId === question.id) || { 
-                selectedOptions: [], 
-                answerText: '', 
-                isCorrect: null,
-                score: 0
-            };
-
-            // 计算得分（如果是问答题/申论题且未评分，则显示未评分）
-            const questionScore = question.type === 'short_answer' || question.type === 'essay' ?
-                (userAnswer.score !== undefined ? userAnswer.score : '未评分') :
-                (userAnswer.isCorrect ? question.points : 0);
-            
-            // 题目卡片开始
-            answersHTML += `
-                <div class="question-card mb-4 p-3 border rounded">
-                    <div class="question-header d-flex justify-content-between align-items-center mb-2">
-                        <h5>题目 ${index + 1} (${question.points}分)</h5>
-                        <span class="badge ${userAnswer.isCorrect ? 'bg-success' : userAnswer.isCorrect === false ? 'bg-danger' : 'bg-secondary'}">
-                            ${userAnswer.isCorrect ? '正确' : userAnswer.isCorrect === false ? '错误' : '未作答'}
-                            ${question.type !== 'short_answer' && question.type !== 'essay' ? 
-                              `: ${questionScore}/${question.points}分` : 
-                              `: ${questionScore}${typeof questionScore === 'number' ? `/${question.points}分` : ''}`}
-                        </span>
-                    </div>
-                    <div class="question-content">${question.text}</div>
-            `;
-
-            // 显示题目图片
-            if (question.imageUrl) {
-                answersHTML += `
-                    <div class="text-center my-3">
-                        <img src="${question.imageUrl}" class="img-fluid rounded" style="max-height: 200px;">
-                    </div>
-                `;
-            }
-
-            if (question.type === 'single' || question.type === 'multiple') {
-                // 选择题结果
-                answersHTML += `
-                    <div class="options-list mt-3">
-                `;
-                
-                // 添加选项
-                question.options.forEach((option, i) => {
-                    const isSelected = userAnswer.selectedOptions.includes(i);
-                    const isCorrectOption = question.correctAnswers.includes(i);
+        // 查看参赛者答案
+        function viewParticipantAnswers(userId) {
+            database.ref('userAnswers/' + userId).once('value').then(snapshot => {
+                if (snapshot.exists()) {
+                    const participantData = snapshot.val();
+                    const answers = participantData.answers || [];
                     
-                    let optionClass = '';
-                    if (isCorrectOption) {
-                        optionClass = 'correct';
-                    } else if (isSelected) {
-                        optionClass = 'incorrect';
-                    }
-                    
-                    answersHTML += `
-                        <div class="option-item ${optionClass}">
-                            ${String.fromCharCode(65 + i)}. ${option.text}
-                            ${isSelected ? '<span class="float-end">✓</span>' : ''}
-                        </div>
+                    let answersHTML = `
+                        <h4>${participantData.userInfo.name} 的答题详情</h4>
+                        <p>班级: ${participantData.userInfo.class} | 组别: ${participantData.userInfo.group === 'highschool' ? '高中' : '初中'}</p>
+                        <p>得分: ${participantData.score || 0} | 正确: ${participantData.correctCount || 0} | 错误: ${participantData.wrongCount || 0}</p>
+                        <hr>
                     `;
-                });
-                
-                answersHTML += `
-                    </div>
-                    ${userAnswer.isCorrect === false ? `
-                        <div class="mt-2 text-success">
-                            <strong>正确答案:</strong> 
-                            ${correctAnswers.map(a => String.fromCharCode(65 + a)).join(', ')}
-                        </div>
-                    ` : ''}
-                `;
-            } else {
-                // 问答题/申论题结果
-                answersHTML += `
-                    <div class="mt-3">
-                        <h6>参赛者答案：</h6>
-                        <div class="p-3 bg-light rounded">
-                            ${userAnswer.answerText || '<span class="text-muted">未作答</span>'}
-                        </div>
-                    </div>
-                `;
-                
-                if (question.correctAnswerText) {
-                    answersHTML += `
-                        <div class="mt-3">
-                            <h6>参考答案：</h6>
-                            <div class="p-3 bg-light rounded">
-                                ${question.correctAnswerText}
+                    
+                    quizData.questions.forEach((question, index) => {
+                        const userAnswer = answers[index] || { 
+                            selectedOptions: [], 
+                            answerText: '', 
+                            isCorrect: null 
+                        };
+                        
+                        answersHTML += `
+                            <div class="question-card mb-4">
+                                <h5>题目 ${index + 1} (${question.points}分) 
+                                    <span class="badge ${userAnswer.isCorrect ? 'bg-success' : userAnswer.isCorrect === false ? 'bg-danger' : 'bg-secondary'}">
+                                        ${userAnswer.isCorrect ? '正确' : userAnswer.isCorrect === false ? '错误' : '未作答'}
+                                    </span>
+                                </h5>
+                                <div class="question-content">${question.text}</div>
+                        `;
+                        
+                        // 显示题目图片
+                        if (question.imageUrl) {
+                            answersHTML += `
+                                <div class="text-center my-3">
+                                    <img src="${question.imageUrl}" class="img-fluid rounded" style="max-height: 300px;">
+                                </div>
+                            `;
+                        }
+                        
+                        if (question.type === 'single' || question.type === 'multiple') {
+                            // 选择题
+                            answersHTML += `
+                                <div class="options-list mt-3">
+                            `;
+                            
+                            // 添加选项
+                            question.options.forEach((option, i) => {
+                                const isSelected = userAnswer.selectedOptions.includes(i);
+                                const isCorrectOption = question.correctAnswers.includes(i);
+                                
+                                let optionClass = '';
+                                if (isCorrectOption) {
+                                    optionClass = 'correct';
+                                } else if (isSelected) {
+                                    optionClass = 'incorrect';
+                                }
+                                
+                                answersHTML += `
+                                    <div class="option-item ${optionClass}">
+                                        ${String.fromCharCode(65 + i)}. ${option.text}
+                                        ${isSelected ? '<span class="float-end">✓</span>' : ''}
+                                    </div>
+                                `;
+                            });
+                            
+                            answersHTML += `
+                                </div>
+                            `;
+                        } else {
+                            // 问答题/申论题
+                            answersHTML += `
+                                <div class="mt-3">
+                                    <h5>参赛者答案：</h5>
+                                    <div class="p-3 bg-light rounded">
+                                        ${userAnswer.answerText || '<span class="text-muted">未作答</span>'}
+                                    </div>
+                                </div>
+                            `;
+                            
+                            if (question.correctAnswerText) {
+                                answersHTML += `
+                                    <div class="mt-3">
+                                        <h5>参考答案：</h5>
+                                        <div class="p-3 bg-light rounded">
+                                            ${question.correctAnswerText}
+                                        </div>
+                                    </div>
+                                `;
+                            }
+                        }
+                        
+                        answersHTML += `
                             </div>
-                        </div>
-                    `;
+                        `;
+                    });
+                    
+                    Swal.fire({
+                        title: `${participantData.userInfo.name} 的答题详情`,
+                        html: answersHTML,
+                        width: '800px',
+                        showConfirmButton: true,
+                        confirmButtonText: '关闭'
+                    });
                 }
-                
-                // 如果是管理员，添加评分输入
-                if (isAdmin) {
-                    answersHTML += `
-                        <div class="mt-3">
-                            <label class="form-label">评分 (满分 ${question.points} 分)</label>
-                            <input type="number" class="form-control score-input" min="0" max="${question.points}" 
-                                value="${userAnswer.score !== undefined ? userAnswer.score : ''}" 
-                                data-question-id="${question.id}"
-                                ${participantData.submitted ? '' : 'disabled'}>
-                        </div>
-                    `;
-                }
-            }
-            
-            // 题目卡片结束
-            answersHTML += `
-                </div>
-            `;
-        });
-
-        answersHTML += `</div>`;
-
-        // 如果是管理员且比赛已提交，添加保存按钮
-        if (isAdmin && participantData.submitted) {
-            answersHTML += `
-                <div class="text-center mt-4">
-                    <button class="btn btn-primary save-scores">保存评分</button>
-                </div>
-            `;
+            }).catch(error => {
+                console.error("查看参赛者答案错误:", error);
+                Swal.fire('错误', '获取答题详情失败', 'error');
+            });
         }
-
-        // 关闭加载提示
-        hideLoading();
-
-        // 显示答题详情模态框
-        const modal = Swal.fire({
-            title: `${participantData.userInfo.name} 的答题详情`,
-            html: answersHTML,
-            width: '800px',
-            showConfirmButton: true,
-            confirmButtonText: '关闭',
-            // 修改 Swal.fire 的 didOpen 回调
-didOpen: () => {
-    // 使用事件委托绑定点击事件
-    document.addEventListener('click', function(e) {
-        if (e.target.classList.contains('save-scores')) {
-            saveParticipantScores(userId, questions);
-        }
-    });
-}
-        });
-
-    }).catch(error => {
-        hideLoading();
-        console.error("查看参赛者答案错误:", error);
-        Swal.fire('错误', '获取答题详情失败: ' + error.message, 'error');
-    });
-}
-
-// 保存参赛者评分
-function saveParticipantScores(userId, questions) {
-    event.preventDefault();
-    const scoreInputs = document.querySelectorAll('.score-input');
-    const updates = {};
-    let totalScore = 0;
-    let correctCount = 0;
-    let wrongCount = 0;
-
-    scoreInputs.forEach(input => {
-        const questionId = input.getAttribute('data-question-id');
-        const question = questions.find(q => q.id === questionId);
-        const score = parseInt(input.value) || 0;
-        
-        // 验证分数不超过题目分值
-        if (score > question.points) {
-            Swal.fire('错误', `题目 ${questionId} 的评分不能超过 ${question.points} 分`, 'error');
-            return;
-        }
-
-        updates[`/userAnswers/${userId}/answers/${questionId}/score`] = score;
-        updates[`/userAnswers/${userId}/answers/${questionId}/isCorrect`] = score > 0;
-        
-        // 计算总分
-        totalScore += score;
-        if (score > 0) {
-            correctCount++;
-        } else if (score === 0 && input.value !== '') {
-            wrongCount++;
-        }
-    });
-
-    // 更新总分和正确/错误计数
-    updates[`/userAnswers/${userId}/score`] = totalScore;
-    updates[`/userAnswers/${userId}/correctCount`] = correctCount;
-    updates[`/userAnswers/${userId}/wrongCount`] = wrongCount;
-
-    // 显示加载中
-    showLoading('保存评分中...');
-
-    // 更新数据库
-    database.ref().update(updates).then(() => {
-        hideLoading();
-        Swal.fire('成功', '评分已保存', 'success');
-    }).catch(error => {
-        hideLoading();
-        console.error("保存评分错误:", error);
-        Swal.fire('错误', '保存评分失败: ' + error.message, 'error');
-    });
-}
         
         // 添加新题目
         function addNewQuestion() {
@@ -2788,53 +3979,70 @@ function saveParticipantScores(userId, questions) {
             }
         }
         
-       function editQuestion(id) {
-    database.ref('questions/' + id).once('value').then(snapshot => {
-        if (snapshot.exists()) {
-            const q = snapshot.val();
-
-            questionId.value = q.id;
-            questionType.value = q.type;
-            questionPoints.value = q.points;
-            quill.root.innerHTML = q.text;
-            questionText.value = q.text;
-            currentImageUrl = q.imageUrl || '';
-            if (currentImageUrl) {
-                imagePreview.src = currentImageUrl;
+        // 编辑题目
+        function editQuestion(id) {
+            const question = quizData.questions.find(q => q.id === id);
+            if (!question) return;
+            
+            // 填充表单
+            questionId.value = question.id;
+            quill.root.innerHTML = question.text;
+            questionText.value = question.text;
+            questionType.value = question.type;
+            questionPoints.value = question.points;
+            
+            // 显示题目图片
+            if (question.imageUrl) {
+                imagePreview.src = question.imageUrl;
                 imagePreview.style.display = 'block';
+                currentImageUrl = question.imageUrl;
             } else {
+                imagePreview.src = '';
                 imagePreview.style.display = 'none';
+                currentImageUrl = null;
             }
-
-            // 重新渲染选项和正确答案
+            
+            // 根据题目类型更新UI
             updateQuestionTypeUI();
-
-            if (q.options) {
-                optionsContainer.innerHTML = '';
-                q.options.forEach((opt, index) => {
-                    const input = document.createElement('input');
-                    input.type = 'text';
-                    input.className = 'form-control my-1';
-                    input.value = opt.text;
-                    optionsContainer.appendChild(input);
+            
+            // 清空选项容器
+            optionsContainer.innerHTML = '';
+            
+            // 如果是选择题，添加选项
+            if (question.type === 'single' || question.type === 'multiple') {
+                question.options.forEach((option, index) => {
+                    const optionHTML = `
+                        <div class="input-group mb-2 option-item" data-index="${index}">
+                            <span class="input-group-text">${String.fromCharCode(65 + index)}</span>
+                            <input type="text" class="form-control option-text" placeholder="选项内容" value="${option.text}" required>
+                            <button class="btn btn-outline-danger remove-option" type="button">×</button>
+                        </div>
+                    `;
+                    
+                    optionsContainer.insertAdjacentHTML('beforeend', optionHTML);
+                    
+                    // 添加删除选项事件
+                    const removeBtn = optionsContainer.lastElementChild.querySelector('.remove-option');
+                    removeBtn.addEventListener('click', function() {
+                        this.closest('.option-item').remove();
+                        updateOptionIndexes();
+                        updateCorrectAnswersUI();
+                    });
                 });
+                
+                // 更新正确答案UI
+                updateCorrectAnswersUI();
+                
+                // 设置正确答案
+                if (question.type === 'single') {
+                    document.querySelector(`input[name="correctAnswer"][value="${question.correctAnswers[0]}"]`).checked = true;
+                } else {
+                    question.correctAnswers.forEach(answerIndex => {
+                        document.querySelector(`#correctAnswersContainer input[value="${answerIndex}"]`).checked = true;
+                    });
+                }
             }
-
-            if (q.correctAnswers) {
-                const inputs = correctAnswersContainer.querySelectorAll('input');
-                inputs.forEach((input, i) => {
-                    input.checked = q.correctAnswers.includes(i);
-                });
-            }
-
-        } else {
-            Swal.fire('错误', '题目不存在', 'error');
         }
-    }).catch(error => {
-        console.error("编辑题目失败：", error);
-    });
-}
-
         
         // 取消编辑
         function cancelEditQuestion() {
@@ -2853,142 +4061,127 @@ function saveParticipantScores(userId, questions) {
         }
         
         // 保存题目
-        function saveQuestion(event) {
-    event.preventDefault();
+        function saveQuestion(e) {
+            e.preventDefault();
 
-    const id = questionId.value || database.ref().child('questions').push().key;
-    const type = questionType.value;
-    const points = parseInt(questionPoints.value);
-    const text = quill.root.innerHTML.trim();
-    const imageUrl = currentImageUrl || '';
-
-    if (!text || text === '<p><br></p>') {
-        Swal.fire('错误', '题目内容不能为空', 'error');
-        return;
-    }
-
-    let options = [];
-    let correctAnswers = [];
-
-    if (type === 'single' || type === 'multiple') {
-        // 获取选项
-        options = Array.from(optionsContainer.querySelectorAll('.form-control')).map(input => ({
-            text: input.value.trim()
-        }));
-
-        // 检查是否有空选项
-        if (options.some(opt => !opt.text)) {
-            Swal.fire('错误', '所有选项都必须填写', 'error');
-            return;
-        }
-
-        // 获取正确答案
-        const correctInputs = correctAnswersContainer.querySelectorAll('input[type="checkbox"], input[type="radio"]');
-        correctInputs.forEach((input, index) => {
-            if (input.checked) correctAnswers.push(index);
-        });
-
-        if (correctAnswers.length === 0) {
-            Swal.fire('错误', '请选择至少一个正确答案', 'error');
-            return;
-        }
-    }
-
-    const questionData = {
-        id,
-        type,
-        points,
-        text,
-        imageUrl,
-        options,
-        correctAnswers
-    };
-
-    database.ref('questions/' + id).set(questionData)
-        .then(() => {
-            Swal.fire('成功', '题目已保存', 'success');
-            clearQuestionForm();
-            loadQuestions(); // 确保你有这个函数来刷新题目列表
-        })
-        .catch(error => {
-            console.error("保存失败：", error);
-            Swal.fire('错误', '保存题目失败: ' + error.message, 'error');
-        });
-}
-
-        function clearQuestionForm() {
-    questionId.value = '';
-    questionType.value = 'single';
-    questionPoints.value = 5;
-    quill.setText('');
-    questionText.value = '';
-    currentImageUrl = '';
-    imagePreview.src = '';
-    imagePreview.style.display = 'none';
-    optionsContainer.innerHTML = '';
-    correctAnswersContainer.innerHTML = '';
-    updateQuestionTypeUI(); // 重新生成选项和正确答案区域
-}
-
-        function loadQuestions() {
-    questionListBody.innerHTML = ''; // 清空现有内容
-
-    database.ref('questions').once('value').then(snapshot => {
-        if (snapshot.exists()) {
-            const questions = snapshot.val();
-            let index = 1;
-
-            Object.values(questions).forEach(question => {
-                const row = document.createElement('tr');
-
-                const textPreview = question.text.replace(/<[^>]+>/g, '').slice(0, 50) + '...';
-
-                row.innerHTML = `
-                    <td>${index++}</td>
-                    <td>${textPreview}</td>
-                    <td>${question.type === 'single' ? '单选题' :
-                          question.type === 'multiple' ? '多选题' :
-                          question.type === 'short_answer' ? '问答题' : '申论题'}</td>
-                    <td>${question.points}</td>
-                    <td>
-                        <button class="btn btn-sm btn-warning me-2" onclick="editQuestion('${question.id}')">编辑</button>
-                        <button class="btn btn-sm btn-danger" onclick="deleteQuestion('${question.id}')">删除</button>
-                    </td>
-                `;
-                questionListBody.appendChild(row);
-            });
-        } else {
-            questionListBody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">暂无题目</td></tr>';
-        }
-    }).catch(error => {
-        console.error("加载题目失败：", error);
-        Swal.fire('错误', '无法加载题目：' + error.message, 'error');
-    });
-}
-
-
-        
-        function deleteQuestion(id) {
-    Swal.fire({
-        title: '确认删除？',
-        text: '删除后将无法恢复该题目！',
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonText: '删除',
-        cancelButtonText: '取消'
-    }).then((result) => {
-        if (result.isConfirmed) {
-            database.ref('questions/' + id).remove().then(() => {
-                Swal.fire('已删除', '题目已成功删除', 'success');
-                loadQuestions();
+            questionText.value = quill.root.innerHTML;
+            // 验证表单
+            const questionContent = quill.root.innerHTML;
+            if (!questionContent || questionContent.trim() === '<p><br></p>') {
+                Swal.fire('错误', '题目内容不能为空', 'error');
+                return;
+            }
+            
+            // 获取选项和正确答案
+            let options = [];
+            let correctAnswers = [];
+            
+            if (questionType.value === 'single' || questionType.value === 'multiple') {
+                // 选择题验证
+                const optionTexts = [];
+                const optionElements = optionsContainer.querySelectorAll('.option-text');
+                
+                optionElements.forEach(input => {
+                    if (!input.value.trim()) {
+                        Swal.fire('错误', '所有选项内容不能为空', 'error');
+                        return;
+                    }
+                    optionTexts.push(input.value.trim());
+                });
+                
+                if (optionTexts.length < 2) {
+                    Swal.fire('错误', '至少需要两个选项', 'error');
+                    return;
+                }
+                
+                // 获取正确答案
+                const correctAnswerElements = correctAnswersContainer.querySelectorAll('.correct-answer:checked');
+                
+                correctAnswerElements.forEach(el => {
+                    correctAnswers.push(parseInt(el.value));
+                });
+                
+                if (correctAnswers.length === 0) {
+                    Swal.fire('错误', '请选择至少一个正确答案', 'error');
+                    return;
+                }
+                
+                if (questionType.value === 'single' && correctAnswers.length > 1) {
+                    Swal.fire('错误', '单选题只能有一个正确答案', 'error');
+                    return;
+                }
+                
+                // 创建选项数组
+                options = optionTexts.map((text, index) => ({
+                    id: index,
+                    text: text
+                }));
+            }
+            
+            // 创建题目对象
+            const question = {
+                id: questionId.value || generateId(),
+                text: questionContent,
+                type: questionType.value,
+                points: parseInt(questionPoints.value),
+                options: options,
+                correctAnswers: correctAnswers,
+                imageUrl: currentImageUrl
+            };
+            
+            // 如果是问答题或申论题，添加参考答案
+            if (questionType.value === 'short_answer' || questionType.value === 'essay') {
+                question.correctAnswerText = ''; // 管理员可以在编辑时添加参考答案
+            }
+            
+            // 保存到quizData
+            if (questionId.value) {
+                // 更新现有题目
+                const index = quizData.questions.findIndex(q => q.id === questionId.value);
+                if (index !== -1) {
+                    quizData.questions[index] = question;
+                }
+            } else {
+                // 添加新题目
+                quizData.questions.push(question);
+            }
+            
+            // 保存到Firebase
+            database.ref('quiz/questions').set(quizData.questions).then(() => {
+                Swal.fire('成功', '题目已保存', 'success');
+                cancelEditQuestion();
+                updateQuestionList();
             }).catch(error => {
-                console.error("删除题目失败：", error);
-                Swal.fire('错误', '删除题目失败: ' + error.message, 'error');
+                console.error("保存题目错误:", error);
+                Swal.fire('错误', '保存题目失败', 'error');
             });
         }
-    });
-}
-
+        
+        // 删除题目
+        function deleteQuestion(id) {
+            Swal.fire({
+                title: '确认删除',
+                text: '您确定要删除这个题目吗？此操作无法撤销。',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: '删除',
+                cancelButtonText: '取消'
+            }).then(result => {
+                if (result.isConfirmed) {
+                    // 从quizData中删除
+                    quizData.questions = quizData.questions.filter(q => q.id !== id);
+                    
+                    // 更新Firebase
+                    database.ref('quiz/questions').set(quizData.questions).then(() => {
+                        Swal.fire('成功', '题目已删除', 'success');
+                        updateQuestionList();
+                    }).catch(error => {
+                        console.error("删除题目错误:", error);
+                        Swal.fire('错误', '删除题目失败', 'error');
+                    });
+                }
+            });
+        }
         
         // 保存比赛设置
         function saveQuizSettings(e) {
@@ -3083,7 +4276,7 @@ function saveParticipantScores(userId, questions) {
                     
                     // 保存到Firebase
                     database.ref('quiz/settings').set(settings).then(() => {
-                       Swal.fire('成功', '比赛已暂停', 'success');
+                        Swal.fire('成功', '比赛已暂停', 'success');
                         updateQuizStatusDisplay('paused');
                     }).catch(error => {
                         console.error("暂停比赛错误:", error);
