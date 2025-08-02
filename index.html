@@ -835,6 +835,11 @@
                                                 <!-- 正确答案选择将通过JavaScript动态生成 -->
                                             </div>
                                         </div>
+                                        <!-- 动态显示参考答案输入框（初始隐藏） -->
+<div class="mb-3" id="correctAnswerContainer" style="display: none;">
+    <label for="correctAnswerText" class="form-label">参考答案</label>
+    <textarea class="form-control" id="correctAnswerText" name="correctAnswerText" rows="3"></textarea>
+</div>
                                         
                                         <div class="d-flex justify-content-between">
                                             <button type="button" class="btn btn-secondary" id="cancelEditBtn">取消</button>
@@ -1259,6 +1264,18 @@
         const imageUploadContainer = document.getElementById('imageUploadContainer');
         const imageUpload = document.getElementById('imageUpload');
         const imagePreview = document.getElementById('imagePreview');
+
+        document.getElementById('questionType').addEventListener('change', function() {
+    const type = this.value;
+    const correctAnswerContainer = document.getElementById('correctAnswerContainer');
+
+    // 如果是问答题或申论题，显示参考答案输入框
+    if (type === 'short_answer' || type === 'essay') {
+        correctAnswerContainer.style.display = 'block';
+    } else {
+        correctAnswerContainer.style.display = 'none';
+    }
+});
         
         // 初始化函数
         function init() {
@@ -2693,53 +2710,48 @@ function hideLoading() {
         
 // 保存参赛者评分
 function saveParticipantScores(userId, questions) {
-    event.preventDefault();
+    showLoading('正在保存评分...');
+    
     const scoreInputs = document.querySelectorAll('.score-input');
     const updates = {};
-    let totalScore = 0;
-    let correctCount = 0;
-    let wrongCount = 0;
-
+    
     scoreInputs.forEach(input => {
-        const questionId = input.getAttribute('data-question-id');
-        const question = questions.find(q => q.id === questionId);
-        const score = parseInt(input.value) || 0;
+        const questionId = input.dataset.questionId;
+        const score = input.value.trim() === '' ? null : parseInt(input.value);
         
-        // 验证分数不超过题目分值
-        if (score > question.points) {
-            Swal.fire('错误', `题目 ${questionId} 的评分不能超过 ${question.points} 分`, 'error');
-            return;
-        }
-
-        updates[`/userAnswers/${userId}/answers/${questionId}/score`] = score;
-        updates[`/userAnswers/${userId}/answers/${questionId}/isCorrect`] = score > 0;
-        
-        // 计算总分
-        totalScore += score;
-        if (score > 0) {
-            correctCount++;
-        } else if (score === 0 && input.value !== '') {
-            wrongCount++;
+        if (!isNaN(score)) {
+            updates[`userAnswers/${userId}/answers/${questionId}/score`] = score;
         }
     });
-
-    // 更新总分和正确/错误计数
-    updates[`/userAnswers/${userId}/score`] = totalScore;
-    updates[`/userAnswers/${userId}/correctCount`] = correctCount;
-    updates[`/userAnswers/${userId}/wrongCount`] = wrongCount;
-
-    // 显示加载中
-    showLoading('保存评分中...');
-
-    // 更新数据库
-    database.ref().update(updates).then(() => {
-        hideLoading();
-        Swal.fire('成功', '评分已保存', 'success');
-    }).catch(error => {
-        hideLoading();
-        console.error("保存评分错误:", error);
-        Swal.fire('错误', '保存评分失败: ' + error.message, 'error');
+    
+    // 计算总分
+    let totalScore = 0;
+    scoreInputs.forEach(input => {
+        const score = input.value.trim() === '' ? 0 : parseInt(input.value);
+        if (!isNaN(score)) totalScore += score;
     });
+    
+    updates[`userAnswers/${userId}/score`] = totalScore;
+    
+    database.ref().update(updates)
+        .then(() => {
+            hideLoading();
+            Swal.fire({
+                icon: 'success',
+                title: '保存成功',
+                text: '评分已成功保存',
+                timer: 2000
+            });
+        })
+        .catch(error => {
+            hideLoading();
+            console.error("保存评分错误:", error);
+            Swal.fire({
+                icon: 'error',
+                title: '保存失败',
+                text: error.message
+            });
+        });
 }
         
         // 添加新题目
@@ -2937,20 +2949,27 @@ function saveParticipantScores(userId, questions) {
 
     let options = [];
     let correctAnswers = [];
+    let correctAnswerText = ''; // 新增：参考答案字段
 
-    if (type === 'single' || type === 'multiple') {
-        // 获取选项
+    // 如果是问答题或申论题，获取参考答案
+    if (type === 'short_answer' || type === 'essay') {
+        correctAnswerText = document.getElementById('correctAnswerText').value.trim();
+        if (!correctAnswerText) {
+            Swal.fire('提示', '参考答案为空，是否继续保存？', 'warning');
+            // 可以在这里添加确认逻辑（如需要强制填写参考答案）
+        }
+    } 
+    // 如果是选择题，处理选项和正确答案
+    else if (type === 'single' || type === 'multiple') {
         options = Array.from(optionsContainer.querySelectorAll('.form-control')).map(input => ({
             text: input.value.trim()
         }));
 
-        // 检查是否有空选项
         if (options.some(opt => !opt.text)) {
             Swal.fire('错误', '所有选项都必须填写', 'error');
             return;
         }
 
-        // 获取正确答案
         const correctInputs = correctAnswersContainer.querySelectorAll('input[type="checkbox"], input[type="radio"]');
         correctInputs.forEach((input, index) => {
             if (input.checked) correctAnswers.push(index);
@@ -2962,6 +2981,7 @@ function saveParticipantScores(userId, questions) {
         }
     }
 
+    // 构建题目数据对象
     const questionData = {
         id,
         type,
@@ -2969,14 +2989,16 @@ function saveParticipantScores(userId, questions) {
         text,
         imageUrl,
         options,
-        correctAnswers
+        correctAnswers,
+        correctAnswerText // 新增：保存参考答案
     };
 
+    // 保存到数据库
     database.ref('questions/' + id).set(questionData)
         .then(() => {
             Swal.fire('成功', '题目已保存', 'success');
             clearQuestionForm();
-            loadQuestions(); // 确保你有这个函数来刷新题目列表
+            loadQuestions(); // 刷新题目列表
         })
         .catch(error => {
             console.error("保存失败：", error);
