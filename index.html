@@ -2246,41 +2246,57 @@ function hideLoading() {
         }
         
         function loadQuizData() {
+    // 显示加载指示器
+    const loadingSwal = Swal.fire({
+        title: '加载比赛数据',
+        html: '正在获取题目和设置...',
+        allowOutsideClick: false,
+        didOpen: () => {
+            Swal.showLoading();
+        }
+    });
+
     // 并行加载设置和题目数据
     Promise.all([
         database.ref('quiz/settings').once('value'),
         database.ref('questions').once('value')
     ]).then(([settingsSnapshot, questionsSnapshot]) => {
+        loadingSwal.close();
+        
+        // 处理设置数据
         if (settingsSnapshot.exists()) {
             quizData.settings = settingsSnapshot.val();
             
             // 更新UI设置
-            quizTitle.value = quizData.settings.title || '';
-            quizDuration.value = quizData.settings.duration || 60;
+            updateQuizSettingsUI();
+        } else {
+            // 初始化默认设置
+            quizData.settings = {
+                title: "宽柔中学电脑协会常识比赛",
+                duration: 60,
+                startTime: null,
+                endTime: null,
+                showResultsImmediately: true,
+                allowRetake: false,
+                status: "not_started"
+            };
             
-            if (quizData.settings.startTime) {
-                quizStartTimeInput.value = new Date(quizData.settings.startTime).toISOString().slice(0, 16);
-            }
-            
-            if (quizData.settings.endTime) {
-                quizEndTimeInput.value = new Date(quizData.settings.endTime).toISOString().slice(0, 16);
-            }
-            
-            showResultsImmediately.checked = quizData.settings.showResultsImmediately || false;
-            allowRetake.checked = quizData.settings.allowRetake || false;
-            updateQuizStatusDisplay(quizData.settings.status || 'not_started');
+            // 保存默认设置到数据库
+            database.ref('quiz/settings').set(quizData.settings);
         }
         
         // 处理题目数据
         if (questionsSnapshot.exists()) {
-            // 将题目数据转换为数组并保存到quizData
             quizData.questions = Object.values(questionsSnapshot.val());
-            
-            // 更新题目列表UI
             updateQuestionList();
         } else {
             quizData.questions = [];
             questionListBody.innerHTML = '<tr><td colspan="5" class="text-center">暂无题目</td></tr>';
+            
+            // 如果是管理员，提示添加题目
+            if (userInfo && userInfo.isAdmin) {
+                Swal.fire('提示', '系统中没有题目，请先添加题目', 'info');
+            }
         }
         
         // 更新其他数据
@@ -2288,9 +2304,27 @@ function hideLoading() {
         updateResultsStatistics();
         
     }).catch(error => {
+        loadingSwal.close();
         console.error("加载比赛数据错误:", error);
-        Swal.fire('错误', '加载比赛数据失败', 'error');
+        Swal.fire('错误', '加载比赛数据失败: ' + error.message, 'error');
     });
+}
+
+function updateQuizSettingsUI() {
+    quizTitle.value = quizData.settings.title || '';
+    quizDuration.value = quizData.settings.duration || 60;
+    
+    if (quizData.settings.startTime) {
+        quizStartTimeInput.value = new Date(quizData.settings.startTime).toISOString().slice(0, 16);
+    }
+    
+    if (quizData.settings.endTime) {
+        quizEndTimeInput.value = new Date(quizData.settings.endTime).toISOString().slice(0, 16);
+    }
+    
+    showResultsImmediately.checked = quizData.settings.showResultsImmediately || false;
+    allowRetake.checked = quizData.settings.allowRetake || false;
+    updateQuizStatusDisplay(quizData.settings.status || 'not_started');
 }
         
         // 更新比赛状态显示
@@ -3432,25 +3466,63 @@ function saveParticipantScores(userId, questions) {
             adminView.classList.add('d-none');
         }
         
-        // 在adminView显示时检查题目数据
-function showAdminView() {
+     function showAdminView() {
     if (!currentUser || !userInfo || !userInfo.isAdmin) {
         Swal.fire('错误', '您没有管理员权限', 'error');
         return;
     }
     
-    // 检查题目数据是否存在
-    database.ref('quiz/questions').once('value').then(snapshot => {
-        if (!snapshot.exists()) {
-            Swal.fire('警告', '系统中尚未设置任何题目', 'warning');
+    // 显示加载指示器
+    const loadingSwal = Swal.fire({
+        title: '加载数据中',
+        html: '正在获取管理员数据...',
+        allowOutsideClick: false,
+        didOpen: () => {
+            Swal.showLoading();
+        }
+    });
+
+    // 并行加载所有必要数据
+    Promise.all([
+        database.ref('quiz/settings').once('value'),
+        database.ref('questions').once('value'),
+        database.ref('userAnswers').once('value')
+    ]).then(([settingsSnapshot, questionsSnapshot, answersSnapshot]) => {
+        loadingSwal.close();
+        
+        // 处理设置数据
+        if (settingsSnapshot.exists()) {
+            quizData.settings = settingsSnapshot.val();
+            updateQuizSettingsUI();
         }
         
-        // 原有显示adminView的代码
+        // 处理题目数据
+        if (questionsSnapshot.exists()) {
+            quizData.questions = Object.values(questionsSnapshot.val());
+            updateQuestionList();
+        } else {
+            Swal.fire('警告', '系统中尚未设置任何题目', 'warning');
+            quizData.questions = [];
+            questionListBody.innerHTML = '<tr><td colspan="5" class="text-center">暂无题目</td></tr>';
+        }
+        
+        // 处理参赛者数据
+        if (answersSnapshot.exists()) {
+            updateParticipantList();
+            updateResultsStatistics();
+        }
+        
+        // 显示管理员界面
         welcomeView.classList.add('d-none');
         quizView.classList.add('d-none');
         resultView.classList.add('d-none');
         rankingView.classList.add('d-none');
         adminView.classList.remove('d-none');
+        
+    }).catch(error => {
+        loadingSwal.close();
+        console.error("加载管理员数据失败:", error);
+        Swal.fire('错误', '加载管理员数据失败: ' + error.message, 'error');
     });
 }
         
