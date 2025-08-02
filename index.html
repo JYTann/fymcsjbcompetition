@@ -3432,18 +3432,27 @@ function saveParticipantScores(userId, questions) {
             adminView.classList.add('d-none');
         }
         
-        function showAdminView() {
-            if (!currentUser || !userInfo || !userInfo.isAdmin) {
-                Swal.fire('错误', '您没有管理员权限', 'error');
-                return;
-            }
-            
-            welcomeView.classList.add('d-none');
-            quizView.classList.add('d-none');
-            resultView.classList.add('d-none');
-            rankingView.classList.add('d-none');
-            adminView.classList.remove('d-none');
+        // 在adminView显示时检查题目数据
+function showAdminView() {
+    if (!currentUser || !userInfo || !userInfo.isAdmin) {
+        Swal.fire('错误', '您没有管理员权限', 'error');
+        return;
+    }
+    
+    // 检查题目数据是否存在
+    database.ref('quiz/questions').once('value').then(snapshot => {
+        if (!snapshot.exists()) {
+            Swal.fire('警告', '系统中尚未设置任何题目', 'warning');
         }
+        
+        // 原有显示adminView的代码
+        welcomeView.classList.add('d-none');
+        quizView.classList.add('d-none');
+        resultView.classList.add('d-none');
+        rankingView.classList.add('d-none');
+        adminView.classList.remove('d-none');
+    });
+}
         
         // 初始化应用
         document.addEventListener('DOMContentLoaded', () => {
