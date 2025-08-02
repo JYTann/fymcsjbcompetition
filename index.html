@@ -1600,7 +1600,6 @@ imageUpload.addEventListener('change', function(e) {
         // 加载用户进度
         function loadUserProgress(answerData) {
             userAnswers = Array.isArray(answerData.answers) ? answerData.answers : [];
-            userAnswers = answerData.answers || [];
             currentQuestionIndex = answerData.currentQuestionIndex || 0;
             quizStartTime = answerData.startTime || new Date().getTime();
             
