@@ -2596,15 +2596,15 @@ imageUpload.addEventListener('change', function(e) {
             width: '800px',
             showConfirmButton: true,
             confirmButtonText: '关闭',
-            didOpen: () => {
-                // 添加保存评分事件
-                const saveBtn = document.querySelector('.save-scores');
-                if (saveBtn) {
-                    saveBtn.addEventListener('click', function() {
-                        saveParticipantScores(userId, questions);
-                    });
-                }
-            }
+            // 修改 Swal.fire 的 didOpen 回调
+didOpen: () => {
+    // 使用事件委托绑定点击事件
+    document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('save-scores')) {
+            saveParticipantScores(userId, questions);
+        }
+    });
+}
         });
 
     }).catch(error => {
@@ -2616,6 +2616,7 @@ imageUpload.addEventListener('change', function(e) {
 
 // 保存参赛者评分
 function saveParticipantScores(userId, questions) {
+    event.preventDefault();
     const scoreInputs = document.querySelectorAll('.score-input');
     const updates = {};
     let totalScore = 0;
