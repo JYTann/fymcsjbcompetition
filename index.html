@@ -2938,6 +2938,43 @@ function saveParticipantScores(userId, questions) {
     updateQuestionTypeUI(); // 重新生成选项和正确答案区域
 }
 
+        function loadQuestions() {
+    questionListBody.innerHTML = ''; // 清空现有内容
+
+    database.ref('questions').once('value').then(snapshot => {
+        if (snapshot.exists()) {
+            const questions = snapshot.val();
+            let index = 1;
+
+            Object.values(questions).forEach(question => {
+                const row = document.createElement('tr');
+
+                const textPreview = question.text.replace(/<[^>]+>/g, '').slice(0, 50) + '...';
+
+                row.innerHTML = `
+                    <td>${index++}</td>
+                    <td>${textPreview}</td>
+                    <td>${question.type === 'single' ? '单选题' :
+                          question.type === 'multiple' ? '多选题' :
+                          question.type === 'short_answer' ? '问答题' : '申论题'}</td>
+                    <td>${question.points}</td>
+                    <td>
+                        <button class="btn btn-sm btn-warning me-2" onclick="editQuestion('${question.id}')">编辑</button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteQuestion('${question.id}')">删除</button>
+                    </td>
+                `;
+                questionListBody.appendChild(row);
+            });
+        } else {
+            questionListBody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">暂无题目</td></tr>';
+        }
+    }).catch(error => {
+        console.error("加载题目失败：", error);
+        Swal.fire('错误', '无法加载题目：' + error.message, 'error');
+    });
+}
+
+
         
         // 删除题目
         function deleteQuestion(id) {
