@@ -2661,7 +2661,7 @@ function updateQuizSettingsUI() {
                 
                 options.forEach((option, i) => {
                     const optionText = option.text || `选项 ${i+1}`;
-                    const isSelected = userAnswer.selectedOptions.includes(i);
+                    const isSelected = Array.isArray(userAnswer.selectedOptions) && userAnswer.selectedOptions.includes(i);
                     const isCorrectOption = correctAnswers.includes(i);
                     
                     let optionClass = '';
