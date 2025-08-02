@@ -2466,37 +2466,43 @@ function updateQuizSettingsUI() {
                     
                     // 填充参赛者列表
                     participants.forEach(participant => {
-                        const progress = participant.answers ? Math.round((participant.answers.filter(a => {
-                            const question = quizData.questions.find(q => q.id === a.questionId);
-                            if (!question) return false;
-                            
-                            if (question.type === 'single' || question.type === 'multiple') {
-                                return a.selectedOptions.length > 0;
-                            } else {
-                                return a.answerText && a.answerText.trim() !== '';
-                            }
-                        }).length / quizData.questions.length) * 100) : 0;
-                        const status = participant.submitted ? '已完成' : '进行中';
-                        
-                        participantListBody.innerHTML += `
-                            <tr>
-                                <td>${participant.userInfo.name}</td>
-                                <td>${participant.userInfo.class}</td>
-                                <td>${participant.userInfo.group === 'highschool' ? '高中' : '初中'}</td>
-                                <td>
-                                    <span class="badge ${participant.submitted ? 'bg-success' : 'bg-warning'}">${status}</span>
-                                </td>
-                                <td>
-                                    <div class="progress" style="height: 20px;">
-                                        <div class="progress-bar" role="progressbar" style="width: ${progress}%" aria-valuenow="${progress}" aria-valuemin="0" aria-valuemax="100">${progress}%</div>
-                                    </div>
-                                </td>
-                                <td>
-                                    <button class="btn btn-sm btn-info view-answers" data-id="${participant.userId}">查看答案</button>
-                                </td>
-                            </tr>
-                        `;
-                    });
+    const answers = Array.isArray(participant.answers) ? participant.answers : [];
+    const questions = Array.isArray(quizData.questions) ? quizData.questions : [];
+
+    const progressCount = answers.filter(a => {
+        const question = questions.find(q => q.id === a.questionId);
+        if (!question) return false;
+
+        if (question.type === 'single' || question.type === 'multiple') {
+            return Array.isArray(a.selectedOptions) && a.selectedOptions.length > 0;
+        } else {
+            return typeof a.answerText === 'string' && a.answerText.trim() !== '';
+        }
+    }).length;
+
+    const progress = questions.length > 0 ? Math.round((progressCount / questions.length) * 100) : 0;
+    const status = participant.submitted ? '已完成' : '进行中';
+
+    participantListBody.innerHTML += `
+        <tr>
+            <td>${participant.userInfo.name}</td>
+            <td>${participant.userInfo.class}</td>
+            <td>${participant.userInfo.group === 'highschool' ? '高中' : '初中'}</td>
+            <td>
+                <span class="badge ${participant.submitted ? 'bg-success' : 'bg-warning'}">${status}</span>
+            </td>
+            <td>
+                <div class="progress" style="height: 20px;">
+                    <div class="progress-bar" role="progressbar" style="width: ${progress}%" aria-valuenow="${progress}" aria-valuemin="0" aria-valuemax="100">${progress}%</div>
+                </div>
+            </td>
+            <td>
+                <button class="btn btn-sm btn-info view-answers" data-id="${participant.userId}">查看答案</button>
+            </td>
+        </tr>
+    `;
+});
+
                     
                     // 填充详细成绩列表
                     participants.filter(p => p.submitted).forEach(participant => {
