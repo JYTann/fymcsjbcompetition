@@ -1599,6 +1599,7 @@ imageUpload.addEventListener('change', function(e) {
         
         // 加载用户进度
         function loadUserProgress(answerData) {
+            userAnswers = Array.isArray(answerData.answers) ? answerData.answers : [];
             userAnswers = answerData.answers || [];
             currentQuestionIndex = answerData.currentQuestionIndex || 0;
             quizStartTime = answerData.startTime || new Date().getTime();
@@ -1864,6 +1865,10 @@ imageUpload.addEventListener('change', function(e) {
         
         // 计算得分
         function calculateScore() {
+            if (!Array.isArray(userAnswers)) {
+        console.warn("userAnswers 未定义，无法计算分数");
+        return;
+    }
             userAnswers.forEach((userAnswer, index) => {
                 const question = quizData.questions[index];
                 
@@ -1905,18 +1910,18 @@ imageUpload.addEventListener('change', function(e) {
         }
         
         function displayResults() {
-    const total = calculateTotalScore();
-    const maxScore = quizData.questions.reduce((sum, q) => sum + q.points, 0);
-
-    // 防止 userAnswers 为 undefined
+            // 确保 userAnswers 是一个数组
     if (!Array.isArray(userAnswers)) {
         console.warn("userAnswers 未定义，自动设为空数组");
         userAnswers = [];
     }
 
+    const total = calculateTotalScore();
+    const maxScore = quizData.questions.reduce((sum, q) => sum + q.points, 0);
     const correct = userAnswers.filter(a => a.isCorrect === true).length;
     const wrong = userAnswers.filter(a => a.isCorrect === false).length;
-    const unanswered = userAnswers.filter((a) => {
+    const unanswered = userAnswers.filter(a => a.isCorrect === null).length;
+            
         const question = quizData.questions.find(q => q.id === a.questionId);
         if (!question) return true;
 
