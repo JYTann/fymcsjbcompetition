@@ -3065,8 +3065,9 @@ function signInWithGoogle() {
         }
         
         // 初始化应用
-        document.addEventListener('DOMContentLoaded', init);
+        document.addEventListener('DOMContentLoaded', () => {
         init();
+    });
     </script>
 </body>
 </html>
