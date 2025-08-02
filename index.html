@@ -2071,11 +2071,14 @@ userAnswers = userAnswers.map((ua, index) => {
                 const isCorrectOption = correctAnswers.includes(i);
 
                 let optionClass = '';
-                if (isCorrectOption) {
-                    optionClass = 'correct';
-                } else if (isSelected) {
-                    optionClass = 'incorrect';
-                }
+
+if (isCorrectOption && isSelected) {
+    optionClass = 'correct'; // 用户选了正确答案 ✅
+} else if (isCorrectOption && !isSelected) {
+    optionClass = 'missed'; // 正确但没选 🟨
+} else if (!isCorrectOption && isSelected) {
+    optionClass = 'incorrect'; // 用户选错了 ❌
+} // 否则就是没选错也不是答案，保持默认
 
                 resultsHTML += `
                     <div class="option-item ${optionClass}">
