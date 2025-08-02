@@ -2576,7 +2576,7 @@ function updateQuizSettingsUI() {
     
     Promise.all([
         database.ref('userAnswers/' + userId).once('value'),
-        database.ref('quiz/questions').once('value')
+        database.ref('questions').once('value')
     ]).then(([participantSnapshot, questionsSnapshot]) => {
         if (!participantSnapshot.exists()) {
             throw new Error('找不到参赛者数据');
