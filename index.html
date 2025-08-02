@@ -1965,6 +1965,25 @@ function hideLoading() {
         }
         
        function displayResults() {
+
+           // 修复 userAnswers 中的数据缺失（比如管理员只是查看）
+userAnswers = userAnswers.map((ua, index) => {
+    const question = quizData.questions[index];
+    if (!ua || typeof ua !== 'object') return {
+        questionId: question?.id || null,
+        selectedOptions: [],
+        answerText: '',
+        isCorrect: null
+    };
+
+    return {
+        questionId: ua.questionId || question?.id || null,
+        selectedOptions: Array.isArray(ua.selectedOptions) ? ua.selectedOptions : [],
+        answerText: typeof ua.answerText === 'string' ? ua.answerText : '',
+        isCorrect: typeof ua.isCorrect === 'boolean' ? ua.isCorrect : null
+    };
+});
+
     // 确保 userAnswers 是一个数组
     if (!Array.isArray(userAnswers)) {
         console.warn("userAnswers 未定义，自动设为空数组");
