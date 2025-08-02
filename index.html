@@ -2861,101 +2861,83 @@ function saveParticipantScores(userId, questions) {
         }
         
         // 保存题目
-        function saveQuestion(e) {
-            e.preventDefault();
+        function saveQuestion(event) {
+    event.preventDefault();
 
-            questionText.value = quill.root.innerHTML;
-            // 验证表单
-            const questionContent = quill.root.innerHTML;
-            if (!questionContent || questionContent.trim() === '<p><br></p>') {
-                Swal.fire('错误', '题目内容不能为空', 'error');
-                return;
-            }
-            
-            // 获取选项和正确答案
-            let options = [];
-            let correctAnswers = [];
-            
-            if (questionType.value === 'single' || questionType.value === 'multiple') {
-                // 选择题验证
-                const optionTexts = [];
-                const optionElements = optionsContainer.querySelectorAll('.option-text');
-                
-                optionElements.forEach(input => {
-                    if (!input.value.trim()) {
-                        Swal.fire('错误', '所有选项内容不能为空', 'error');
-                        return;
-                    }
-                    optionTexts.push(input.value.trim());
-                });
-                
-                if (optionTexts.length < 2) {
-                    Swal.fire('错误', '至少需要两个选项', 'error');
-                    return;
-                }
-                
-                // 获取正确答案
-                const correctAnswerElements = correctAnswersContainer.querySelectorAll('.correct-answer:checked');
-                
-                correctAnswerElements.forEach(el => {
-                    correctAnswers.push(parseInt(el.value));
-                });
-                
-                if (correctAnswers.length === 0) {
-                    Swal.fire('错误', '请选择至少一个正确答案', 'error');
-                    return;
-                }
-                
-                if (questionType.value === 'single' && correctAnswers.length > 1) {
-                    Swal.fire('错误', '单选题只能有一个正确答案', 'error');
-                    return;
-                }
-                
-                // 创建选项数组
-                options = optionTexts.map((text, index) => ({
-                    id: index,
-                    text: text
-                }));
-            }
-            
-            // 创建题目对象
-            const question = {
-                id: questionId.value || generateId(),
-                text: questionContent,
-                type: questionType.value,
-                points: parseInt(questionPoints.value),
-                options: options,
-                correctAnswers: correctAnswers,
-                imageUrl: currentImageUrl
-            };
-            
-            // 如果是问答题或申论题，添加参考答案
-            if (questionType.value === 'short_answer' || questionType.value === 'essay') {
-                question.correctAnswerText = ''; // 管理员可以在编辑时添加参考答案
-            }
-            
-            // 保存到quizData
-            if (questionId.value) {
-                // 更新现有题目
-                const index = quizData.questions.findIndex(q => q.id === questionId.value);
-                if (index !== -1) {
-                    quizData.questions[index] = question;
-                }
-            } else {
-                // 添加新题目
-                quizData.questions.push(question);
-            }
-            
-            // 保存到Firebase
-            database.ref('quiz/questions').set(quizData.questions).then(() => {
-                Swal.fire('成功', '题目已保存', 'success');
-                cancelEditQuestion();
-                updateQuestionList();
-            }).catch(error => {
-                console.error("保存题目错误:", error);
-                Swal.fire('错误', '保存题目失败', 'error');
-            });
+    const id = questionId.value || database.ref().child('questions').push().key;
+    const type = questionType.value;
+    const points = parseInt(questionPoints.value);
+    const text = quill.root.innerHTML.trim();
+    const imageUrl = currentImageUrl || '';
+
+    if (!text || text === '<p><br></p>') {
+        Swal.fire('错误', '题目内容不能为空', 'error');
+        return;
+    }
+
+    let options = [];
+    let correctAnswers = [];
+
+    if (type === 'single' || type === 'multiple') {
+        // 获取选项
+        options = Array.from(optionsContainer.querySelectorAll('.form-control')).map(input => ({
+            text: input.value.trim()
+        }));
+
+        // 检查是否有空选项
+        if (options.some(opt => !opt.text)) {
+            Swal.fire('错误', '所有选项都必须填写', 'error');
+            return;
         }
+
+        // 获取正确答案
+        const correctInputs = correctAnswersContainer.querySelectorAll('input[type="checkbox"], input[type="radio"]');
+        correctInputs.forEach((input, index) => {
+            if (input.checked) correctAnswers.push(index);
+        });
+
+        if (correctAnswers.length === 0) {
+            Swal.fire('错误', '请选择至少一个正确答案', 'error');
+            return;
+        }
+    }
+
+    const questionData = {
+        id,
+        type,
+        points,
+        text,
+        imageUrl,
+        options,
+        correctAnswers
+    };
+
+    database.ref('questions/' + id).set(questionData)
+        .then(() => {
+            Swal.fire('成功', '题目已保存', 'success');
+            clearQuestionForm();
+            loadQuestions(); // 确保你有这个函数来刷新题目列表
+        })
+        .catch(error => {
+            console.error("保存失败：", error);
+            Swal.fire('错误', '保存题目失败: ' + error.message, 'error');
+        });
+}
+
+        function clearQuestionForm() {
+    questionId.value = '';
+    questionType.value = 'single';
+    questionPoints.value = 5;
+    quill.setText('');
+    questionText.value = '';
+    currentImageUrl = '';
+    imagePreview.src = '';
+    imagePreview.style.display = 'none';
+    optionsContainer.innerHTML = '';
+    correctAnswersContainer.innerHTML = '';
+    updateQuestionTypeUI(); // 重新生成选项和正确答案区域
+}
+
         
         // 删除题目
         function deleteQuestion(id) {
