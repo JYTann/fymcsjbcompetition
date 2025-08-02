@@ -2590,7 +2590,8 @@ function signInWithGoogle() {
         // 保存题目
         function saveQuestion(e) {
             e.preventDefault();
-            
+
+            questionText.value = quill.root.innerHTML;
             // 验证表单
             const questionContent = quill.root.innerHTML;
             if (!questionContent || questionContent.trim() === '<p><br></p>') {
