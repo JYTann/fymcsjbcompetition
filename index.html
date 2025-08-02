@@ -1932,8 +1932,14 @@ imageUpload.addEventListener('change', function(e) {
             let resultsHTML = '';
             
             quizData.questions.forEach((question, index) => {
-                const userAnswer = userAnswers[index];
-                const isCorrect = userAnswer.isCorrect;
+                const userAnswer = userAnswers[index] || {};
+const isCorrect = userAnswer.isCorrect;
+const selectedOptions = Array.isArray(userAnswer.selectedOptions) ? userAnswer.selectedOptions : [];
+const answerText = typeof userAnswer.answerText === 'string' ? userAnswer.answerText : '';
+
+const options = Array.isArray(question.options) ? question.options : [];
+const correctAnswers = Array.isArray(question.correctAnswers) ? question.correctAnswers : [];
+
                 
                 resultsHTML += `
                     <div class="question-card mb-4">
@@ -1961,7 +1967,7 @@ imageUpload.addEventListener('change', function(e) {
                     `;
                     
                     // 添加选项
-                    question.options.forEach((option, i) => {
+                   options.forEach((option, i) => {
                         const isSelected = userAnswer.selectedOptions.includes(i);
                         const isCorrectOption = question.correctAnswers.includes(i);
                         
@@ -2531,7 +2537,7 @@ if (isCorrect === false && Array.isArray(question.correctAnswers)) {
                     ${userAnswer.isCorrect === false ? `
                         <div class="mt-2 text-success">
                             <strong>正确答案:</strong> 
-                            ${question.correctAnswers.map(a => String.fromCharCode(65 + a)).join(', ')}
+                            ${correctAnswers.map(a => String.fromCharCode(65 + a)).join(', ')}
                         </div>
                     ` : ''}
                 `;
