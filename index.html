@@ -1792,38 +1792,27 @@ function hideLoading() {
     nextQuestionBtn.disabled = index === quizData.questions.length - 1;
 }
         
-        // 修改 selectOption 函数
-function selectOption(questionIndex, optionIndex) {
-    const question = quizData.questions[questionIndex];
-    const userAnswer = userAnswers[questionIndex];
-    
-    if (!userAnswer) {
-        userAnswers[questionIndex] = {
-            questionId: question.id,
-            selectedOptions: [],
-            answerText: '',
-            isCorrect: null
-        };
-    }
-    
-    if (question.type === 'single') {
-        userAnswer.selectedOptions = [optionIndex];
-        // 立即检查答案是否正确
-        userAnswer.isCorrect = question.correctAnswers.includes(optionIndex);
-    } else {
-        const optionPos = userAnswer.selectedOptions.indexOf(optionIndex);
-        if (optionPos === -1) {
-            userAnswer.selectedOptions.push(optionIndex);
-        } else {
-            userAnswer.selectedOptions.splice(optionPos, 1);
+        // 选择选项
+        function selectOption(questionIndex, optionIndex) {
+            const question = quizData.questions[questionIndex];
+            const userAnswer = userAnswers[questionIndex];
+            
+            if (question.type === 'single') {
+                // 单选题 - 替换已选选项
+                userAnswer.selectedOptions = [optionIndex];
+            } else {
+                // 多选题 - 切换选项选择状态
+                const optionPos = userAnswer.selectedOptions.indexOf(optionIndex);
+                if (optionPos === -1) {
+                    userAnswer.selectedOptions.push(optionIndex);
+                } else {
+                    userAnswer.selectedOptions.splice(optionPos, 1);
+                }
+            }
+            
+            // 重新显示题目以更新UI
+            displayQuestion(questionIndex);
         }
-        // 多选题需要提交时才检查
-        userAnswer.isCorrect = null;
-    }
-    
-    saveUserProgress();
-    displayQuestion(questionIndex);
-}
         
         // 显示上一题
         function showPreviousQuestion() {
@@ -2642,40 +2631,19 @@ function updateQuizSettingsUI() {
                 (userAnswer.score !== undefined ? userAnswer.score : '未评分') :
                 (userAnswer.isCorrect ? questionPoints : 0);
             
-            // 修改 viewParticipantAnswers 函数中的显示逻辑
-answersHTML += `
-    <div class="question-card mb-4 p-3 border rounded">
-        <div class="question-header d-flex justify-content-between align-items-center mb-2">
-            <h5>题目 ${index + 1} (${questionPoints}分)</h5>
-            <span class="badge ${userAnswer.isCorrect ? 'bg-success' : userAnswer.isCorrect === false ? 'bg-danger' : 'bg-secondary'}">
-                ${userAnswer.isCorrect ? '正确' : userAnswer.isCorrect === false ? '错误' : '未作答'}
-            </span>
-        </div>
-        <div class="question-content">${questionText}</div>
-        ${question.imageUrl ? `<div class="text-center my-3"><img src="${question.imageUrl}" class="img-fluid rounded" style="max-height: 200px;"></div>` : ''}
-        
-        ${question.type === 'single' || question.type === 'multiple' ? `
-            <div class="options-list mt-3">
-                ${options.map((option, i) => `
-                    <div class="option-item 
-                        ${question.correctAnswers.includes(i) ? 'correct' : ''}
-                        ${userAnswer.selectedOptions.includes(i) && !question.correctAnswers.includes(i) ? 'incorrect' : ''}
-                        ${userAnswer.selectedOptions.includes(i) ? 'selected' : ''}">
-                        ${String.fromCharCode(65 + i)}. ${option.text}
-                        ${userAnswer.selectedOptions.includes(i) ? '<span class="float-end">✓</span>' : ''}
+            answersHTML += `
+                <div class="question-card mb-4 p-3 border rounded">
+                    <div class="question-header d-flex justify-content-between align-items-center mb-2">
+                        <h5>题目 ${index + 1} (${questionPoints}分)</h5>
+                        <span class="badge ${userAnswer.isCorrect ? 'bg-success' : userAnswer.isCorrect === false ? 'bg-danger' : 'bg-secondary'}">
+                            ${userAnswer.isCorrect ? '正确' : userAnswer.isCorrect === false ? '错误' : '未作答'}
+                            ${questionType !== 'short_answer' && questionType !== 'essay' ? 
+                              `: ${questionScore}/${questionPoints}分` : 
+                              `: ${questionScore}${typeof questionScore === 'number' ? `/${questionPoints}分` : ''}`}
+                        </span>
                     </div>
-                `).join('')}
-            </div>
-            
-            ${userAnswer.isCorrect === false ? `
-                <div class="mt-2 text-success">
-                    <strong>正确答案:</strong> 
-                    ${question.correctAnswers.map(a => String.fromCharCode(65 + a)).join(', ')}
-                </div>
-            ` : ''}
-        ` : ''}
-    </div>
-`;
+                    <div class="question-content">${questionText}</div>
+            `;
 
             if (question.imageUrl) {
                 answersHTML += `
