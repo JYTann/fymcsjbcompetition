@@ -810,7 +810,7 @@
                                         
                                         <!-- 图片上传 -->
                                         <div class="mb-3">
-                                            <label class="form-label">题目图片</label>
+                                            <label class="form-label">题目图片（可选）</label>
                                             <div class="image-upload-container" id="imageUploadContainer">
                                                 <i class="fas fa-image fa-3x mb-2" style="color: #6c757d;"></i>
                                                 <p>点击或拖拽图片到此处上传</p>
@@ -818,6 +818,12 @@
                                                 <img id="imagePreview" class="image-preview">
                                             </div>
                                         </div>
+
+                                        <!-- 动态显示参考答案输入框（您要添加的代码） -->
+<div class="mb-3" id="correctAnswerContainer" style="display: none;">
+    <label for="correctAnswerText" class="form-label">参考答案</label>
+    <textarea class="form-control" id="correctAnswerText" name="correctAnswerText" rows="3"></textarea>
+</div>
                                         
                                         <!-- 选项容器（仅选择题显示） -->
                                         <div class="mb-3" id="optionsSection">
@@ -835,11 +841,7 @@
                                                 <!-- 正确答案选择将通过JavaScript动态生成 -->
                                             </div>
                                         </div>
-                                        <!-- 动态显示参考答案输入框（初始隐藏） -->
-<div class="mb-3" id="correctAnswerContainer" style="display: none;">
-    <label for="correctAnswerText" class="form-label">参考答案</label>
-    <textarea class="form-control" id="correctAnswerText" name="correctAnswerText" rows="3"></textarea>
-</div>
+                                       
                                         
                                         <div class="d-flex justify-content-between">
                                             <button type="button" class="btn btn-secondary" id="cancelEditBtn">取消</button>
