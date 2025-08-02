@@ -1908,8 +1908,8 @@ imageUpload.addEventListener('change', function(e) {
             }, 0);
         }
         
-        function displayResults() {
-            // 确保 userAnswers 是一个数组
+       function displayResults() {
+    // 确保 userAnswers 是一个数组
     if (!Array.isArray(userAnswers)) {
         console.warn("userAnswers 未定义，自动设为空数组");
         userAnswers = [];
@@ -1919,8 +1919,9 @@ imageUpload.addEventListener('change', function(e) {
     const maxScore = quizData.questions.reduce((sum, q) => sum + q.points, 0);
     const correct = userAnswers.filter(a => a.isCorrect === true).length;
     const wrong = userAnswers.filter(a => a.isCorrect === false).length;
-    const unanswered = userAnswers.filter(a => a.isCorrect === null).length;
-            
+    
+    // 修正后的未答题数计算
+    const unanswered = userAnswers.filter(a => {
         const question = quizData.questions.find(q => q.id === a.questionId);
         if (!question) return true;
 
@@ -1929,7 +1930,7 @@ imageUpload.addEventListener('change', function(e) {
         } else {
             return !a.answerText || a.answerText.trim() === '';
         }
-    }.length;
+    }).length;
 
     // 更新结果摘要
     finalScore.textContent = `${total}/${maxScore}`;
