@@ -2906,15 +2906,31 @@ function saveParticipantScores(userId, questions) {
         }
         
        function editQuestion(id) {
+    // 显示加载指示器
+    const loadingSwal = Swal.fire({
+        title: '加载题目',
+        html: '正在获取题目数据...',
+        allowOutsideClick: false,
+        didOpen: () => {
+            Swal.showLoading();
+        }
+    });
+
     database.ref('questions/' + id).once('value').then(snapshot => {
+        loadingSwal.close();
+        
         if (snapshot.exists()) {
             const q = snapshot.val();
 
+            // 重置表单
+            questionForm.reset();
             questionId.value = q.id;
             questionType.value = q.type;
             questionPoints.value = q.points;
             quill.root.innerHTML = q.text;
             questionText.value = q.text;
+            
+            // 处理图片
             currentImageUrl = q.imageUrl || '';
             if (currentImageUrl) {
                 imagePreview.src = currentImageUrl;
@@ -2923,32 +2939,58 @@ function saveParticipantScores(userId, questions) {
                 imagePreview.style.display = 'none';
             }
 
-            // 重新渲染选项和正确答案
+            // 处理参考答案（新增）
+            const correctAnswerText = q.correctAnswerText || '';
+            document.getElementById('correctAnswerText').value = correctAnswerText;
+            
+            // 根据题目类型显示相应UI
             updateQuestionTypeUI();
 
-            if (q.options) {
-                optionsContainer.innerHTML = '';
-                q.options.forEach((opt, index) => {
-                    const input = document.createElement('input');
-                    input.type = 'text';
-                    input.className = 'form-control my-1';
-                    input.value = opt.text;
-                    optionsContainer.appendChild(input);
+            // 处理选项
+            optionsContainer.innerHTML = '';
+            if (q.options && q.options.length > 0) {
+                q.options.forEach((option, index) => {
+                    const optionHTML = `
+                        <div class="input-group mb-2 option-item" data-index="${index}">
+                            <span class="input-group-text">${String.fromCharCode(65 + index)}</span>
+                            <input type="text" class="form-control option-text" 
+                                   value="${option.text || ''}" placeholder="选项内容" required>
+                            <button class="btn btn-outline-danger remove-option" type="button">×</button>
+                        </div>
+                    `;
+                    optionsContainer.insertAdjacentHTML('beforeend', optionHTML);
+                    
+                    // 添加删除选项事件
+                    const removeBtn = optionsContainer.lastElementChild.querySelector('.remove-option');
+                    removeBtn.addEventListener('click', function() {
+                        this.closest('.option-item').remove();
+                        updateOptionIndexes();
+                        updateCorrectAnswersUI();
+                    });
                 });
+            } else if (q.type === 'single' || q.type === 'multiple') {
+                // 如果是选择题但没有选项，添加默认选项
+                addOption();
+                addOption();
             }
 
-            if (q.correctAnswers) {
-                const inputs = correctAnswersContainer.querySelectorAll('input');
-                inputs.forEach((input, i) => {
-                    input.checked = q.correctAnswers.includes(i);
+            // 处理正确答案
+            updateCorrectAnswersUI();
+            if (q.correctAnswers && q.correctAnswers.length > 0) {
+                q.correctAnswers.forEach(correctIndex => {
+                    const input = correctAnswersContainer.querySelector(`input[value="${correctIndex}"]`);
+                    if (input) {
+                        input.checked = true;
+                    }
                 });
             }
-
         } else {
             Swal.fire('错误', '题目不存在', 'error');
         }
     }).catch(error => {
+        loadingSwal.close();
         console.error("编辑题目失败：", error);
+        Swal.fire('错误', '加载题目失败: ' + error.message, 'error');
     });
 }
 
