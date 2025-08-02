@@ -1395,21 +1395,23 @@ imageUpload.addEventListener('change', function(e) {
             
             // 监听认证状态变化
             auth.onAuthStateChanged(user => {
-        if (user) {
-            currentUser = user;
-            updateUserUI();
-            checkUserInfo().then(() => {
-                // 用户信息检查完成后才加载数据
-                loadQuizData();
+                if (user) {
+                    // 用户已登录
+                    currentUser = user;
+                    updateUserUI();
+                    checkUserInfo();
+                } else {
+                    // 用户未登录
+                    currentUser = null;
+                    userInfo = null;
+                    showWelcomeView();
+                    updateUserUI();
+                }
             });
-        } else {
-            currentUser = null;
-            userInfo = null;
-            showWelcomeView();
-            updateUserUI();
+            
+            // 从Firebase加载数据
+            loadQuizData();
         }
-    });
-}
         
         // Google登录
         function signInWithGoogle() {
@@ -2264,6 +2266,9 @@ function hideLoading() {
         // 处理设置数据
         if (settingsSnapshot.exists()) {
             quizData.settings = settingsSnapshot.val();
+            
+            // 更新UI设置
+            updateQuizSettingsUI();
         } else {
             // 初始化默认设置
             quizData.settings = {
@@ -2275,23 +2280,26 @@ function hideLoading() {
                 allowRetake: false,
                 status: "not_started"
             };
+            
+            // 保存默认设置到数据库
             database.ref('quiz/settings').set(quizData.settings);
         }
         
         // 处理题目数据
         if (questionsSnapshot.exists()) {
             quizData.questions = Object.values(questionsSnapshot.val());
-            if (quizData.questions.length === 0) {
-                showNoQuestionsMessage();
-            }
+            updateQuestionList();
         } else {
             quizData.questions = [];
-            showNoQuestionsMessage();
+            questionListBody.innerHTML = '<tr><td colspan="5" class="text-center">暂无题目</td></tr>';
+            
+            // 如果是管理员，提示添加题目
+            if (userInfo && userInfo.isAdmin) {
+                Swal.fire('提示', '系统中没有题目，请先添加题目', 'info');
+            }
         }
         
-        // 更新UI
-        updateQuizSettingsUI();
-        updateQuestionList();
+        // 更新其他数据
         updateParticipantList();
         updateResultsStatistics();
         
@@ -2299,16 +2307,7 @@ function hideLoading() {
         loadingSwal.close();
         console.error("加载比赛数据错误:", error);
         Swal.fire('错误', '加载比赛数据失败: ' + error.message, 'error');
-        quizData.questions = []; // 确保有默认空数组
-        updateQuestionList();
     });
-}
-
-function showNoQuestionsMessage() {
-    questionListBody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">暂无题目数据</td></tr>';
-    if (userInfo && userInfo.isAdmin) {
-        Swal.fire('提示', '系统中没有题目，请先添加题目', 'info');
-    }
 }
 
 function updateQuizSettingsUI() {
