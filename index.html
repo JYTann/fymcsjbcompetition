@@ -1022,13 +1022,13 @@
     <script>
         // Firebase 配置
         const firebaseConfig = {
-            apiKey: "AIzaSyBnlTYP3Tkt0SKbPlW2sMbZCo33GoPhK2M",
-            authDomain: "fymcsjb-competition.firebaseapp.com",
-            projectId: "fymcsjb-competition",
-            storageBucket: "fymcsjb-competition.appspot.com",
-            messagingSenderId: "231117222555",
-            appId: "1:231117222555:web:a7106a8006774272ec0c3e"
-        };
+    apiKey: "AIzaSyBnlTYP3Tkt0SKbPlW2sMbZCo33GoPhK2M",
+    authDomain: "fymcsjb-competition.firebaseapp.com",
+    projectId: "fymcsjb-competition",
+    storageBucket: "fymcsjb-competition.appspot.com",  // 修正这里
+    messagingSenderId: "231117222555",
+    appId: "1:231117222555:web:a7106a8006774272ec0c3e"
+};
 
         // 初始化 Firebase
         firebase.initializeApp(firebaseConfig);
@@ -1256,13 +1256,32 @@
         }
         
         // Google登录
-        function signInWithGoogle() {
-            const provider = new firebase.auth.GoogleAuthProvider();
-            auth.signInWithPopup(provider).catch(error => {
-                console.error("登录错误:", error);
-                Swal.fire('错误', '登录失败: ' + error.message, 'error');
-            });
-        }
+        // 更新后的signInWithGoogle函数
+function signInWithGoogle() {
+    const provider = new firebase.auth.GoogleAuthProvider();
+    // 添加scope请求
+    provider.addScope('profile');
+    provider.addScope('email');
+    
+    auth.signInWithPopup(provider)
+        .then((result) => {
+            // 登录成功处理
+            console.log("登录成功", result.user);
+        })
+        .catch((error) => {
+            console.error("登录错误:", error);
+            // 显示更详细的错误信息
+            let errorMessage = "登录失败";
+            if (error.code === 'auth/popup-closed-by-user') {
+                errorMessage = "您关闭了登录窗口，请重新尝试";
+            } else if (error.code === 'auth/network-request-failed') {
+                errorMessage = "网络连接失败，请检查您的网络";
+            } else {
+                errorMessage = `登录失败: ${error.message}`;
+            }
+            Swal.fire('错误', errorMessage, 'error');
+        });
+}
         
         // 退出登录
         function signOut() {
