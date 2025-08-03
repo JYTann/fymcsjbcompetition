@@ -2830,10 +2830,8 @@ function saveParticipantScores(userId, questions, participantData) {
                 input.classList.add('is-invalid');
             } else {
                 input.classList.remove('is-invalid');
-                // 确保更新路径正确
-                updates[`userAnswers/${userId}/answers/${index}/score`] = score;
-                // 同时更新 isCorrect 状态
-                updates[`userAnswers/${userId}/answers/${index}/isCorrect`] = (score === question.points);
+                updates[`userAnswers/${userId}/answers/${questionId}/score`] = score;
+                updates[`userAnswers/${userId}/answers/${questionId}/isCorrect`] = (score === question.points);
             }
         }
     });
