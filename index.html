@@ -1131,74 +1131,6 @@
                         </div>
                     </form>
                 </div>
-                <!-- 在页脚上方添加反馈按钮 -->
-<div class="feedback-button">
-    <button class="btn btn-primary btn-feedback" data-bs-toggle="modal" data-bs-target="#feedbackModal">
-        <i class="fas fa-comment-alt"></i> 反馈
-    </button>
-</div>
-
-<!-- 添加反馈模态框 -->
-<div class="modal fade" id="feedbackModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">问题反馈</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <form id="feedbackForm">
-                    <div class="mb-3">
-                        <label class="form-label">反馈类型</label>
-                        <select class="form-select" id="feedbackType" required>
-                            <option value="">请选择...</option>
-                            <option value="question_error">题目错误</option>
-                            <option value="system_bug">系统问题</option>
-                            <option value="suggestion">改进建议</option>
-                            <option value="other">其他</option>
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">问题描述</label>
-                        <textarea class="form-control" id="feedbackContent" rows="5" required></textarea>
-                    </div>
-                    <div class="mb-3" id="questionFeedbackSection" style="display:none;">
-                        <label class="form-label">相关题目</label>
-                        <select class="form-select" id="feedbackQuestion">
-                            <option value="">请选择题目...</option>
-                            <!-- 动态填充题目选项 -->
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">截图（可选）</label>
-                        <input type="file" class="form-control" id="feedbackScreenshot" accept="image/*">
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
-                <button type="button" class="btn btn-primary" id="submitFeedbackBtn">提交反馈</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<style>
-.feedback-button {
-    position: fixed;
-    bottom: 30px;
-    right: 30px;
-    z-index: 1000;
-}
-
-.btn-feedback {
-    width: 60px;
-    height: 60px;
-    border-radius: 50%;
-    font-size: 24px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-}
-</style>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
                     <button type="button" class="btn btn-primary" id="saveUserInfoBtn">保存</button>
@@ -3913,6 +3845,7 @@ updates[`userAnswers/${userId}/wrongCount`] = wrongCount;
     });
 }
 
+        
         // 保存比赛设置
         function saveQuizSettings(e) {
             e.preventDefault();
@@ -4223,97 +4156,6 @@ updates[`userAnswers/${userId}/wrongCount`] = wrongCount;
             
             doc.save(`宽中电脑协会常识比赛成绩_${new Date().toISOString().slice(0, 10)}.pdf`);
         }
-
-        // 添加反馈功能
-document.getElementById('feedbackType').addEventListener('change', function() {
-    const questionSection = document.getElementById('questionFeedbackSection');
-    questionSection.style.display = this.value === 'question_error' ? 'block' : 'none';
-});
-
-document.getElementById('submitFeedbackBtn').addEventListener('click', submitFeedback);
-
-// 初始化反馈表单
-function initFeedbackForm() {
-    const questionSelect = document.getElementById('feedbackQuestion');
-    questionSelect.innerHTML = '<option value="">请选择题目...</option>';
-    
-    quizData.questions.forEach((q, index) => {
-        const option = document.createElement('option');
-        option.value = q.id;
-        option.textContent = `题目 ${index + 1}: ${q.text.substring(0, 50)}${q.text.length > 50 ? '...' : ''}`;
-        questionSelect.appendChild(option);
-    });
-}
-
-// 提交反馈
-function submitFeedback() {
-    const type = document.getElementById('feedbackType').value;
-    const content = document.getElementById('feedbackContent').value.trim();
-    const questionId = document.getElementById('feedbackQuestion').value;
-    const screenshot = document.getElementById('feedbackScreenshot').files[0];
-    
-    if (!type || !content) {
-        Swal.fire('错误', '请填写反馈类型和问题描述', 'error');
-        return;
-    }
-    
-    const feedbackData = {
-        type,
-        content,
-        questionId: type === 'question_error' ? questionId : null,
-        userId: currentUser ? currentUser.uid : null,
-        userName: currentUser ? currentUser.displayName : '匿名用户',
-        timestamp: new Date().getTime(),
-        status: 'pending'
-    };
-    
-    // 如果有截图，先上传图片
-    if (screenshot) {
-        const storageRef = storage.ref('feedback-screenshots/' + generateId() + '.png');
-        const uploadTask = storageRef.put(screenshot);
-        
-        uploadTask.on('state_changed', 
-            null,
-            error => {
-                console.error("上传截图失败:", error);
-                // 即使截图上传失败也继续提交反馈
-                saveFeedback(feedbackData);
-            },
-            () => {
-                // 上传成功，获取URL
-                uploadTask.snapshot.ref.getDownloadURL().then(url => {
-                    feedbackData.screenshotUrl = url;
-                    saveFeedback(feedbackData);
-                });
-            }
-        );
-    } else {
-        saveFeedback(feedbackData);
-    }
-}
-
-function saveFeedback(feedbackData) {
-    const feedbackRef = database.ref('feedbacks').push();
-    
-    feedbackRef.set(feedbackData)
-        .then(() => {
-            Swal.fire('感谢', '您的反馈已提交', 'success');
-            const feedbackModal = bootstrap.Modal.getInstance(document.getElementById('feedbackModal'));
-            feedbackModal.hide();
-            document.getElementById('feedbackForm').reset();
-        })
-        .catch(error => {
-            console.error("提交反馈失败:", error);
-            Swal.fire('错误', '提交反馈失败: ' + error.message, 'error');
-        });
-}
-
-// 在用户登录后初始化反馈表单
-auth.onAuthStateChanged(user => {
-    if (user) {
-        initFeedbackForm();
-    }
-});
         
         // 生成ID
         function generateId() {
