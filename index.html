@@ -1610,28 +1610,29 @@ function updateMonitorList() {
         monitorList.innerHTML = '';
         
         if (snapshot.exists()) {
+            const participants = [];
+            
             snapshot.forEach(childSnapshot => {
                 const participant = childSnapshot.val();
-                
-                // 确保参赛者有基本信息
-                if (!participant.userInfo) {
-                    participant.userInfo = {
-                        name: '未知用户',
-                        class: '未知班级',
-                        group: 'highschool'
-                    };
+                if (participant.userInfo) {
+                    participants.push(participant);
                 }
-                
+            });
+            
+            // 按最后更新时间排序
+            participants.sort((a, b) => (b.lastUpdated || 0) - (a.lastUpdated || 0));
+            
+            participants.forEach(participant => {
                 const progress = calculateProgress(participant);
+                const isActive = participant.userId === currentMonitoringUserId;
                 
                 const item = document.createElement('button');
-                item.className = `list-group-item list-group-item-action d-flex justify-content-between align-items-center 
-                                 ${participant.userId === currentMonitoringUserId ? 'active' : ''}`;
+                item.className = `list-group-item list-group-item-action d-flex justify-content-between align-items-center ${isActive ? 'active' : ''}`;
                 item.innerHTML = `
                     <div>
-                        <strong>${participant.userInfo.name || '未知用户'}</strong>
+                        <strong>${participant.userInfo.name}</strong>
                         <div class="text-muted small">
-                            ${participant.userInfo.class || '未知班级'} - 
+                            ${participant.userInfo.class} - 
                             ${participant.userInfo.group === 'highschool' ? '高中' : '初中'}
                         </div>
                     </div>
@@ -1640,10 +1641,9 @@ function updateMonitorList() {
                     </span>
                 `;
                 
-                // 确保正确绑定点击事件
                 item.addEventListener('click', () => {
                     currentMonitoringUserId = participant.userId;
-                    updateMonitorList();
+                    updateMonitorList(); // 重新渲染以更新active状态
                     monitorParticipant(participant.userId);
                 });
                 
@@ -1656,6 +1656,7 @@ function updateMonitorList() {
         console.error("更新监控列表错误:", error);
     });
 }
+        
 // 监控特定参赛者
 function monitorParticipant(userId) {
     const monitorView = document.getElementById('participantMonitorView');
@@ -1848,7 +1849,7 @@ function initMonitor() {
         
         // 检查比赛状态
         function checkQuizStatus() {
-            database.ref('quiz/settings/status').once('value').then(snapshot => {
+            database.ref('quiz/settings/status').on('value').then(snapshot => {
                 const status = snapshot.val() || 'not_started';
                 
                 if (status === 'in_progress') {
@@ -2113,6 +2114,7 @@ function hideLoading() {
             
             // 重新显示题目以更新UI
             displayQuestion(questionIndex);
+            saveUserProgress();
         }
         
         // 显示上一题
@@ -2151,30 +2153,58 @@ function updateMonitorList() {
         monitorList.innerHTML = '';
         
         if (snapshot.exists()) {
+            const participants = [];
+            
             snapshot.forEach(childSnapshot => {
                 const participant = childSnapshot.val();
                 if (participant.userInfo) {
-                    const progress = calculateProgress(participant);
-                    
-                    const item = document.createElement('button');
-                    item.className = `list-group-item list-group-item-action d-flex justify-content-between align-items-center ${participant.userId === currentMonitoringUserId ? 'active' : ''}`;
-                    item.innerHTML = `
-                        <div>
-                            <strong>${participant.userInfo.name}</strong>
-                            <div class="text-muted small">${participant.userInfo.class} - ${participant.userInfo.group === 'highschool' ? '高中' : '初中'}</div>
-                        </div>
-                        <span class="badge ${participant.submitted ? 'bg-success' : 'bg-warning'} rounded-pill">
-                            ${participant.submitted ? '已完成' : progress}%
-                        </span>
-                    `;
-                    item.addEventListener('click', () => {
-                        currentMonitoringUserId = participant.userId;
-                        updateMonitorList(); // 重新渲染列表以更新active状态
-                        monitorParticipant(participant.userId);
-                    });
-                    
-                    monitorList.appendChild(item);
+                    participants.push(participant);
                 }
+            });
+            
+            // 按最后更新时间排序
+            participants.sort((a, b) => (b.lastUpdated || 0) - (a.lastUpdated || 0));
+            
+            participants.forEach(participant => {
+                const progress = calculateProgress(participant);
+                const isActive = participant.userId === currentMonitoringUserId;
+                
+                const item = document.createElement('button');
+                item.className = `list-group-item list-group-item-action d-flex justify-content-between align-items-center ${isActive ? 'active' : ''}`;
+                item.innerHTML = `
+                    <div>
+                        <strong>${participant.userInfo.name}</strong>
+                        <div class="text-muted small">
+                            ${participant.userInfo.class} - 
+                            ${participant.userInfo.group === 'highschool' ? '高中' : '初中'}
+                        </div>
+                    </div>
+                    <span class="badge ${participant.submitted ? 'bg-success' : 'bg-warning'} rounded-pill">
+                        ${participant.submitted ? '已完成' : progress}%
+                    </span>
+                `;
+
+                // 添加辅助函数
+function formatTime(timestamp) {
+    if (!timestamp) return '';
+    const now = Date.now();
+    const diff = now - timestamp;
+    const minutes = Math.floor(diff / 60000);
+    
+    if (minutes < 1) return '刚刚更新';
+    if (minutes < 60) return `${minutes}分钟前`;
+    
+    const date = new Date(timestamp);
+    return date.toLocaleTimeString();
+}
+                
+                item.addEventListener('click', () => {
+                    currentMonitoringUserId = participant.userId;
+                    updateMonitorList(); // 重新渲染以更新active状态
+                    monitorParticipant(participant.userId);
+                });
+                
+                monitorList.appendChild(item);
             });
         } else {
             monitorList.innerHTML = '<div class="list-group-item text-muted">暂无参赛者数据</div>';
@@ -2344,19 +2374,17 @@ function renderParticipantMonitorView(participant) {
 
 // 初始化监控功能
 function initMonitor() {
-    updateMonitorList();
-    
-    // 设置自动刷新
-    if (monitorInterval) clearInterval(monitorInterval);
-    monitorInterval = setInterval(updateMonitorList, 10000); // 每10秒刷新一次
-    
-    // 添加刷新按钮事件
-    document.getElementById('refreshMonitorBtn').addEventListener('click', () => {
+    // 替换原来的once('value')为on('value')实时监听
+    database.ref('userAnswers').on('value', snapshot => {
         updateMonitorList();
-        if (currentMonitoringUserId) {
-            monitorParticipant(currentMonitoringUserId);
-        }
     });
+    
+    // 设置自动刷新（可选保留）
+    if (monitorInterval) clearInterval(monitorInterval);
+    monitorInterval = setInterval(updateMonitorList, 10000);
+    
+    // 初始加载
+    updateMonitorList();
 }
         // 保存用户进度
         function saveUserProgress() {
@@ -2368,7 +2396,8 @@ function initMonitor() {
                 startTime: quizStartTime,
                 submitted: false,
                 userId: currentUser.uid,
-                userInfo: userInfo
+                userInfo: userInfo,
+                lastUpdated: firebase.database.ServerValue.TIMESTAMP // 添加时间戳
             };
             
             database.ref('userAnswers/' + currentUser.uid).set(progressData).catch(error => {
