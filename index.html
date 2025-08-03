@@ -1918,6 +1918,11 @@ function hideLoading() {
 
     submitConfirmModal.hide();
 
+    const answerInput = document.getElementById('shortAnswer');
+    if (answerInput) {
+        userAnswers[currentQuestionIndex].answerText = answerInput.value.trim();
+    }
+
     // 停止计时器
     clearInterval(quizTimer);
 
