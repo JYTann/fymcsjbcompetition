@@ -2622,6 +2622,11 @@ function updateQuizSettingsUI() {
         database.ref('userAnswers/' + userId).once('value'),
         database.ref('questions').once('value')
     ]).then(([participantSnapshot, questionsSnapshot]) => {
+        const rawQuestions = questionsSnapshot.val();
+const questions = {};
+Object.keys(rawQuestions).forEach(id => {
+    questions[id] = { id, ...rawQuestions[id] };
+});
         if (!participantSnapshot.exists()) {
             throw new Error('找不到参赛者数据');
         }
