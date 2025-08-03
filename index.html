@@ -38,6 +38,254 @@
         display: flex;
         flex-direction: column;
     }
+
+        /* 全局入场动画 */
+    body.app-loaded * {
+        animation-duration: 0.6s;
+        animation-fill-mode: both;
+    }
+    
+    /* 卡片弹跳入场 */
+    @keyframes bounceIn {
+        0% { transform: scale(0.95); opacity: 0; }
+        50% { transform: scale(1.05); }
+        100% { transform: scale(1); opacity: 1; }
+    }
+    
+    .card {
+        animation: bounceIn 0.6s both;
+        animation-delay: calc(var(--order) * 0.1s);
+    }
+    
+    /* 按钮波纹效果 */
+    @keyframes ripple {
+        to {
+            transform: scale(4);
+            opacity: 0;
+        }
+    }
+    
+    .btn {
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .btn:after {
+        content: "";
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 5px;
+        height: 5px;
+        background: rgba(255, 255, 255, 0.5);
+        opacity: 0;
+        border-radius: 100%;
+        transform: scale(1, 1) translate(-50%, -50%);
+        transform-origin: 50% 50%;
+    }
+    
+    .btn:focus:not(:active)::after {
+        animation: ripple 0.6s ease-out;
+    }
+    
+    /* 导航菜单项动画 */
+    .nav-item {
+        transform: translateY(10px);
+        opacity: 0;
+        animation: slideUp 0.5s forwards;
+        animation-delay: calc(0.2s + var(--order) * 0.1s);
+    }
+    
+    @keyframes slideUp {
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
+    
+    /* 题目卡片翻转效果 */
+    .question-card {
+        perspective: 1000px;
+    }
+    
+    .question-card:hover {
+        animation: flipInY 0.8s;
+    }
+    
+    @keyframes flipInY {
+        from {
+            transform: perspective(400px) rotate3d(0, 1, 0, 90deg);
+            opacity: 0;
+        }
+        40% {
+            transform: perspective(400px) rotate3d(0, 1, 0, -20deg);
+        }
+        60% {
+            transform: perspective(400px) rotate3d(0, 1, 0, 10deg);
+        }
+        80% {
+            transform: perspective(400px) rotate3d(0, 1, 0, -5deg);
+        }
+        to {
+            transform: perspective(400px);
+            opacity: 1;
+        }
+    }
+    
+    /* 选项脉冲动画 */
+    .option-item {
+        animation: fadeInRight 0.5s both;
+        animation-delay: calc(0.3s + var(--order) * 0.1s);
+    }
+    
+    @keyframes fadeInRight {
+        from {
+            opacity: 0;
+            transform: translateX(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+    
+    .option-item:hover {
+        animation: pulse 0.5s infinite alternate;
+    }
+    
+    @keyframes pulse {
+        to {
+            transform: translateX(8px) scale(1.02);
+        }
+    }
+    
+    /* 计时器抖动动画 */
+    .timer.text-danger {
+        animation: shake 0.5s infinite alternate;
+    }
+    
+    @keyframes shake {
+        0%, 100% { transform: translateX(0); }
+        20%, 60% { transform: translateX(-5px); }
+        40%, 80% { transform: translateX(5px); }
+    }
+    
+    /* 表格行高亮动画 */
+    .ranking-table tr {
+        transition: all 0.3s;
+    }
+    
+    .ranking-table tr:hover {
+        animation: rowHighlight 1.5s infinite alternate;
+    }
+    
+    @keyframes rowHighlight {
+        from {
+            background-color: #f0f7ff;
+        }
+        to {
+            background-color: #e1f0ff;
+        }
+    }
+    
+    /* 进度条流动效果 */
+    .progress-bar {
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .progress-bar::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(
+            90deg,
+            rgba(255, 255, 255, 0) 0%,
+            rgba(255, 255, 255, 0.3) 50%,
+            rgba(255, 255, 255, 0) 100%
+        );
+        animation: progressFlow 2s linear infinite;
+    }
+    
+    @keyframes progressFlow {
+        0% { transform: translateX(-100%); }
+        100% { transform: translateX(100%); }
+    }
+    
+    /* 模态框弹跳效果 */
+    .modal-content {
+        animation: modalEnter 0.4s;
+    }
+    
+    @keyframes modalEnter {
+        from {
+            transform: scale(0.8);
+            opacity: 0;
+        }
+        to {
+            transform: scale(1);
+            opacity: 1;
+        }
+    }
+    
+    /* 页面切换动画 */
+    .view-container {
+        position: relative;
+        min-height: 50vh;
+    }
+    
+    .view-container > div {
+        position: absolute;
+        width: 100%;
+        animation: viewFade 0.6s both;
+    }
+    
+    @keyframes viewFade {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    /* 加载旋转动画 */
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    
+    .spinner-border {
+        animation: spin 0.8s linear infinite;
+    }
+    
+    /* 徽章闪烁效果 */
+    .badge {
+        animation: badgePulse 2s infinite;
+    }
+    
+    @keyframes badgePulse {
+        0% { box-shadow: 0 0 0 0 rgba(0, 123, 255, 0.4); }
+        70% { box-shadow: 0 0 0 10px rgba(0, 123, 255, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(0, 123, 255, 0); }
+    }
+    
+    /* 响应式调整 */
+    @media (max-width: 768px) {
+        /* 移动端减少动画强度 */
+        .card, .nav-item, .option-item {
+            animation: none !important;
+        }
+        
+        .btn:after {
+            display: none;
+        }
+    }
     
     .navbar {
         background: linear-gradient(135deg, var(--primary-color), var(--dark-color));
