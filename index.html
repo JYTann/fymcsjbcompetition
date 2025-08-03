@@ -2829,7 +2829,10 @@ function saveParticipantScores(userId, questions, participantData) {
                 input.classList.add('is-invalid');
             } else {
                 input.classList.remove('is-invalid');
+                // 确保更新路径正确
                 updates[`userAnswers/${userId}/answers/${questionId}/score`] = score;
+                // 同时更新 isCorrect 状态
+                updates[`userAnswers/${userId}/answers/${questionId}/isCorrect`] = (score === question.points);
             }
         }
     });
@@ -2848,21 +2851,41 @@ function saveParticipantScores(userId, questions, participantData) {
     });
     updates[`userAnswers/${userId}/score`] = totalScore;
     
-    // 3. 计算正确/错误计数
-    const correctCount = Object.values(questions).reduce((count, q) => {
-        const answer = participantData.answers.find(a => a.questionId === q.id);
-        return count + (answer && answer.score === q.points ? 1 : 0);
-    }, 0);
+    // 3. 计算正确/错误计数 - 确保使用原始数据作为基础
+    const originalAnswers = participantData.answers || [];
+    let correctCount = 0;
+    let wrongCount = 0;
     
-    const wrongCount = Object.values(questions).reduce((count, q) => {
-        const answer = participantData.answers.find(a => a.questionId === q.id);
-        return count + (answer && answer.score !== undefined && answer.score < q.points ? 1 : 0);
-    }, 0);
+    Object.values(questions).forEach(q => {
+        const answer = originalAnswers.find(a => a.questionId === q.id);
+        if (!answer) return;
+        
+        // 如果这道题已经有新分数，使用新分数判断
+        if (updates[`userAnswers/${userId}/answers/${q.id}/score`] !== undefined) {
+            const newScore = updates[`userAnswers/${userId}/answers/${q.id}/score`];
+            if (newScore === q.points) correctCount++;
+            else if (newScore < q.points) wrongCount++;
+        } 
+        // 否则使用原始数据判断
+        else {
+            if (answer.isCorrect === true) correctCount++;
+            else if (answer.isCorrect === false) wrongCount++;
+        }
+    });
     
     updates[`userAnswers/${userId}/correctCount`] = correctCount;
     updates[`userAnswers/${userId}/wrongCount`] = wrongCount;
     
-    // 4. 执行批量更新
+    // 4. 确保保留原始数据中其他重要字段
+    if (participantData.startTime) {
+        updates[`userAnswers/${userId}/startTime`] = participantData.startTime;
+    }
+    if (participantData.endTime) {
+        updates[`userAnswers/${userId}/endTime`] = participantData.endTime;
+    }
+    updates[`userAnswers/${userId}/submitted`] = true;
+    
+    // 5. 执行批量更新
     database.ref().update(updates)
         .then(() => {
             hideLoading();
@@ -2875,6 +2898,8 @@ function saveParticipantScores(userId, questions, participantData) {
             }).then(() => {
                 // 重新加载数据以显示最新结果
                 viewParticipantAnswers(userId);
+                // 刷新成绩统计
+                updateResultsStatistics();
             });
         })
         .catch(error => {
