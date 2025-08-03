@@ -1849,7 +1849,7 @@ function initMonitor() {
         
         // 检查比赛状态
         function checkQuizStatus() {
-            database.ref('quiz/settings/status').on('value').then(snapshot => {
+            database.ref('quiz/settings/status').once('value').then(snapshot => {
                 const status = snapshot.val() || 'not_started';
                 
                 if (status === 'in_progress') {
