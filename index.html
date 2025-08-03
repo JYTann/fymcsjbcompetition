@@ -2861,29 +2861,25 @@ if (index !== -1) {
     
     // 3. 计算正确/错误计数 - 确保使用原始数据作为基础
     const originalAnswers = participantData.answers || [];
-    let correctCount = 0;
-    let wrongCount = 0;
-    
-    Object.values(questions).forEach(q => {
-        const answer = originalAnswers.find(a => a.questionId === q.id);
-        if (!answer) return;
-        
-        // 如果这道题已经有新分数，使用新分数判断
-        if (updates[`userAnswers/${userId}/answers/${q.id}/score`] !== undefined) {
-            const newScore = updates[`userAnswers/${userId}/answers/${q.id}/score`];
-            if (newScore === q.points) correctCount++;
-            else if (newScore < q.points) wrongCount++;
-        } 
-        // 否则使用原始数据判断
-        else {
-            if (answer.isCorrect === true) correctCount++;
-            else if (answer.isCorrect === false) wrongCount++;
-        }
-    });
-    
-    updates[`userAnswers/${userId}/correctCount`] = correctCount;
-    updates[`userAnswers/${userId}/wrongCount`] = wrongCount;
-    
+let correctCount = 0;
+let wrongCount = 0;
+
+Object.values(questions).forEach(q => {
+    const index = originalAnswers.findIndex(a => a.questionId === q.id);
+    if (index === -1) return;
+
+    const updateKey = `userAnswers/${userId}/answers/${index}/score`;
+    const score = updates[updateKey] !== undefined
+        ? updates[updateKey]
+        : originalAnswers[index].score || 0;
+
+    if (score === q.points) correctCount++;
+    else if (score > 0) wrongCount++;
+});
+
+updates[`userAnswers/${userId}/correctCount`] = correctCount;
+updates[`userAnswers/${userId}/wrongCount`] = wrongCount;
+
     // 4. 确保保留原始数据中其他重要字段
     if (participantData.startTime) {
         updates[`userAnswers/${userId}/startTime`] = participantData.startTime;
