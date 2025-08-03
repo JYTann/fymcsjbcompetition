@@ -1837,6 +1837,12 @@ function hideLoading() {
         
         // 显示上一题
        function showPreviousQuestion() {
+           // 保存当前题目的答题内容（问答题）
+    const answerInput = document.getElementById('shortAnswer');
+    if (answerInput) {
+        userAnswers[currentQuestionIndex].answerText = answerInput.value.trim();
+    }
+           
     if (currentQuestionIndex > 0) {
         currentQuestionIndex--;
         displayQuestion(currentQuestionIndex);
@@ -1846,9 +1852,15 @@ function hideLoading() {
         
         // 显示下一题
        function showNextQuestion() {
+    // 保存当前题目的答题内容（问答题）
+    const answerInput = document.getElementById('shortAnswer');
+    if (answerInput) {
+        userAnswers[currentQuestionIndex].answerText = answerInput.value.trim();
+    }
+
     if (currentQuestionIndex < quizData.questions.length - 1) {
-        currentQuestionIndex++; // ✅ 更新索引
-        displayQuestion(currentQuestionIndex); // ✅ 重新渲染题目
+        currentQuestionIndex++;
+        displayQuestion(currentQuestionIndex);
     }
 }
 
