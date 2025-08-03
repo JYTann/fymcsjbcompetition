@@ -2639,8 +2639,6 @@ Object.keys(rawQuestions).forEach(id => {
 
 
         const participantData = participantSnapshot.val();
-        const rawQuestions = questionsSnapshot.val();
-        const questions = Object.keys(rawQuestions).map(id => ({ id, ...rawQuestions[id] }));
         const answers = participantData.answers || [];
         const isAdmin = userInfo && userInfo.isAdmin;
 
