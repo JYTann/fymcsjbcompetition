@@ -489,7 +489,14 @@
     background-color: #fff3cd; /* 黄色 */
     border-left: 5px solid #ffc107;
 }
-            
+            .is-invalid {
+    border-color: #dc3545 !important;
+}
+
+.invalid-feedback {
+    color: #dc3545;
+    font-size: 0.875em;
+}
             .nav-tabs .nav-link {
                 padding: 10px 15px;
                 font-size: 0.9rem;
@@ -2780,13 +2787,14 @@ function updateQuizSettingsUI() {
             html: answersHTML,
             width: '800px',
             didOpen: () => {
-                const saveBtn = document.querySelector('.save-scores');
-                if (saveBtn) {
-                    saveBtn.addEventListener('click', () => {
-                        saveParticipantScores(userId, questions);
-                    });
-                }
-            }
+    const saveBtn = document.querySelector('.save-scores');
+    if (saveBtn) {
+        saveBtn.addEventListener('click', () => {
+            // 确保传递正确的参数
+            saveParticipantScores(userId, questions);
+        });
+    }
+}
         });
 
     }).catch(error => {
@@ -2807,49 +2815,66 @@ function saveParticipantScores(userId, questions) {
     
     const scoreInputs = document.querySelectorAll('.score-input');
     const updates = {};
+    let hasError = false;
     
+    // 1. 验证并收集更新数据
     scoreInputs.forEach(input => {
         const questionId = input.dataset.questionId;
+        const question = questions[questionId];
         const score = input.value.trim() === '' ? null : parseInt(input.value);
         
         if (!isNaN(score)) {
-            updates[`userAnswers/${userId}/answers/${questionId}/score`] = score;
+            if (score < 0 || score > question.points) {
+                hasError = true;
+                input.classList.add('is-invalid');
+            } else {
+                input.classList.remove('is-invalid');
+                updates[`userAnswers/${userId}/answers/${questionId}/score`] = score;
+            }
         }
     });
     
-    // 计算总分
+    if (hasError) {
+        hideLoading();
+        Swal.fire('错误', '部分分数超出允许范围（0-' + question.points + '），请检查', 'error');
+        return;
+    }
+    
+    // 2. 计算总分
     let totalScore = 0;
     scoreInputs.forEach(input => {
         const score = input.value.trim() === '' ? 0 : parseInt(input.value);
         if (!isNaN(score)) totalScore += score;
     });
-    
     updates[`userAnswers/${userId}/score`] = totalScore;
     
-    // 更新正确和错误计数
+    // 3. 计算正确/错误计数
     const correctCount = Object.values(questions).reduce((count, q) => {
         const answer = participantData.answers.find(a => a.questionId === q.id);
-        if (answer && answer.score === q.points) return count + 1;
-        return count;
+        return count + (answer && answer.score === q.points ? 1 : 0);
     }, 0);
     
     const wrongCount = Object.values(questions).reduce((count, q) => {
         const answer = participantData.answers.find(a => a.questionId === q.id);
-        if (answer && answer.score !== undefined && answer.score < q.points) return count + 1;
-        return count;
+        return count + (answer && answer.score !== undefined && answer.score < q.points ? 1 : 0);
     }, 0);
     
     updates[`userAnswers/${userId}/correctCount`] = correctCount;
     updates[`userAnswers/${userId}/wrongCount`] = wrongCount;
     
+    // 4. 执行批量更新
     database.ref().update(updates)
         .then(() => {
             hideLoading();
             Swal.fire({
+                position: 'center',
                 icon: 'success',
-                title: '保存成功',
-                text: '评分已成功保存',
-                timer: 2000
+                title: '评分已保存',
+                showConfirmButton: false,
+                timer: 1500
+            }).then(() => {
+                // 重新加载数据以显示最新结果
+                viewParticipantAnswers(userId);
             });
         })
         .catch(error => {
@@ -2858,7 +2883,8 @@ function saveParticipantScores(userId, questions) {
             Swal.fire({
                 icon: 'error',
                 title: '保存失败',
-                text: error.message
+                text: '错误: ' + error.message,
+                footer: '请检查网络连接后重试'
             });
         });
 }
