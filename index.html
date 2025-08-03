@@ -10,6 +10,7 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
     <style>
         :root {
             --primary-color: #2c3e50;
@@ -991,7 +992,7 @@
                                         <select class="form-select" id="exportFormat">
                                             <option value="csv">CSV</option>
                                             <option value="excel">Excel</option>
-                                            <option value="pdf">PDF</option>
+                                            <option value="pdf">PNG截图</option>
                                         </select>
                                     </div>
                                     <div class="mb-3">
@@ -4458,7 +4459,6 @@ function saveGeneratedPaper() {
         }
     });
 }
-
         
         // 显示导出确认
         function showExportConfirm() {
@@ -4506,7 +4506,7 @@ function saveGeneratedPaper() {
                         exportToCSV(filteredResults);
                     } else if (format === 'excel') {
                         exportToExcel(filteredResults);
-                    } else if (format === 'pdf') {
+                    } else if (format === 'png') {
                         exportToPDF(filteredResults);
                     }
                 } else {
@@ -4557,52 +4557,43 @@ function saveGeneratedPaper() {
             XLSX.writeFile(wb, `宽中电脑协会常识比赛成绩_${new Date().toISOString().slice(0, 10)}.xlsx`);
         }
         
-        // 导出为PDF
-        function exportToPDF(results) {
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
-            
-            // 标题
-            doc.setFontSize(18);
-            doc.text('宽柔中学电脑协会常识比赛成绩', 105, 15, { align: 'center' });
-            doc.setFontSize(12);
-            doc.text(`导出时间: ${new Date().toLocaleString()}`, 105, 22, { align: 'center' });
-            
-            // 表格数据
-            const columns = [
-                { header: '排名', dataKey: 'rank' },
-                { header: '姓名', dataKey: 'name' },
-                { header: '班级', dataKey: 'class' },
-                { header: '组别', dataKey: 'group' },
-                { header: '正确', dataKey: 'correct' },
-                { header: '错误', dataKey: 'wrong' },
-                { header: '得分', dataKey: 'score' },
-                { header: '用时(秒)', dataKey: 'time' }
-            ];
-            
-            const rows = results.map((result, index) => ({
-                rank: index + 1,
-                name: result.userInfo.name,
-                class: result.userInfo.class,
-                group: result.userInfo.group === 'highschool' ? '高中' : '初中',
-                correct: result.correctCount || 0,
-                wrong: result.wrongCount || 0,
-                score: result.score || 0,
-                time: result.endTime ? Math.floor((result.endTime - result.startTime) / 1000) : 0
-            }));
-            
-            doc.autoTable({
-                head: [columns.map(col => col.header)],
-                body: rows.map(row => columns.map(col => row[col.dataKey])),
-                startY: 30,
-                margin: { horizontal: 10 },
-                styles: { fontSize: 10, cellPadding: 2 },
-                headStyles: { fillColor: [52, 152, 219], textColor: 255, fontStyle: 'bold' },
-                alternateRowStyles: { fillColor: [240, 240, 240] }
-            });
-            
-            doc.save(`宽中电脑协会常识比赛成绩_${new Date().toISOString().slice(0, 10)}.pdf`);
+       // 导出为PNG
+function exportToPNG(results) {
+    // 获取要截图的元素
+    const element = document.getElementById('rankingTabContent');
+    
+    // 显示加载提示
+    Swal.fire({
+        title: '正在生成截图',
+        html: '请稍候...',
+        allowOutsideClick: false,
+        didOpen: () => {
+            Swal.showLoading();
         }
+    });
+
+    // 使用html2canvas生成截图
+    html2canvas(element, {
+        scale: 2, // 提高截图质量
+        logging: false,
+        useCORS: true,
+        allowTaint: true
+    }).then(canvas => {
+        // 关闭加载提示
+        Swal.close();
+        
+        // 将canvas转换为图片并下载
+        const imgData = canvas.toDataURL('image/png');
+        const link = document.createElement('a');
+        link.download = `宽中电脑协会常识比赛成绩_${new Date().toISOString().slice(0, 10)}.png`;
+        link.href = imgData;
+        link.click();
+        
+    }).catch(error => {
+        Swal.fire('错误', '生成截图失败: ' + error.message, 'error');
+        console.error("截图生成错误:", error);
+    });
+}
         
         // 生成ID
         function generateId() {
