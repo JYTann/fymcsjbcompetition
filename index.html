@@ -2836,8 +2836,11 @@ function saveParticipantScores(userId, questions, participantData) {
                 input.classList.add('is-invalid');
             } else {
                 input.classList.remove('is-invalid');
-                updates[`userAnswers/${userId}/answers/${questionId}/score`] = score;
-                updates[`userAnswers/${userId}/answers/${questionId}/isCorrect`] = (score === question.points);
+                const index = participantData.answers.findIndex(a => a.questionId === questionId);
+if (index !== -1) {
+    updates[`userAnswers/${userId}/answers/${index}/score`] = score;
+    updates[`userAnswers/${userId}/answers/${index}/isCorrect`] = (score === question.points);
+}
             }
         }
     });
