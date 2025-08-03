@@ -2637,18 +2637,18 @@ function initMonitor() {
 
     submitConfirmModal.hide();
 
-          // ✅ 防止没有保存最后一题
-try {
-    const currentQ = quizData.questions[currentQuestionIndex];
-    if (currentQ && (currentQ.type === 'short_answer' || currentQ.type === 'essay')) {
-        const answerInput = document.getElementById('shortAnswer');
-        if (answerInput) {
-            userAnswers[currentQuestionIndex].answerText = answerInput.value.trim();
+    // ✅ 防止没有保存最后一题
+    try {
+        const currentQ = quizData.questions[currentQuestionIndex];
+        if (currentQ && (currentQ.type === 'short_answer' || currentQ.type === 'essay')) {
+            const answerInput = document.getElementById('shortAnswer');
+            if (answerInput) {
+                userAnswers[currentQuestionIndex].answerText = answerInput.value.trim();
+            }
         }
+    } catch (e) {
+        console.warn('⚠️ 无法保存当前题答案:', e);
     }
-} catch (e) {
-    console.warn('⚠️ 无法保存当前题答案:', e);
-}
 
     const answerInput = document.getElementById('shortAnswer');
     if (answerInput) {
@@ -2714,7 +2714,6 @@ try {
         Swal.fire('错误', '提交答卷失败', 'error');
     });
 }
-
         
         // 计算得分
         function calculateScore() {
@@ -4739,14 +4738,14 @@ function sendQuizStartNotification() {
         
         function showQuizView() {
     // 检查比赛状态
-    database.ref('quiz/settings/status').once('value').then(snapshot => {
-        const status = snapshot.val() || 'not_started';
-        
-        if (status !== 'in_progress') {
-            Swal.fire('访问受限', '比赛尚未开始，您无法访问答题页面', 'warning');
-            showWelcomeView();
-            return;
-        }
+   database.ref('quiz/settings/status').once('value').then(snapshot => {
+    const status = snapshot.val() || 'not_started';
+    
+    if (status !== 'in_progress') {
+        Swal.fire('比赛已暂停', '管理员已暂停比赛，您无法继续答题', 'warning');
+        showWelcomeView();
+    }
+});
         
         welcomeView.classList.add('d-none');
         quizView.classList.remove('d-none');
