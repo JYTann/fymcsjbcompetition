@@ -2629,7 +2629,11 @@ function updateQuizSettingsUI() {
         if (!questionsSnapshot.exists()) {
             throw new Error('找不到题目数据');
         }
-
+        
+window.currentParticipantData = participantData;
+        window.currentParticipantId = userId;
+        window.currentQuestions = questions;
+        
         const participantData = participantSnapshot.val();
         const questions = questionsSnapshot.val();
         const answers = participantData.answers || [];
@@ -2773,28 +2777,26 @@ function updateQuizSettingsUI() {
         answersHTML += `</div>`;
 
         if (isAdmin && participantData.submitted) {
-            answersHTML += `
-                <div class="text-center mt-4">
-                    <button class="btn btn-primary save-scores">保存评分</button>
-                </div>
-            `;
-        }
-
-        hideLoading();
-
-        Swal.fire({
-            title: `${participantData.userInfo.name} 的答题详情`,
-            html: answersHTML,
-            width: '800px',
-            didOpen: () => {
-    const saveBtn = document.querySelector('.save-scores');
-    if (saveBtn) {
-        saveBtn.addEventListener('click', () => {
-            // 确保传递正确的参数
-            saveParticipantScores(userId, questions);
-        });
-    }
+    answersHTML += `
+        <div class="text-center mt-4">
+            <button class="btn btn-primary save-scores">保存评分</button>
+        </div>
+    `;
 }
+
+hideLoading();
+
+Swal.fire({
+    title: `${participantData.userInfo.name} 的答题详情`,
+    html: answersHTML,
+    width: '800px',
+    didOpen: () => {
+        const saveBtn = document.querySelector('.save-scores');
+        if (saveBtn) {
+            saveBtn.addEventListener('click', saveParticipantScores);
+        }
+    }
+});
         });
 
     }).catch(error => {
@@ -2810,12 +2812,17 @@ function updateQuizSettingsUI() {
 }
         
 // 修改 saveParticipantScores 函数
-function saveParticipantScores(userId, questions) {
+function saveParticipantScores() {
     showLoading('正在保存评分...');
     
     const scoreInputs = document.querySelectorAll('.score-input');
     const updates = {};
     let hasError = false;
+    
+    // Use the stored participant data
+    const participantData = window.currentParticipantData;
+    const userId = window.currentParticipantId;
+    const questions = window.currentQuestions;
     
     // 1. 验证并收集更新数据
     scoreInputs.forEach(input => {
