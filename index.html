@@ -890,6 +890,9 @@
                                             <th>状态</th>
                                             <th>答题进度</th>
                                             <th>操作</th>
+                                            <td>
+    <button class="btn btn-sm btn-success view-screen" data-id="${participant.userId}">查看屏幕</button>
+</td>
                                         </tr>
                                     </thead>
                                     <tbody id="participantListBody">
@@ -1732,6 +1735,49 @@ function hideLoading() {
                 quizTimerElement.classList.remove('text-danger');
             }
         }
+
+        // 全局变量
+let screenStreams = {}; // 存储所有参赛者的屏幕流
+
+// 在init函数中添加事件监听
+document.addEventListener('click', function(e) {
+    if (e.target.classList.contains('view-screen')) {
+        const userId = e.target.getAttribute('data-id');
+        requestScreenShare(userId);
+    }
+});
+
+// 请求屏幕共享
+function requestScreenShare(userId) {
+    // 这里应该向参赛者发送请求，实际实现需要信令服务器
+    Swal.fire({
+        title: '请求屏幕共享',
+        text: `正在请求 ${userId} 的屏幕共享...`,
+        allowOutsideClick: false,
+        didOpen: () => Swal.showLoading()
+    });
+    
+    // 模拟响应 - 实际应用中需要通过WebSocket或Firebase实时数据库实现
+    setTimeout(() => {
+        Swal.fire('成功', '已连接到参赛者屏幕', 'success');
+        // 这里应该显示视频元素
+    }, 2000);
+}
+
+// 参赛者端的屏幕共享代码
+function startScreenSharing() {
+    if (currentUser && !userInfo.isAdmin) {
+        // 参赛者端代码 - 实际应用中需要通过信令服务器实现
+        navigator.mediaDevices.getDisplayMedia({ video: true })
+            .then(stream => {
+                // 这里应该将流发送给管理员
+                console.log("屏幕共享已开始");
+            })
+            .catch(error => {
+                console.error("屏幕共享错误:", error);
+            });
+    }
+}
         
         // 显示题目
         function displayQuestion(index) {
