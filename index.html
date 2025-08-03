@@ -1918,6 +1918,19 @@ function hideLoading() {
 
     submitConfirmModal.hide();
 
+          // ✅ 防止没有保存最后一题
+try {
+    const currentQ = quizData.questions[currentQuestionIndex];
+    if (currentQ && (currentQ.type === 'short_answer' || currentQ.type === 'essay')) {
+        const answerInput = document.getElementById('shortAnswer');
+        if (answerInput) {
+            userAnswers[currentQuestionIndex].answerText = answerInput.value.trim();
+        }
+    }
+} catch (e) {
+    console.warn('⚠️ 无法保存当前题答案:', e);
+}
+
     const answerInput = document.getElementById('shortAnswer');
     if (answerInput) {
         userAnswers[currentQuestionIndex].answerText = answerInput.value.trim();
