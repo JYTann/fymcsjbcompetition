@@ -2249,6 +2249,103 @@ function monitorParticipant(userId) {
     });
 }
 
+        // 在考试开始前添加防作弊检测
+function startQuizWithAntiCheat() {
+    // 检查是否全屏
+    if (!document.fullscreenElement) {
+        Swal.fire({
+            title: '全屏模式',
+            text: '为了考试公平性，请进入全屏模式',
+            icon: 'warning',
+            confirmButtonText: '进入全屏',
+            allowOutsideClick: false
+        }).then(() => {
+            document.documentElement.requestFullscreen().catch(e => {
+                console.error("全屏失败:", e);
+                Swal.fire('错误', '无法进入全屏模式: ' + e.message, 'error');
+            });
+        });
+        return;
+    }
+    
+    // 检查是否切换标签页
+    let hidden, visibilityChange;
+    if (typeof document.hidden !== "undefined") {
+        hidden = "hidden";
+        visibilityChange = "visibilitychange";
+    } else if (typeof document.msHidden !== "undefined") {
+        hidden = "msHidden";
+        visibilityChange = "msvisibilitychange";
+    } else if (typeof document.webkitHidden !== "undefined") {
+        hidden = "webkitHidden";
+        visibilityChange = "webkitvisibilitychange";
+    }
+    
+    let tabSwitchCount = 0;
+    const maxTabSwitchAllowed = 3;
+    
+    function handleVisibilityChange() {
+        if (document[hidden]) {
+            tabSwitchCount++;
+            if (tabSwitchCount > maxTabSwitchAllowed) {
+                Swal.fire({
+                    title: '警告',
+                    text: `检测到多次切换标签页(${tabSwitchCount}次)，系统将自动提交答卷`,
+                    icon: 'error',
+                    confirmButtonText: '确定',
+                    allowOutsideClick: false
+                }).then(() => {
+                    submitQuiz();
+                });
+            } else {
+                Swal.fire({
+                    title: '注意',
+                    text: `请勿切换标签页！剩余警告次数: ${maxTabSwitchAllowed - tabSwitchCount}`,
+                    icon: 'warning',
+                    timer: 3000,
+                    timerProgressBar: true
+                });
+            }
+        }
+    }
+    
+    document.addEventListener(visibilityChange, handleVisibilityChange, false);
+    
+    // 禁止右键、复制等操作
+    function preventDefaultActions(e) {
+        if (e.keyCode === 123 || // F12
+            (e.ctrlKey && e.shiftKey && e.keyCode === 73) || // Ctrl+Shift+I
+            (e.ctrlKey && e.keyCode === 85) || // Ctrl+U
+            (e.ctrlKey && e.keyCode === 83) || // Ctrl+S
+            (e.ctrlKey && e.keyCode === 67) || // Ctrl+C
+            (e.ctrlKey && e.keyCode === 86) || // Ctrl+V
+            (e.ctrlKey && e.keyCode === 88) || // Ctrl+X
+            (e.metaKey && e.keyCode === 82)) { // Cmd+R (Mac)
+            e.preventDefault();
+            Swal.fire('警告', '此操作在考试期间被禁止', 'warning');
+        }
+    }
+    
+    document.addEventListener('keydown', preventDefaultActions);
+    document.addEventListener('contextmenu', e => e.preventDefault());
+    
+    // 开始考试
+    initializeUserQuiz();
+    
+    // 考试结束时清理事件监听
+    function cleanup() {
+        document.removeEventListener(visibilityChange, handleVisibilityChange);
+        document.removeEventListener('keydown', preventDefaultActions);
+        document.removeEventListener('contextmenu', e => e.preventDefault());
+    }
+    
+    // 监听考试结束
+    window.addEventListener('quizEnded', cleanup);
+}
+
+// 修改开始考试按钮事件
+document.getElementById('startQuizBtn').addEventListener('click', startQuizWithAntiCheat);
+        
 // 渲染参赛者监控视图
 function renderParticipantMonitorView(participant) {
     let html = `
