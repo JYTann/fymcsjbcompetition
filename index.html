@@ -1284,7 +1284,7 @@
         document.getElementById('questionType').addEventListener('change', function() {
     const type = this.value;
     const correctAnswerContainer = document.getElementById('correctAnswerContainer');
-
+    
     // 如果是问答题或申论题，显示参考答案输入框
     if (type === 'short_answer' || type === 'essay') {
         correctAnswerContainer.style.display = 'block';
@@ -3065,7 +3065,6 @@ function saveParticipantScores(userId, questions) {
         Swal.fire('错误', '加载题目失败: ' + error.message, 'error');
     });
 }
-
         
         // 取消编辑
         function cancelEditQuestion() {
@@ -3169,6 +3168,7 @@ function saveParticipantScores(userId, questions) {
     optionsContainer.innerHTML = '';
     correctAnswersContainer.innerHTML = '';
     updateQuestionTypeUI(); // 重新生成选项和正确答案区域
+    document.getElementById('correctAnswerText').value = '';
 }
 
         function loadQuestions() {
