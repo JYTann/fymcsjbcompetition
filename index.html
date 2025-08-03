@@ -13,36 +13,37 @@
     <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
     <style>
     :root {
-        --primary-color: #3498db; /* 更明亮的蓝色 */
-        --secondary-color: #2ecc71; /* 清新的绿色 */
-        --accent-color: #e74c3c; /* 保持原有强调色 */
-        --light-color: #f8f9fa;
+        --primary-color: #2c3e50; /* 恢复原来的主色 */
+        --secondary-color: #3498db; /* 恢复原来的次要色 */
+        --accent-color: #e74c3c; /* 保持原来的强调色 */
+        --light-color: #ecf0f1;
         --dark-color: #2c3e50;
         --success-color: #27ae60;
         --warning-color: #f39c12;
-        --info-color: #3498db;
-        --background-color: #f5f7fa; /* 更柔和的背景色 */
-        --card-shadow: 0 6px 15px rgba(0, 0, 0, 0.1); /* 更柔和的阴影 */
+        --info-color: #2980b9;
+        --background-color: #f8f9fa; /* 恢复原来的背景色 */
+        --card-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); /* 恢复原来的阴影 */
         --border-radius: 12px;
-        --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); /* 更平滑的过渡 */
-        --text-color: #34495e; /* 更易读的文本颜色 */
+        --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); /* 保持平滑的过渡 */
+        --text-color: #2c3e50; /* 恢复原来的文本颜色 */
     }
     
+    /* 以下代码保持不变，只颜色恢复为原来的 */
     body {
         font-family: 'Noto Sans SC', -apple-system, BlinkMacSystemFont, sans-serif;
         background-color: var(--background-color);
         color: var(--text-color);
-        line-height: 1.7; /* 增加行高提高可读性 */
+        line-height: 1.7;
         min-height: 100vh;
         display: flex;
         flex-direction: column;
     }
     
     .navbar {
-        background: linear-gradient(135deg, var(--primary-color), #2980b9);
+        background: linear-gradient(135deg, var(--primary-color), var(--dark-color));
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
         padding: 0.8rem 1.5rem;
-        backdrop-filter: blur(5px); /* 毛玻璃效果 */
+        backdrop-filter: blur(5px);
     }
     
     .navbar-brand {
@@ -52,12 +53,12 @@
         align-items: center;
         color: white;
         transition: var(--transition);
-        letter-spacing: 0.5px; /* 增加字母间距 */
+        letter-spacing: 0.5px;
     }
     
     .navbar-brand:hover {
         color: rgba(255, 255, 255, 0.9);
-        transform: translateX(3px); /* 悬停微动效果 */
+        transform: translateX(3px);
     }
     
     .btn {
@@ -83,37 +84,33 @@
     
     .btn-primary {
         background-color: var(--primary-color);
-        background-image: linear-gradient(to right, var(--primary-color), #2980b9);
     }
     
     .btn-primary:hover {
         background-color: #2980b9;
-        box-shadow: 0 8px 20px rgba(52, 152, 219, 0.3);
+        box-shadow: 0 8px 20px rgba(41, 128, 185, 0.3);
     }
     
     .btn-secondary {
-        background-color: #7f8c8d;
-        background-image: linear-gradient(to right, #7f8c8d, #95a5a6);
+        background-color: #6c757d;
     }
     
     .btn-success {
         background-color: var(--secondary-color);
-        background-image: linear-gradient(to right, var(--secondary-color), #27ae60);
     }
     
     .btn-success:hover {
         background-color: #27ae60;
-        box-shadow: 0 8px 20px rgba(46, 204, 113, 0.3);
+        box-shadow: 0 8px 20px rgba(39, 174, 96, 0.3);
     }
     
     .btn-danger {
         background-color: var(--accent-color);
-        background-image: linear-gradient(to right, var(--accent-color), #c0392b);
     }
     
     .btn-danger:hover {
         background-color: #c0392b;
-        box-shadow: 0 8px 20px rgba(231, 76, 60, 0.3);
+        box-shadow: 0 8px 20px rgba(192, 57, 43, 0.3);
     }
     
     .btn-outline-light {
@@ -216,7 +213,7 @@
         background-color: var(--primary-color);
         color: white;
         border-color: var(--primary-color);
-        box-shadow: 0 4px 10px rgba(52, 152, 219, 0.3);
+        box-shadow: 0 4px 10px rgba(44, 62, 80, 0.3);
     }
     
     .option-item.correct {
@@ -537,7 +534,7 @@
     }
     
     .result-details-item:hover {
-        background-color: rgba(52, 152, 219, 0.05);
+        background-color: rgba(44, 62, 80, 0.05);
         transform: translateX(5px);
     }
     
@@ -595,7 +592,7 @@
     
     .image-upload-container:hover {
         border-color: var(--primary-color);
-        background-color: rgba(52, 152, 219, 0.05);
+        background-color: rgba(44, 62, 80, 0.05);
         transform: translateY(-3px);
     }
     
@@ -669,7 +666,7 @@
     
     .form-control:focus, .form-select:focus {
         border-color: var(--primary-color);
-        box-shadow: 0 0 0 0.25rem rgba(52, 152, 219, 0.25);
+        box-shadow: 0 0 0 0.25rem rgba(44, 62, 80, 0.25);
     }
     
     .form-check-input:checked {
