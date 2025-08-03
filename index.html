@@ -3574,6 +3574,356 @@ updates[`userAnswers/${userId}/wrongCount`] = wrongCount;
             });
         });
 }
+
+        // 在管理员面板添加智能组卷功能
+function addSmartPaperGeneration() {
+    // 添加智能组卷标签页
+    const adminTabs = document.getElementById('adminTabs');
+    adminTabs.innerHTML += `
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="paper-tab" data-bs-toggle="tab" data-bs-target="#paper" type="button">智能组卷</button>
+        </li>
+    `;
+
+    // 添加智能组卷内容
+    const adminTabContent = document.getElementById('adminTabContent');
+    adminTabContent.innerHTML += `
+        <div class="tab-pane fade" id="paper" role="tabpanel">
+            <div class="card">
+                <div class="card-header">智能组卷系统</div>
+                <div class="card-body">
+                    <form id="paperForm">
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">试卷名称</label>
+                                <input type="text" class="form-control" id="paperName" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">试卷总分</label>
+                                <input type="number" class="form-control" id="paperTotalPoints" min="10" value="100" required>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">题目类型分布</label>
+                            <div class="row g-2">
+                                <div class="col-md-3">
+                                    <label class="form-label">单选题</label>
+                                    <input type="number" class="form-control question-dist" data-type="single" min="0" value="20">
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">多选题</label>
+                                    <input type="number" class="form-control question-dist" data-type="multiple" min="0" value="10">
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">问答题</label>
+                                    <input type="number" class="form-control question-dist" data-type="short_answer" min="0" value="5">
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">申论题</label>
+                                    <input type="number" class="form-control question-dist" data-type="essay" min="0" value="2">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">题目难度分布</label>
+                            <div class="row g-2">
+                                <div class="col-md-4">
+                                    <label class="form-label">简单题 (%)</label>
+                                    <input type="number" class="form-control difficulty-dist" data-level="easy" min="0" max="100" value="30">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">中等题 (%)</label>
+                                    <input type="number" class="form-control difficulty-dist" data-level="medium" min="0" max="100" value="50">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">难题 (%)</label>
+                                    <input type="number" class="form-control difficulty-dist" data-level="hard" min="0" max="100" value="20">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">知识点覆盖</label>
+                            <select class="form-select" id="paperCategories" multiple>
+                                <option value="general">通用知识</option>
+                                <option value="programming">编程</option>
+                                <option value="hardware">硬件</option>
+                                <option value="network">网络</option>
+                                <option value="security">安全</option>
+                                <option value="history">历史</option>
+                            </select>
+                        </div>
+                        
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary">生成试卷</button>
+                        </div>
+                    </form>
+                    
+                    <div class="mt-4" id="generatedPaperContainer" style="display:none;">
+                        <h5>生成的试卷</h5>
+                        <div class="table-responsive">
+                            <table class="table table-bordered" id="generatedPaperTable">
+                                <thead>
+                                    <tr>
+                                        <th>题号</th>
+                                        <th>题目内容</th>
+                                        <th>类型</th>
+                                        <th>分值</th>
+                                        <th>难度</th>
+                                        <th>操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                        <div class="d-flex justify-content-between mt-3">
+                            <button class="btn btn-secondary" id="regeneratePaperBtn">重新生成</button>
+                            <button class="btn btn-success" id="savePaperBtn">保存试卷</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    // 初始化多选下拉框
+    $('#paperCategories').select2({
+        placeholder: "选择知识点",
+        width: '100%'
+    });
+
+    // 表单提交事件
+    document.getElementById('paperForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        generatePaper();
+    });
+
+    document.getElementById('regeneratePaperBtn').addEventListener('click', generatePaper);
+    document.getElementById('savePaperBtn').addEventListener('click', saveGeneratedPaper);
+}
+
+// 生成试卷
+function generatePaper() {
+    const paperName = document.getElementById('paperName').value;
+    const totalPoints = parseInt(document.getElementById('paperTotalPoints').value);
+    
+    if (!paperName) {
+        Swal.fire('错误', '请输入试卷名称', 'error');
+        return;
+    }
+    
+    // 收集题目分布
+    const questionDistribution = {};
+    document.querySelectorAll('.question-dist').forEach(input => {
+        const type = input.getAttribute('data-type');
+        const count = parseInt(input.value);
+        if (count > 0) {
+            questionDistribution[type] = count;
+        }
+    });
+    
+    // 收集难度分布
+    const difficultyDistribution = {};
+    document.querySelectorAll('.difficulty-dist').forEach(input => {
+        const level = input.getAttribute('data-level');
+        const percentage = parseInt(input.value);
+        if (percentage > 0) {
+            difficultyDistribution[level] = percentage;
+        }
+    });
+    
+    // 收集知识点
+    const selectedCategories = Array.from(document.getElementById('paperCategories').selectedOptions)
+        .map(option => option.value);
+    
+    // 验证分布总和
+    const totalQuestions = Object.values(questionDistribution).reduce((sum, count) => sum + count, 0);
+    if (totalQuestions === 0) {
+        Swal.fire('错误', '请至少选择一种题目类型', 'error');
+        return;
+    }
+    
+    // 获取题库数据
+    database.ref('questions').once('value').then(snapshot => {
+        if (!snapshot.exists()) {
+            Swal.fire('错误', '题库中没有题目', 'error');
+            return;
+        }
+        
+        const allQuestions = Object.values(snapshot.val());
+        
+        // 按条件筛选题目
+        let filteredQuestions = allQuestions.filter(q => {
+            // 按类型筛选
+            if (!questionDistribution[q.type]) return false;
+            
+            // 按知识点筛选
+            if (selectedCategories.length > 0 && (!q.category || !selectedCategories.includes(q.category))) {
+                return false;
+            }
+            
+            return true;
+        });
+        
+        // 如果没有题目符合条件
+        if (filteredQuestions.length === 0) {
+            Swal.fire('错误', '没有题目符合筛选条件', 'error');
+            return;
+        }
+        
+        // 计算每种类型需要的题目数量
+        const requiredQuestions = {};
+        Object.entries(questionDistribution).forEach(([type, count]) => {
+            requiredQuestions[type] = count;
+        });
+        
+        // 随机选择题目
+        const selectedQuestions = [];
+        const usedQuestionIds = new Set();
+        
+        // 先尝试满足难度分布
+        const difficultyGroups = {
+            easy: filteredQuestions.filter(q => q.difficulty === 'easy'),
+            medium: filteredQuestions.filter(q => q.difficulty === 'medium'),
+            hard: filteredQuestions.filter(q => q.difficulty === 'hard')
+        };
+        
+        // 为每种难度选择题目
+        Object.entries(difficultyDistribution).forEach(([level, percentage]) => {
+            const targetCount = Math.round(totalQuestions * percentage / 100);
+            if (targetCount === 0) return;
+            
+            const availableQuestions = difficultyGroups[level] || [];
+            if (availableQuestions.length === 0) return;
+            
+            // 随机选择题目
+            const shuffled = [...availableQuestions].sort(() => 0.5 - Math.random());
+            let selected = 0;
+            
+            for (const question of shuffled) {
+                if (selected >= targetCount) break;
+                if (usedQuestionIds.has(question.id)) continue;
+                
+                // 检查是否还需要这种类型的题目
+                if (requiredQuestions[question.type] > 0) {
+                    selectedQuestions.push(question);
+                    usedQuestionIds.add(question.id);
+                    requiredQuestions[question.type]--;
+                    selected++;
+                }
+            }
+        });
+        
+        // 补充未满足的类型需求
+        Object.entries(requiredQuestions).forEach(([type, remaining]) => {
+            if (remaining <= 0) return;
+            
+            const availableQuestions = filteredQuestions.filter(q => 
+                q.type === type && !usedQuestionIds.has(q.id)
+            );
+            
+            if (availableQuestions.length === 0) return;
+            
+            // 随机选择题目
+            const shuffled = [...availableQuestions].sort(() => 0.5 - Math.random());
+            for (let i = 0; i < Math.min(remaining, shuffled.length); i++) {
+                selectedQuestions.push(shuffled[i]);
+                usedQuestionIds.add(shuffled[i].id);
+            }
+        });
+        
+        // 显示生成的试卷
+        displayGeneratedPaper(selectedQuestions);
+    });
+}
+
+// 显示生成的试卷
+function displayGeneratedPaper(questions) {
+    const container = document.getElementById('generatedPaperContainer');
+    const tableBody = document.querySelector('#generatedPaperTable tbody');
+    
+    tableBody.innerHTML = '';
+    
+    // 计算总分
+    const totalPoints = questions.reduce((sum, q) => sum + (q.points || 5), 0);
+    
+    questions.forEach((q, index) => {
+        const typeText = q.type === 'single' ? '单选' :
+                        q.type === 'multiple' ? '多选' :
+                        q.type === 'short_answer' ? '问答' : '申论';
+        
+        const difficultyText = q.difficulty === 'easy' ? '简单' :
+                             q.difficulty === 'medium' ? '中等' : '困难';
+        
+        tableBody.innerHTML += `
+            <tr>
+                <td>${index + 1}</td>
+                <td>${q.text.replace(/<[^>]+>/g, '').substring(0, 50)}${q.text.length > 50 ? '...' : ''}</td>
+                <td>${typeText}</td>
+                <td>${q.points || 5}</td>
+                <td>${difficultyText}</td>
+                <td>
+                    <button class="btn btn-sm btn-info view-question" data-id="${q.id}">查看</button>
+                    <button class="btn btn-sm btn-danger remove-question" data-index="${index}">移除</button>
+                </td>
+            </tr>
+        `;
+    });
+    
+    // 添加查看和移除事件
+    document.querySelectorAll('.view-question').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const questionId = this.getAttribute('data-id');
+            viewQuestionDetails(questionId);
+        });
+    });
+    
+    document.querySelectorAll('.remove-question').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const index = parseInt(this.getAttribute('data-index'));
+            removeQuestionFromPaper(index);
+        });
+    });
+    
+    container.style.display = 'block';
+}
+
+// 保存生成的试卷
+function saveGeneratedPaper() {
+    const paperName = document.getElementById('paperName').value;
+    const tableBody = document.querySelector('#generatedPaperTable tbody');
+    const questionIds = [];
+    
+    // 收集题目ID
+    tableBody.querySelectorAll('tr').forEach(row => {
+        const viewBtn = row.querySelector('.view-question');
+        if (viewBtn) {
+            questionIds.push(viewBtn.getAttribute('data-id'));
+        }
+    });
+    
+    if (questionIds.length === 0) {
+        Swal.fire('错误', '试卷中没有题目', 'error');
+        return;
+    }
+    
+    // 保存到数据库
+    const newPaperRef = database.ref('papers').push();
+    newPaperRef.set({
+        name: paperName,
+        questionIds: questionIds,
+        createdAt: new Date().getTime(),
+        createdBy: currentUser.uid
+    }).then(() => {
+        Swal.fire('成功', '试卷已保存', 'success');
+    }).catch(error => {
+        console.error("保存试卷失败:", error);
+        Swal.fire('错误', '保存试卷失败: ' + error.message, 'error');
+    });
+}
+
         
         // 添加新题目
         function addNewQuestion() {
