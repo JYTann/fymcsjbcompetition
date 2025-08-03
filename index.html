@@ -2630,11 +2630,11 @@ if (!questionsSnapshot.exists()) {
     throw new Error('找不到题目数据');
 }
 
-//const rawQuestions = questionsSnapshot.val() || {};
-//const questions = {};
-//Object.keys(rawQuestions).forEach(id => {
- //   questions[id] = { id, ...rawQuestions[id] };
-//});
+const rawQuestions = questionsSnapshot.val() || {};
+const questions = {};
+Object.keys(rawQuestions).forEach(id => {
+    questions[id] = { id, ...rawQuestions[id] };
+});
 
 
 
