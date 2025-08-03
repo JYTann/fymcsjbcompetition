@@ -2631,7 +2631,8 @@ function updateQuizSettingsUI() {
         }
 
         const participantData = participantSnapshot.val();
-        const questions = questionsSnapshot.val();
+        const rawQuestions = questionsSnapshot.val();
+        const questions = Object.keys(rawQuestions).map(id => ({ id, ...rawQuestions[id] }));
         const answers = participantData.answers || [];
         const isAdmin = userInfo && userInfo.isAdmin;
 
@@ -2830,16 +2831,16 @@ function saveParticipantScores(userId, questions, participantData) {
             } else {
                 input.classList.remove('is-invalid');
                 // 确保更新路径正确
-                updates[`userAnswers/${userId}/answers/${questionId}/score`] = score;
+                updates[`userAnswers/${userId}/answers/${index}/score`] = score;
                 // 同时更新 isCorrect 状态
-                updates[`userAnswers/${userId}/answers/${questionId}/isCorrect`] = (score === question.points);
+                updates[`userAnswers/${userId}/answers/${index}/isCorrect`] = (score === question.points);
             }
         }
     });
     
     if (hasError) {
         hideLoading();
-        Swal.fire('错误', '部分分数超出允许范围（0-' + question.points + '），请检查', 'error');
+        Swal.fire('错误', '部分分数超出允许范围（请检查红框处）', 'error');
         return;
     }
     
