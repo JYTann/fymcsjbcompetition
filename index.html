@@ -241,32 +241,6 @@
             margin-right: 10px;
             filter: brightness(0) invert(1);
         }
-
-        /* 确保错误状态可见 */
-.score-input.is-invalid {
-    border-color: #dc3545;
-    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' width='12' height='12' fill='none' stroke='%23dc3545'%3e%3ccircle cx='6' cy='6' r='4.5'/%3e%3cpath stroke-linejoin='round' d='M5.8 3.6h.4L6 6.5z'/%3e%3ccircle cx='6' cy='8.2' r='.6' fill='%23dc3545' stroke='none'/%3e%3c/svg%3e");
-    background-repeat: no-repeat;
-    background-position: right calc(0.375em + 0.1875rem) center;
-    background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
-}
-
-.score-input.is-invalid:focus {
-    border-color: #dc3545;
-    box-shadow: 0 0 0 0.25rem rgba(220, 53, 69, 0.25);
-}
-
-.invalid-feedback {
-    display: none;
-    width: 100%;
-    margin-top: 0.25rem;
-    font-size: 0.875em;
-    color: #dc3545;
-}
-
-.is-invalid ~ .invalid-feedback {
-    display: block;
-}
         
         .welcome-section {
             background: linear-gradient(135deg, var(--primary-color), var(--dark-color));
@@ -2641,33 +2615,24 @@ function updateQuizSettingsUI() {
             });
         }
         
-       async function viewParticipantAnswers(userId) {
-    try {
-        // 显示加载指示器
-        const loadingSwal = Swal.fire({
-            title: '加载中...',
-            html: '正在获取参赛者答题详情',
-            allowOutsideClick: false,
-            didOpen: () => Swal.showLoading()
-        });
-
-        // 并行获取参赛者数据和题目数据
-        const [participantSnapshot, questionsSnapshot] = await Promise.all([
-            database.ref(`userAnswers/${userId}`).once('value'),
-            database.ref('questions').once('value')
-        ]);
-
+       function viewParticipantAnswers(userId) {
+    showLoading('加载参赛者答题详情...');
+    
+    Promise.all([
+        database.ref('userAnswers/' + userId).once('value'),
+        database.ref('questions').once('value')
+    ]).then(([participantSnapshot, questionsSnapshot]) => {
         if (!participantSnapshot.exists()) {
             throw new Error('找不到参赛者数据');
         }
-
+        
         if (!questionsSnapshot.exists()) {
             throw new Error('找不到题目数据');
         }
 
         const participantData = participantSnapshot.val();
         const questions = questionsSnapshot.val();
-        const answers = participantData.answers || {};
+        const answers = participantData.answers || [];
         const isAdmin = userInfo && userInfo.isAdmin;
 
         // 验证数据完整性
@@ -2695,7 +2660,7 @@ function updateQuizSettingsUI() {
         Object.values(questions).forEach((question, index) => {
             if (!question.id) return;
             
-            const userAnswer = answers[question.id] || { 
+            const userAnswer = answers.find(a => a.questionId === question.id) || { 
                 selectedOptions: [], 
                 answerText: '', 
                 isCorrect: null,
@@ -2706,7 +2671,10 @@ function updateQuizSettingsUI() {
             const questionPoints = question.points || 0;
             const questionText = question.text || '题目内容缺失';
             
-            // 第2部分：题目头部显示
+            const questionScore = (questionType === 'short_answer' || questionType === 'essay') ?
+                (userAnswer.score !== undefined ? userAnswer.score : '未评分') :
+                (userAnswer.isCorrect ? questionPoints : 0);
+            
             answersHTML += `
                 <div class="question-card mb-4 p-3 border rounded">
                     <div class="question-header d-flex justify-content-between align-items-center mb-2">
@@ -2714,14 +2682,13 @@ function updateQuizSettingsUI() {
                         <span class="badge ${userAnswer.isCorrect ? 'bg-success' : userAnswer.isCorrect === false ? 'bg-danger' : 'bg-secondary'}">
                             ${userAnswer.isCorrect ? '正确' : userAnswer.isCorrect === false ? '错误' : '未作答'}
                             ${questionType !== 'short_answer' && questionType !== 'essay' ? 
-                              `: ${userAnswer.score || 0}/${questionPoints}分` : 
-                              `: ${userAnswer.score !== undefined ? `${userAnswer.score}/${questionPoints}分` : '未评分'}`}
+                              `: ${questionScore}/${questionPoints}分` : 
+                              `: ${questionScore}${typeof questionScore === 'number' ? `/${questionPoints}分` : ''}`}
                         </span>
                     </div>
                     <div class="question-content">${questionText}</div>
             `;
 
-            // 题目图片
             if (question.imageUrl) {
                 answersHTML += `
                     <div class="text-center my-3">
@@ -2730,7 +2697,6 @@ function updateQuizSettingsUI() {
                 `;
             }
 
-            // 选择题选项
             if (questionType === 'single' || questionType === 'multiple') {
                 answersHTML += `<div class="options-list mt-3">`;
                 
@@ -2743,11 +2709,9 @@ function updateQuizSettingsUI() {
                     const isCorrectOption = correctAnswers.includes(i);
                     
                     let optionClass = '';
-                    if (isCorrectOption && isSelected) {
+                    if (isCorrectOption) {
                         optionClass = 'correct';
-                    } else if (isCorrectOption && !isSelected) {
-                        optionClass = 'missed';
-                    } else if (!isCorrectOption && isSelected) {
+                    } else if (isSelected) {
                         optionClass = 'incorrect';
                     }
                     
@@ -2770,7 +2734,6 @@ function updateQuizSettingsUI() {
                     `;
                 }
             } else {
-                // 问答题/申论题
                 answersHTML += `
                     <div class="mt-3">
                         <h6>参赛者答案：</h6>
@@ -2791,7 +2754,6 @@ function updateQuizSettingsUI() {
                     `;
                 }
                 
-                // 第3部分：评分输入框（仅管理员可见）
                 if (isAdmin) {
                     answersHTML += `
                         <div class="mt-3">
@@ -2800,18 +2762,16 @@ function updateQuizSettingsUI() {
                                 value="${userAnswer.score !== undefined ? userAnswer.score : ''}" 
                                 data-question-id="${question.id}"
                                 ${participantData.submitted ? '' : 'disabled'}>
-                            <div class="invalid-feedback">请输入0-${questionPoints}之间的分数</div>
                         </div>
                     `;
                 }
             }
             
-            answersHTML += `</div>`; // 结束题目卡片
+            answersHTML += `</div>`;
         });
 
         answersHTML += `</div>`;
 
-        // 添加保存按钮（仅管理员）
         if (isAdmin && participantData.submitted) {
             answersHTML += `
                 <div class="text-center mt-4">
@@ -2820,28 +2780,25 @@ function updateQuizSettingsUI() {
             `;
         }
 
-        // 关闭加载指示器
-        loadingSwal.close();
+        hideLoading();
 
-        // 显示答题详情
-        const result = await Swal.fire({
+        Swal.fire({
             title: `${participantData.userInfo.name} 的答题详情`,
             html: answersHTML,
             width: '800px',
-            showConfirmButton: false,
-            willOpen: (modal) => {
-                // 添加保存按钮事件
-                const saveBtn = modal.querySelector('.save-scores');
-                if (saveBtn) {
-                    saveBtn.addEventListener('click', () => {
-                        saveParticipantScores(userId, questions, participantData);
-                    });
-                }
-            }
+            didOpen: () => {
+    const saveBtn = document.querySelector('.save-scores');
+    if (saveBtn) {
+        saveBtn.addEventListener('click', () => {
+            // 确保传递正确的参数
+            saveParticipantScores(userId, questions, participantData);
+        });
+    }
+}
         });
 
-    } catch (error) {
-        loadingSwal.close();
+    }).catch(error => {
+        hideLoading();
         console.error("查看参赛者答案错误:", error);
         Swal.fire({
             icon: 'error',
@@ -2849,120 +2806,112 @@ function updateQuizSettingsUI() {
             text: error.message,
             footer: '请检查数据是否存在或联系管理员'
         });
-    }
+    });
 }
         
 // 修改 saveParticipantScores 函数
-async function saveParticipantScores(userId, questions, participantData) {
+function saveParticipantScores(userId, questions, participantData) {
     showLoading('正在保存评分...');
     
-    try {
-        const scoreInputs = document.querySelectorAll('.score-input');
-        const updates = {};
-        let hasError = false;
+    const scoreInputs = document.querySelectorAll('.score-input');
+    const updates = {};
+    let hasError = false;
+    
+    // 1. 验证并收集更新数据
+    scoreInputs.forEach(input => {
+        const questionId = input.dataset.questionId;
+        const question = questions[questionId];
+        const score = input.value.trim() === '' ? null : parseInt(input.value);
         
-        // 1. 验证并收集更新数据
-        scoreInputs.forEach(input => {
-            const questionId = input.dataset.questionId;
-            const question = questions[questionId];
-            const score = input.value.trim() === '' ? null : parseInt(input.value);
-            
-            if (!isNaN(score)) {
-                if (score < 0 || score > question.points) {
-                    hasError = true;
-                    input.classList.add('is-invalid');
-                } else {
-                    input.classList.remove('is-invalid');
-                    // 确保使用正确的路径格式
-                    const answerPath = `answers/${questionId}`;
-                    updates[`userAnswers/${userId}/${answerPath}/score`] = score;
-                    updates[`userAnswers/${userId}/${answerPath}/isCorrect`] = score === question.points;
-                }
+        if (!isNaN(score)) {
+            if (score < 0 || score > question.points) {
+                hasError = true;
+                input.classList.add('is-invalid');
+            } else {
+                input.classList.remove('is-invalid');
+                // 确保更新路径正确
+                updates[`userAnswers/${userId}/answers/${questionId}/score`] = score;
+                // 同时更新 isCorrect 状态
+                updates[`userAnswers/${userId}/answers/${questionId}/isCorrect`] = (score === question.points);
             }
-        });
-        
-        if (hasError) {
-            throw new Error('部分分数超出允许范围');
         }
-        
-        // 2. 计算总分
-        let totalScore = 0;
-        let correctCount = 0;
-        let wrongCount = 0;
-        
-        // 获取当前所有答案
-        const answersRef = await database.ref(`userAnswers/${userId}/answers`).once('value');
-        const currentAnswers = answersRef.val() || {};
-        
-        // 3. 更新并计算统计
-        Object.keys(currentAnswers).forEach(questionId => {
-            const question = questions[questionId];
-            if (!question) return;
-            
-            // 如果有新分数，使用新分数
-            if (updates[`userAnswers/${userId}/answers/${questionId}/score`] !== undefined) {
-                const newScore = updates[`userAnswers/${userId}/answers/${questionId}/score`];
-                totalScore += newScore;
-                
-                if (newScore === question.points) {
-                    correctCount++;
-                } else if (newScore < question.points) {
-                    wrongCount++;
-                }
-            } 
-            // 否则使用原分数
-            else if (currentAnswers[questionId].score !== undefined) {
-                totalScore += currentAnswers[questionId].score;
-                
-                if (currentAnswers[questionId].isCorrect) {
-                    correctCount++;
-                } else if (currentAnswers[questionId].isCorrect === false) {
-                    wrongCount++;
-                }
-            }
-        });
-        
-        // 4. 更新统计信息
-        updates[`userAnswers/${userId}/score`] = totalScore;
-        updates[`userAnswers/${userId}/correctCount`] = correctCount;
-        updates[`userAnswers/${userId}/wrongCount`] = wrongCount;
-        
-        // 5. 保留必要字段
-        updates[`userAnswers/${userId}/submitted`] = true;
-        if (participantData.startTime) {
-            updates[`userAnswers/${userId}/startTime`] = participantData.startTime;
-        }
-        if (participantData.endTime) {
-            updates[`userAnswers/${userId}/endTime`] = participantData.endTime;
-        }
-        
-        // 6. 执行更新
-        await database.ref().update(updates);
-        
-        // 7. 刷新显示
+    });
+    
+    if (hasError) {
         hideLoading();
-        Swal.fire({
-            position: 'center',
-            icon: 'success',
-            title: '评分已保存',
-            showConfirmButton: false,
-            timer: 1500
-        });
-        
-        // 完全重新加载数据
-        await viewParticipantAnswers(userId);
-        updateResultsStatistics();
-        
-    } catch (error) {
-        hideLoading();
-        console.error("保存评分错误:", error);
-        Swal.fire({
-            icon: 'error',
-            title: '保存失败',
-            text: error.message || '保存评分时出错',
-            footer: '请检查数据后重试'
-        });
+        Swal.fire('错误', '部分分数超出允许范围（0-' + question.points + '），请检查', 'error');
+        return;
     }
+    
+    // 2. 计算总分
+    let totalScore = 0;
+    scoreInputs.forEach(input => {
+        const score = input.value.trim() === '' ? 0 : parseInt(input.value);
+        if (!isNaN(score)) totalScore += score;
+    });
+    updates[`userAnswers/${userId}/score`] = totalScore;
+    
+    // 3. 计算正确/错误计数 - 确保使用原始数据作为基础
+    const originalAnswers = participantData.answers || [];
+    let correctCount = 0;
+    let wrongCount = 0;
+    
+    Object.values(questions).forEach(q => {
+        const answer = originalAnswers.find(a => a.questionId === q.id);
+        if (!answer) return;
+        
+        // 如果这道题已经有新分数，使用新分数判断
+        if (updates[`userAnswers/${userId}/answers/${q.id}/score`] !== undefined) {
+            const newScore = updates[`userAnswers/${userId}/answers/${q.id}/score`];
+            if (newScore === q.points) correctCount++;
+            else if (newScore < q.points) wrongCount++;
+        } 
+        // 否则使用原始数据判断
+        else {
+            if (answer.isCorrect === true) correctCount++;
+            else if (answer.isCorrect === false) wrongCount++;
+        }
+    });
+    
+    updates[`userAnswers/${userId}/correctCount`] = correctCount;
+    updates[`userAnswers/${userId}/wrongCount`] = wrongCount;
+    
+    // 4. 确保保留原始数据中其他重要字段
+    if (participantData.startTime) {
+        updates[`userAnswers/${userId}/startTime`] = participantData.startTime;
+    }
+    if (participantData.endTime) {
+        updates[`userAnswers/${userId}/endTime`] = participantData.endTime;
+    }
+    updates[`userAnswers/${userId}/submitted`] = true;
+    
+    // 5. 执行批量更新
+    database.ref().update(updates)
+        .then(() => {
+            hideLoading();
+            Swal.fire({
+                position: 'center',
+                icon: 'success',
+                title: '评分已保存',
+                showConfirmButton: false,
+                timer: 1500
+            }).then(() => {
+                // 重新加载数据以显示最新结果
+                viewParticipantAnswers(userId);
+                // 刷新成绩统计
+                updateResultsStatistics();
+            });
+        })
+        .catch(error => {
+            hideLoading();
+            console.error("保存评分错误:", error);
+            Swal.fire({
+                icon: 'error',
+                title: '保存失败',
+                text: '错误: ' + error.message,
+                footer: '请检查网络连接后重试'
+            });
+        });
 }
         
         // 添加新题目
