@@ -103,34 +103,7 @@
         }
     }
     
-    /* 题目卡片翻转效果 */
-    .question-card {
-        perspective: 1000px;
-    }
     
-    .question-card:hover {
-        animation: flipInY 0.8s;
-    }
-    
-    @keyframes flipInY {
-        from {
-            transform: perspective(400px) rotate3d(0, 1, 0, 90deg);
-            opacity: 0;
-        }
-        40% {
-            transform: perspective(400px) rotate3d(0, 1, 0, -20deg);
-        }
-        60% {
-            transform: perspective(400px) rotate3d(0, 1, 0, 10deg);
-        }
-        80% {
-            transform: perspective(400px) rotate3d(0, 1, 0, -5deg);
-        }
-        to {
-            transform: perspective(400px);
-            opacity: 1;
-        }
-    }
     
     /* 选项脉冲动画 */
     .option-item {
