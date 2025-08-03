@@ -569,16 +569,6 @@
                     <i class="fab fa-google me-2"></i> 使用Google账号登录
                 </button>
             </div>
-
-            <div class="card mb-4">
-    <div class="card-header">比赛状态</div>
-    <div class="card-body">
-        <div id="quizStatusDisplay" class="alert alert-info">
-            正在获取比赛状态...
-        </div>
-        <div id="quizTimeInfo" class="small text-muted"></div>
-    </div>
-</div>
             
             <div class="row">
                 <div class="col-md-6">
@@ -1342,41 +1332,7 @@
         correctAnswerContainer.style.display = 'none';
     }
 });
-        function updateQuizStatusDisplayForParticipants() {
-    database.ref('quiz/settings').once('value').then(snapshot => {
-        if (snapshot.exists()) {
-            const settings = snapshot.val();
-            const statusDisplay = document.getElementById('quizStatusDisplay');
-            const timeInfo = document.getElementById('quizTimeInfo');
-            
-            switch(settings.status) {
-                case 'not_started':
-                    statusDisplay.className = 'alert alert-info';
-                    statusDisplay.textContent = '比赛尚未开始';
-                    if (settings.startTime) {
-                        const startTime = new Date(settings.startTime).toLocaleString();
-                        timeInfo.textContent = `预计开始时间: ${startTime}`;
-                    }
-                    break;
-                case 'in_progress':
-                    statusDisplay.className = 'alert alert-success';
-                    statusDisplay.textContent = '比赛进行中';
-                    if (settings.duration) {
-                        timeInfo.textContent = `比赛时长: ${settings.duration}分钟`;
-                    }
-                    break;
-                case 'paused':
-                    statusDisplay.className = 'alert alert-warning';
-                    statusDisplay.textContent = '比赛已暂停';
-                    break;
-                case 'ended':
-                    statusDisplay.className = 'alert alert-secondary';
-                    statusDisplay.textContent = '比赛已结束';
-                    break;
-            }
-        }
-    });
-}
+        
         // 初始化函数
         function init() {
             // 初始化富文本编辑器
@@ -1490,17 +1446,6 @@ imageUpload.addEventListener('change', function(e) {
             resetQuizBtn.addEventListener('click', resetQuiz);
             exportResultsBtn.addEventListener('click', showExportConfirm);
             confirmExportBtn.addEventListener('click', exportResults);
-
-            database.ref('quiz/settings/status').on('value', snapshot => {
-        const status = snapshot.val() || 'not_started';
-        
-        // 如果用户尝试在比赛未开始时访问答题页面
-        if (!userInfo?.isAdmin && status !== 'in_progress' && 
-            !quizView.classList.contains('d-none')) {
-            Swal.fire('比赛已暂停', '管理员已暂停比赛，您无法继续答题', 'warning');
-            showWelcomeView();
-        }
-    });
             
             // 监听认证状态变化
             auth.onAuthStateChanged(user => {
@@ -1520,8 +1465,6 @@ imageUpload.addEventListener('change', function(e) {
             
             // 从Firebase加载数据
             loadQuizData();
-            updateQuizStatusDisplayForParticipants();
-            setInterval(updateQuizStatusDisplayForParticipants, 60000);
         }
         
         // Google登录
@@ -1583,24 +1526,6 @@ imageUpload.addEventListener('change', function(e) {
                 if (snapshot.exists()) {
                     // 用户信息已存在
                     userInfo = snapshot.val();
-
-                     // 检查比赛状态
-            database.ref('quiz/settings/status').once('value').then(statusSnapshot => {
-                const status = statusSnapshot.val() || 'not_started';
-                
-                if (userInfo.isAdmin) {
-                    showAdminView();
-                } else if (status === 'in_progress') {
-                    checkUserQuizStatus();
-                } else if (status === 'ended') {
-                    showResultView();
-                    loadUserResults();
-                } else {
-                    showWelcomeView();
-                    Swal.fire('等待开始', '比赛尚未开始，请等待管理员开始比赛', 'info');
-                }
-            });
-        }
                     // 特殊处理管理员账户
                     if (currentUser.email === 'tanjunyuanfoonyew@gmail.com') {
                         userInfo.isAdmin = true;
@@ -1924,32 +1849,26 @@ function initMonitor() {
         
         // 检查比赛状态
         function checkQuizStatus() {
-    database.ref('quiz/settings/status').once('value').then(snapshot => {
-        const status = snapshot.val() || 'not_started';
-        
-        if (status === 'in_progress') {
-            // 比赛进行中，检查用户是否已完成
-            checkUserQuizStatus();
-        } else if (status === 'ended') {
-            // 比赛已结束，显示结果
-            showResultView();
-            loadUserResults();
-        } else {
-            // 比赛未开始或暂停
-            showWelcomeView();
-            Swal.fire({
-                title: '比赛尚未开始',
-                text: '管理员尚未开始比赛，请等待比赛开始通知',
-                icon: 'info',
-                confirmButtonText: '确定',
-                allowOutsideClick: false
+            database.ref('quiz/settings/status').once('value').then(snapshot => {
+                const status = snapshot.val() || 'not_started';
+                
+                if (status === 'in_progress') {
+                    // 比赛进行中，检查用户是否已完成
+                    checkUserQuizStatus();
+                } else if (status === 'ended') {
+                    // 比赛已结束，显示结果
+                    showResultView();
+                    loadUserResults();
+                } else {
+                    // 比赛未开始或暂停
+                    showWelcomeView();
+                    Swal.fire('提示', '比赛尚未开始，请等待管理员开始比赛', 'info');
+                }
+            }).catch(error => {
+                console.error("获取比赛状态错误:", error);
+                Swal.fire('错误', '获取比赛状态失败', 'error');
             });
         }
-    }).catch(error => {
-        console.error("获取比赛状态错误:", error);
-        Swal.fire('错误', '获取比赛状态失败', 'error');
-    });
-}
         
         async function checkUserQuizStatus() {
     try {
@@ -2013,16 +1932,6 @@ function hideLoading() {
         
         // 初始化用户答题
         function initializeUserQuiz() {
-
-            // 首先检查比赛状态
-    database.ref('quiz/settings/status').once('value').then(snapshot => {
-        const status = snapshot.val() || 'not_started';
-        
-        if (status !== 'in_progress') {
-            Swal.fire('无法开始', '比赛尚未开始，请等待管理员开始比赛', 'warning');
-            return;
-        }
-        
     // 确保题目数据已加载
     if (!quizData.questions || quizData.questions.length === 0) {
         Swal.fire('错误', '题目数据未加载，请稍后再试', 'error');
@@ -2107,15 +2016,6 @@ function hideLoading() {
         
         // 显示题目
         function displayQuestion(index) {
-
-             database.ref('quiz/settings/status').once('value').then(snapshot => {
-        const status = snapshot.val() || 'not_started';
-        
-        if (status !== 'in_progress') {
-            Swal.fire('比赛已结束', '比赛已结束或暂停，您无法继续答题', 'info');
-            showWelcomeView();
-            return;
-        }
     // 检查边界
     if (index < 0 || index >= quizData.questions.length) {
         console.error("无效的题目索引:", index);
@@ -2637,18 +2537,18 @@ function initMonitor() {
 
     submitConfirmModal.hide();
 
-    // ✅ 防止没有保存最后一题
-    try {
-        const currentQ = quizData.questions[currentQuestionIndex];
-        if (currentQ && (currentQ.type === 'short_answer' || currentQ.type === 'essay')) {
-            const answerInput = document.getElementById('shortAnswer');
-            if (answerInput) {
-                userAnswers[currentQuestionIndex].answerText = answerInput.value.trim();
-            }
+          // ✅ 防止没有保存最后一题
+try {
+    const currentQ = quizData.questions[currentQuestionIndex];
+    if (currentQ && (currentQ.type === 'short_answer' || currentQ.type === 'essay')) {
+        const answerInput = document.getElementById('shortAnswer');
+        if (answerInput) {
+            userAnswers[currentQuestionIndex].answerText = answerInput.value.trim();
         }
-    } catch (e) {
-        console.warn('⚠️ 无法保存当前题答案:', e);
     }
+} catch (e) {
+    console.warn('⚠️ 无法保存当前题答案:', e);
+}
 
     const answerInput = document.getElementById('shortAnswer');
     if (answerInput) {
@@ -2714,6 +2614,7 @@ function initMonitor() {
         Swal.fire('错误', '提交答卷失败', 'error');
     });
 }
+
         
         // 计算得分
         function calculateScore() {
@@ -4430,56 +4331,37 @@ function saveGeneratedPaper() {
         
         // 开始比赛
         function startQuiz() {
-    if (quizData.settings.status === 'in_progress') return;
-    
-    Swal.fire({
-        title: '确认开始比赛',
-        text: '您确定要开始比赛吗？开始后参赛者可以开始答题。',
-        icon: 'question',
-        showCancelButton: true,
-        confirmButtonText: '开始',
-        cancelButtonText: '取消'
-    }).then(result => {
-        if (result.isConfirmed) {
-            const settings = {
-                ...quizData.settings,
-                status: 'in_progress',
-                startTime: new Date().getTime()
-            };
+            if (quizData.settings.status === 'in_progress') return;
             
-            // 更新quizData
-            quizData.settings = settings;
-            
-            // 保存到Firebase
-            database.ref('quiz/settings').set(settings).then(() => {
-                Swal.fire({
-                    title: '比赛已开始',
-                    text: '参赛者现在可以开始答题了',
-                    icon: 'success',
-                    timer: 3000,
-                    timerProgressBar: true
-                });
-                updateQuizStatusDisplay('in_progress');
-                
-                // 发送通知给所有参赛者
-                sendQuizStartNotification();
-            }).catch(error => {
-                console.error("开始比赛错误:", error);
-                Swal.fire('错误', '开始比赛失败', 'error');
+            Swal.fire({
+                title: '确认开始比赛',
+                text: '您确定要开始比赛吗？开始后参赛者可以开始答题。',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: '开始',
+                cancelButtonText: '取消'
+            }).then(result => {
+                if (result.isConfirmed) {
+                    const settings = {
+                        ...quizData.settings,
+                        status: 'in_progress',
+                        startTime: new Date().getTime()
+                    };
+                    
+                    // 更新quizData
+                    quizData.settings = settings;
+                    
+                    // 保存到Firebase
+                    database.ref('quiz/settings').set(settings).then(() => {
+                        Swal.fire('成功', '比赛已开始', 'success');
+                        updateQuizStatusDisplay('in_progress');
+                    }).catch(error => {
+                        console.error("开始比赛错误:", error);
+                        Swal.fire('错误', '开始比赛失败', 'error');
+                    });
+                }
             });
         }
-    });
-}
-
-// 新增通知函数
-function sendQuizStartNotification() {
-    // 这里可以添加通知逻辑，比如：
-    // 1. 发送邮件通知
-    // 2. 推送浏览器通知
-    // 3. 在数据库中设置标志让前端轮询检查
-    
-    console.log("比赛开始通知已发送");
-}
         
         // 暂停比赛
         function pauseQuiz() {
@@ -4737,23 +4619,12 @@ function sendQuizStartNotification() {
         }
         
         function showQuizView() {
-    // 检查比赛状态
-   database.ref('quiz/settings/status').once('value').then(snapshot => {
-    const status = snapshot.val() || 'not_started';
-    
-    if (status !== 'in_progress') {
-        Swal.fire('比赛已暂停', '管理员已暂停比赛，您无法继续答题', 'warning');
-        showWelcomeView();
-    }
-});
-        
-        welcomeView.classList.add('d-none');
-        quizView.classList.remove('d-none');
-        resultView.classList.add('d-none');
-        rankingView.classList.add('d-none');
-        adminView.classList.add('d-none');
-    });
-}
+            welcomeView.classList.add('d-none');
+            quizView.classList.remove('d-none');
+            resultView.classList.add('d-none');
+            rankingView.classList.add('d-none');
+            adminView.classList.add('d-none');
+        }
         
         function showResultView() {
             welcomeView.classList.add('d-none');
