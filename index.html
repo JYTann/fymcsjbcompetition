@@ -2791,7 +2791,7 @@ function updateQuizSettingsUI() {
     if (saveBtn) {
         saveBtn.addEventListener('click', () => {
             // 确保传递正确的参数
-            saveParticipantScores(userId, questions);
+            saveParticipantScores(userId, questions, participantData);
         });
     }
 }
@@ -2810,7 +2810,7 @@ function updateQuizSettingsUI() {
 }
         
 // 修改 saveParticipantScores 函数
-function saveParticipantScores(userId, questions) {
+function saveParticipantScores(userId, questions, participantData) {
     showLoading('正在保存评分...');
     
     const scoreInputs = document.querySelectorAll('.score-input');
