@@ -3965,6 +3965,15 @@ function saveParticipantScores(userId, questions, participantData) {
 if (index !== -1) {
     updates[`userAnswers/${userId}/answers/${index}/score`] = score;
     updates[`userAnswers/${userId}/answers/${index}/isCorrect`] = (score === question.points);
+    updates[`userAnswers/${userId}/answers/${index}/isGraded`] = true;
+updates[`userAnswers/${userId}/answers/${index}/isAnswered`] = true;
+
+// 补充答案（如果已存在）
+const originalAnswer = participantData.answers[index]?.answer || participantData.answers[index]?.answerText || '';
+if (originalAnswer) {
+    updates[`userAnswers/${userId}/answers/${index}/answer`] = originalAnswer;
+}
+
 }
             }
         }
