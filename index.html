@@ -3125,10 +3125,17 @@ try {
         
         // 计算总分
         function calculateTotalScore() {
-            return userAnswers.reduce((total, answer, index) => {
-                return total + (answer.isCorrect ? quizData.questions[index].points : 0);
-            }, 0);
+    return userAnswers.reduce((total, answer, index) => {
+        const question = quizData.questions[index];
+        if (!question) return total;
+
+        if (question.type === 'short_answer' || question.type === 'essay') {
+            return total + (typeof answer.score === 'number' ? answer.score : 0);
         }
+        return total + (answer.isCorrect ? question.points : 0);
+    }, 0);
+}
+
         
        function displayResults() {
 
