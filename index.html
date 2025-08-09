@@ -64,6 +64,34 @@
             opacity: 0;
         }
     }
+
+        /* 查询结果样式 */
+.result-container {
+    background-color: #f8f9fa;
+    border-radius: var(--border-radius);
+    padding: 1.5rem;
+    border-left: 4px solid var(--primary-color);
+}
+
+#resultCheckSuccess {
+    background-color: #d4edda;
+    border-color: #c3e6cb;
+    color: #155724;
+}
+
+#resultCheckInfo {
+    background-color: #d1ecf1;
+    border-color: #bee5eb;
+    color: #0c5460;
+}
+
+#resultCheckSuccess h4, #resultCheckInfo h4 {
+    margin-bottom: 1rem;
+}
+
+#resultCheckSuccess i, #resultCheckInfo i {
+    margin-right: 10px;
+}
     
     .btn {
         position: relative;
@@ -1004,6 +1032,9 @@
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+    <button class="btn btn-outline-light" id="checkResultBtn">查询结果</button>
+</li>
                     <li class="nav-item" id="loginNavItem">
                         <button class="btn btn-outline-light" id="loginButton">登录</button>
                     </li>
@@ -1073,6 +1104,42 @@
                 </div>
             </div>
         </div>
+        <div id="resultCheckView" class="d-none">
+    <div class="card">
+        <div class="card-header">
+            <h2 class="section-title">查询比赛结果</h2>
+        </div>
+        <div class="card-body">
+            <form id="resultCheckForm">
+                <div class="mb-3">
+                    <label for="checkName" class="form-label">姓名</label>
+                    <input type="text" class="form-control" id="checkName" required>
+                </div>
+                <div class="mb-3">
+                    <label for="checkClass" class="form-label">班级</label>
+                    <input type="text" class="form-control" id="checkClass" required>
+                </div>
+                <div class="mb-3">
+                    <label for="checkStudentId" class="form-label">学号</label>
+                    <input type="text" class="form-control" id="checkStudentId" required>
+                </div>
+                <button type="submit" class="btn btn-primary w-100">查询</button>
+            </form>
+            
+            <div class="result-container mt-4 d-none" id="resultCheckContainer">
+                <h3 class="text-center">查询结果</h3>
+                <div class="alert alert-success" id="resultCheckSuccess" style="display: none;">
+                    <h4><i class="fas fa-trophy"></i> 恭喜您已晋级/获奖！</h4>
+                    <p id="resultCheckDetails"></p>
+                </div>
+                <div class="alert alert-info" id="resultCheckInfo" style="display: none;">
+                    <h4><i class="fas fa-info-circle"></i> 查询结果</h4>
+                    <p id="resultCheckMessage"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
         <!-- 参赛者答题界面 -->
         <div id="quizView" class="d-none">
@@ -1914,7 +1981,9 @@ imageUpload.addEventListener('change', function(e) {
             resetQuizBtn.addEventListener('click', resetQuiz);
             exportResultsBtn.addEventListener('click', showExportConfirm);
             confirmExportBtn.addEventListener('click', exportResults);
-            
+            // 添加事件监听
+document.getElementById('checkResultBtn').addEventListener('click', showResultCheckView);
+document.getElementById('resultCheckForm').addEventListener('submit', checkResult);
             // 监听认证状态变化
             auth.onAuthStateChanged(user => {
                 if (user) {
@@ -1934,7 +2003,93 @@ imageUpload.addEventListener('change', function(e) {
             // 从Firebase加载数据
             loadQuizData();
         }
+        function showResultCheckView() {
+    welcomeView.classList.add('d-none');
+    quizView.classList.add('d-none');
+    resultView.classList.add('d-none');
+    rankingView.classList.add('d-none');
+    adminView.classList.add('d-none');
+    resultCheckView.classList.remove('d-none');
+    
+    // 清空之前的结果
+    document.getElementById('resultCheckContainer').classList.add('d-none');
+    document.getElementById('resultCheckSuccess').style.display = 'none';
+    document.getElementById('resultCheckInfo').style.display = 'none';
+}
+
+        function checkResult(e) {
+    e.preventDefault();
+    
+    const name = document.getElementById('checkName').value.trim();
+    const className = document.getElementById('checkClass').value.trim();
+    const studentId = document.getElementById('checkStudentId').value.trim();
+    
+    if (!name || !className || !studentId) {
+        Swal.fire('错误', '请填写所有查询信息', 'error');
+        return;
+    }
+    
+    // 显示加载状态
+    const resultContainer = document.getElementById('resultCheckContainer');
+    resultContainer.classList.add('d-none');
+    const loadingSwal = Swal.fire({
+        title: '查询中',
+        html: '正在查询您的比赛结果...',
+        allowOutsideClick: false,
+        didOpen: () => {
+            Swal.showLoading();
+        }
+    });
+    
+    // 查询数据库中的晋级/获奖名单
+    database.ref('awards').once('value').then(snapshot => {
+        loadingSwal.close();
+        resultContainer.classList.remove('d-none');
         
+        const successDiv = document.getElementById('resultCheckSuccess');
+        const infoDiv = document.getElementById('resultCheckInfo');
+        const detailsP = document.getElementById('resultCheckDetails');
+        const messageP = document.getElementById('resultCheckMessage');
+        
+        if (snapshot.exists()) {
+            const awards = snapshot.val();
+            let found = false;
+            
+            // 检查是否在晋级/获奖名单中
+            for (const key in awards) {
+                const award = awards[key];
+                if (award.name === name && award.class === className && award.studentId === studentId) {
+                    found = true;
+                    successDiv.style.display = 'block';
+                    infoDiv.style.display = 'none';
+                    
+                    let details = `班级: ${award.class}<br>`;
+                    details += `组别: ${award.group === 'highschool' ? '高中组' : '初中组'}<br>`;
+                    details += `奖项: ${award.award}<br>`;
+                    details += `得分: ${award.score || '无'}<br>`;
+                    details += `排名: ${award.rank || '无'}`;
+                    
+                    detailsP.innerHTML = details;
+                    break;
+                }
+            }
+            
+            if (!found) {
+                successDiv.style.display = 'none';
+                infoDiv.style.display = 'block';
+                messageP.textContent = '很遗憾，您目前不在晋级/获奖名单中。请继续努力！';
+            }
+        } else {
+            successDiv.style.display = 'none';
+            infoDiv.style.display = 'block';
+            messageP.textContent = '目前还没有公布晋级/获奖名单，请稍后再查询。';
+        }
+    }).catch(error => {
+        loadingSwal.close();
+        console.error("查询结果错误:", error);
+        Swal.fire('错误', '查询结果失败: ' + error.message, 'error');
+    });
+}
         // Google登录
         function signInWithGoogle() {
             const provider = new firebase.auth.GoogleAuthProvider();
