@@ -3039,8 +3039,21 @@ try {
                 selected.length === correct.length &&
                 selected.every((v, i) => v === correct[i])
             );
-        } else {
-            answer.isCorrect = null; // 主观题默认不评分
+        } else if (question.type === 'short_answer' || question.type === 'essay') {
+            // 问答题/申论题自动评分
+            if (question.correctAnswerText && answer.answerText) {
+                // 简单比较答案是否包含关键词（可根据需求调整）
+                const correctKeywords = question.correctAnswerText.toLowerCase().split(/\s+/);
+                const userAnswer = answer.answerText.toLowerCase();
+                
+                // 如果用户答案包含所有关键词，则视为正确
+                answer.isCorrect = correctKeywords.every(keyword => 
+                    keyword.length > 3 && userAnswer.includes(keyword)
+                );
+                
+                // 根据是否正确设置分数
+                answer.score = answer.isCorrect ? question.points : 0;
+            }
         }
     });
 
@@ -3138,24 +3151,25 @@ try {
 
         
        function displayResults() {
+    // 修复 userAnswers 中的数据缺失（比如管理员只是查看）
+    userAnswers = userAnswers.map((ua, index) => {
+        const question = quizData.questions[index];
+        if (!ua || typeof ua !== 'object') return {
+            questionId: question?.id || null,
+            selectedOptions: [],
+            answerText: '',
+            isCorrect: null,
+            score: 0
+        };
 
-           // 修复 userAnswers 中的数据缺失（比如管理员只是查看）
-userAnswers = userAnswers.map((ua, index) => {
-    const question = quizData.questions[index];
-    if (!ua || typeof ua !== 'object') return {
-        questionId: question?.id || null,
-        selectedOptions: [],
-        answerText: '',
-        isCorrect: null
-    };
-
-    return {
-        questionId: ua.questionId || question?.id || null,
-        selectedOptions: Array.isArray(ua.selectedOptions) ? ua.selectedOptions : [],
-        answerText: typeof ua.answerText === 'string' ? ua.answerText : '',
-        isCorrect: typeof ua.isCorrect === 'boolean' ? ua.isCorrect : null
-    };
-});
+        return {
+            questionId: ua.questionId || question?.id || null,
+            selectedOptions: Array.isArray(ua.selectedOptions) ? ua.selectedOptions : [],
+            answerText: typeof ua.answerText === 'string' ? ua.answerText : '',
+            isCorrect: typeof ua.isCorrect === 'boolean' ? ua.isCorrect : null,
+            score: typeof ua.score === 'number' ? ua.score : 0
+        };
+    });
 
     // 确保 userAnswers 是一个数组
     if (!Array.isArray(userAnswers)) {
@@ -3197,12 +3211,15 @@ userAnswers = userAnswers.map((ua, index) => {
         const answerText = typeof userAnswer.answerText === 'string' ? userAnswer.answerText : '';
         const options = Array.isArray(question.options) ? question.options : [];
         const correctAnswers = Array.isArray(question.correctAnswers) ? question.correctAnswers : [];
+        const questionScore = userAnswer.score || 0;
 
         resultsHTML += `
             <div class="question-card mb-4">
                 <h4>题目 ${index + 1} (${question.points}分) 
                     <span class="badge ${isCorrect === true ? 'bg-success' : isCorrect === false ? 'bg-danger' : 'bg-secondary'}">
                         ${isCorrect === true ? '正确' : isCorrect === false ? '错误' : '未作答'}
+                        ${question.type === 'short_answer' || question.type === 'essay' ? 
+                          `: ${questionScore}/${question.points}分` : ''}
                     </span>
                 </h4>
                 <div class="question-content">${question.text || ''}</div>
@@ -3224,14 +3241,13 @@ userAnswers = userAnswers.map((ua, index) => {
                 const isCorrectOption = correctAnswers.includes(i);
 
                 let optionClass = '';
-
-if (isCorrectOption && isSelected) {
-    optionClass = 'correct'; // 用户选了正确答案 ✅
-} else if (isCorrectOption && !isSelected) {
-    optionClass = 'missed'; // 正确但没选 🟨
-} else if (!isCorrectOption && isSelected) {
-    optionClass = 'incorrect'; // 用户选错了 ❌
-} // 否则就是没选错也不是答案，保持默认
+                if (isCorrectOption && isSelected) {
+                    optionClass = 'correct'; // 用户选了正确答案 ✅
+                } else if (isCorrectOption && !isSelected) {
+                    optionClass = 'missed'; // 正确但没选 🟨
+                } else if (!isCorrectOption && isSelected) {
+                    optionClass = 'incorrect'; // 用户选错了 ❌
+                }
 
                 resultsHTML += `
                     <div class="option-item ${optionClass}">
@@ -3261,12 +3277,28 @@ if (isCorrectOption && isSelected) {
                 </div>
             `;
 
-            if (isCorrect === false) {
+            // 显示参考答案（无论是否正确）
+            if (question.correctAnswerText) {
                 resultsHTML += `
                     <div class="mt-3">
                         <h5>参考答案：</h5>
                         <div class="p-3 bg-light rounded">
-                            ${question.correctAnswerText || '<span class="text-muted">暂无参考答案</span>'}
+                            ${question.correctAnswerText}
+                        </div>
+                    </div>
+                `;
+            }
+
+            // 显示评分详情（如果是问答题/申论题）
+            if (question.type === 'short_answer' || question.type === 'essay') {
+                resultsHTML += `
+                    <div class="mt-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span>得分：${questionScore}/${question.points}</span>
+                            ${isCorrect !== null ? 
+                              `<span class="text-${isCorrect ? 'success' : 'danger'}">
+                                ${isCorrect ? '答案正确' : '答案不正确'}
+                              </span>` : ''}
                         </div>
                     </div>
                 `;
@@ -3281,7 +3313,6 @@ if (isCorrectOption && isSelected) {
     // 加载排名信息
     loadRankingData();
 }
-
         
         // 加载用户结果
         async function loadUserResults() {
