@@ -13,33 +13,22 @@
     <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
     <style>
     :root {
-        --primary-color: #2c3e50; /* 恢复原来的主色 */
-        --secondary-color: #3498db; /* 恢复原来的次要色 */
-        --accent-color: #e74c3c; /* 保持原来的强调色 */
+        --primary-color: #2c3e50;
+        --secondary-color: #3498db;
+        --accent-color: #e74c3c;
         --light-color: #ecf0f1;
         --dark-color: #2c3e50;
         --success-color: #27ae60;
         --warning-color: #f39c12;
         --info-color: #2980b9;
-        --background-color: #f8f9fa; /* 恢复原来的背景色 */
-        --card-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); /* 恢复原来的阴影 */
+        --background-color: #f8f9fa;
+        --card-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
         --border-radius: 12px;
-        --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); /* 保持平滑的过渡 */
-        --text-color: #2c3e50; /* 恢复原来的文本颜色 */
+        --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        --text-color: #2c3e50;
     }
     
-    /* 以下代码保持不变，只颜色恢复为原来的 */
-    body {
-        font-family: 'Noto Sans SC', -apple-system, BlinkMacSystemFont, sans-serif;
-        background-color: var(--background-color);
-        color: var(--text-color);
-        line-height: 1.7;
-        min-height: 100vh;
-        display: flex;
-        flex-direction: column;
-    }
-
-        /* 全局入场动画 */
+    /* 全局入场动画 */
     body.app-loaded * {
         animation-duration: 0.6s;
         animation-fill-mode: both;
@@ -51,6 +40,762 @@
         50% { transform: scale(1.05); }
         100% { transform: scale(1); opacity: 1; }
     }
+    
+    .card {
+        animation: bounceIn 0.6s both;
+        animation-delay: calc(var(--order) * 0.1s);
+    }
+    
+    /* 按钮波纹效果 */
+    @keyframes ripple {
+        to {
+            transform: scale(4);
+            opacity: 0;
+        }
+    }
+
+    /* 查询结果样式 */
+    .result-container {
+        background-color: #f8f9fa;
+        border-radius: var(--border-radius);
+        padding: 1.5rem;
+        border-left: 4px solid var(--primary-color);
+    }
+
+    #resultCheckSuccess {
+        background-color: #d4edda;
+        border-color: #c3e6cb;
+        color: #155724;
+    }
+
+    #resultCheckInfo {
+        background-color: #d1ecf1;
+        border-color: #bee5eb;
+        color: #0c5460;
+    }
+
+    #resultCheckSuccess h4, #resultCheckInfo h4 {
+        margin-bottom: 1rem;
+    }
+
+    #resultCheckSuccess i, #resultCheckInfo i {
+        margin-right: 10px;
+    }
+    
+    .btn {
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .btn:after {
+        content: "";
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 5px;
+        height: 5px;
+        background: rgba(255, 255, 255, 0.5);
+        opacity: 0;
+        border-radius: 100%;
+        transform: scale(1, 1) translate(-50%, -50%);
+        transform-origin: 50% 50%;
+    }
+    
+    .btn:focus:not(:active)::after {
+        animation: ripple 0.6s ease-out;
+    }
+    
+    /* 导航菜单项动画 */
+    .nav-item {
+        transform: translateY(10px);
+        opacity: 0;
+        animation: slideUp 0.5s forwards;
+        animation-delay: calc(0.2s + var(--order) * 0.1s);
+    }
+    
+    @keyframes slideUp {
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
+    
+    /* 选项脉冲动画 */
+    .option-item {
+        animation: fadeInRight 0.5s both;
+        animation-delay: calc(0.3s + var(--order) * 0.1s);
+    }
+    
+    @keyframes fadeInRight {
+        from {
+            opacity: 0;
+            transform: translateX(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+    
+    .option-item:hover {
+        animation: pulse 0.5s infinite alternate;
+    }
+    
+    @keyframes pulse {
+        to {
+            transform: translateX(8px) scale(1.02);
+        }
+    }
+    
+    /* 计时器抖动动画 */
+    .timer.text-danger {
+        animation: shake 0.5s infinite alternate;
+    }
+    
+    @keyframes shake {
+        0%, 100% { transform: translateX(0); }
+        20%, 60% { transform: translateX(-5px); }
+        40%, 80% { transform: translateX(5px); }
+    }
+    
+    /* 表格行高亮动画 */
+    .ranking-table tr {
+        transition: all 0.3s;
+    }
+    
+    .ranking-table tr:hover {
+        animation: rowHighlight 1.5s infinite alternate;
+    }
+    
+    @keyframes rowHighlight {
+        from {
+            background-color: #f0f7ff;
+        }
+        to {
+            background-color: #e1f0ff;
+        }
+    }
+    
+    /* 进度条流动效果 */
+    .progress-bar {
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .progress-bar::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(
+            90deg,
+            rgba(255, 255, 255, 0) 0%,
+            rgba(255, 255, 255, 0.3) 50%,
+            rgba(255, 255, 255, 0) 100%
+        );
+        animation: progressFlow 2s linear infinite;
+    }
+    
+    @keyframes progressFlow {
+        0% { transform: translateX(-100%); }
+        100% { transform: translateX(100%); }
+    }
+    
+    /* 模态框弹跳效果 */
+    .modal-content {
+        animation: modalEnter 0.4s;
+    }
+    
+    @keyframes modalEnter {
+        from {
+            transform: scale(0.8);
+            opacity: 0;
+        }
+        to {
+            transform: scale(1);
+            opacity: 1;
+        }
+    }
+    
+    /* 页面切换动画 */
+    .view-container {
+        position: relative;
+        min-height: 50vh;
+    }
+    
+    .view-container > div {
+        position: absolute;
+        width: 100%;
+        animation: viewFade 0.6s both;
+    }
+    
+    @keyframes viewFade {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    /* 加载旋转动画 */
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    
+    .spinner-border {
+        animation: spin 0.8s linear infinite;
+    }
+    
+    /* 徽章闪烁效果 */
+    .badge {
+        animation: badgePulse 2s infinite;
+    }
+    
+    @keyframes badgePulse {
+        0% { box-shadow: 0 0 0 0 rgba(0, 123, 255, 0.4); }
+        70% { box-shadow: 0 0 0 10px rgba(0, 123, 255, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(0, 123, 255, 0); }
+    }
+    
+    /* 响应式调整 */
+    @media (max-width: 768px) {
+        /* 移动端减少动画强度 */
+        .card, .nav-item, .option-item {
+            animation: none !important;
+        }
+        
+        .btn:after {
+            display: none;
+        }
+    }
+    
+    .navbar {
+        background: linear-gradient(135deg, var(--primary-color), var(--dark-color));
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        padding: 0.8rem 1.5rem;
+        backdrop-filter: blur(5px);
+    }
+    
+    .navbar-brand {
+        font-weight: 700;
+        font-size: 1.5rem;
+        display: flex;
+        align-items: center;
+        color: white;
+        transition: var(--transition);
+        letter-spacing: 0.5px;
+    }
+    
+    .navbar-brand:hover {
+        color: rgba(255, 255, 255, 0.9);
+        transform: translateX(3px);
+    }
+    
+    .btn {
+        border-radius: var(--border-radius);
+        padding: 10px 20px;
+        font-weight: 600;
+        transition: var(--transition);
+        border: none;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        letter-spacing: 0.5px;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 15px rgba(0, 0, 0, 0.15);
+    }
+    
+    .btn:active {
+        transform: translateY(1px);
+    }
+    
+    .btn-primary {
+        background-color: var(--primary-color);
+    }
+    
+    .btn-primary:hover {
+        background-color: #2980b9;
+        box-shadow: 0 8px 20px rgba(41, 128, 185, 0.3);
+    }
+    
+    .btn-secondary {
+        background-color: #6c757d;
+    }
+    
+    .btn-success {
+        background-color: var(--secondary-color);
+    }
+    
+    .btn-success:hover {
+        background-color: #27ae60;
+        box-shadow: 0 8px 20px rgba(39, 174, 96, 0.3);
+    }
+    
+    .btn-danger {
+        background-color: var(--accent-color);
+    }
+    
+    .btn-danger:hover {
+        background-color: #c0392b;
+        box-shadow: 0 8px 20px rgba(192, 57, 43, 0.3);
+    }
+    
+    .btn-outline-light {
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        background-color: transparent;
+        color: white;
+        position: relative;
+        z-index: 1;
+    }
+    
+    .btn-outline-light:hover {
+        background-color: rgba(255, 255, 255, 0.15);
+        border-color: rgba(255, 255, 255, 0.5);
+        color: white;
+    }
+    
+    .btn-outline-light::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 0;
+        height: 100%;
+        background-color: rgba(255, 255, 255, 0.2);
+        transition: var(--transition);
+        z-index: -1;
+    }
+    
+    .btn-outline-light:hover::before {
+        width: 100%;
+    }
+    
+    .card {
+        border: none;
+        border-radius: var(--border-radius);
+        box-shadow: var(--card-shadow);
+        margin-bottom: 24px;
+        transition: var(--transition);
+        overflow: hidden;
+        background-color: white;
+        border-top: 3px solid var(--primary-color);
+    }
+    
+    .card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
+    }
+    
+    .card-header {
+        background: linear-gradient(135deg, var(--primary-color), var(--info-color));
+        color: white;
+        border-radius: var(--border-radius) var(--border-radius) 0 0 !important;
+        font-weight: 600;
+        padding: 1rem 1.5rem;
+        border-bottom: none;
+        letter-spacing: 0.5px;
+    }
+    
+    .question-card {
+        background-color: white;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        border-radius: var(--border-radius);
+        box-shadow: var(--card-shadow);
+        animation: fadeIn 0.5s ease forwards;
+        border-left: 4px solid var(--primary-color);
+        transition: var(--transition);
+    }
+    
+    .question-card:hover {
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.12);
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .option-item {
+        padding: 12px 20px;
+        margin: 10px 0;
+        background-color: white;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: var(--transition);
+        border: 1px solid #e0e0e0;
+        font-weight: 500;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .option-item:hover {
+        background-color: #f8fafc;
+        border-color: var(--primary-color);
+        transform: translateX(8px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+    }
+    
+    .option-item.selected {
+        background-color: var(--primary-color);
+        color: white;
+        border-color: var(--primary-color);
+        box-shadow: 0 4px 10px rgba(44, 62, 80, 0.3);
+    }
+    
+    .option-item.correct {
+        background-color: #d4edda;
+        border-left: 5px solid #28a745;
+        color: #155724;
+    }
+    
+    .option-item.incorrect {
+        background-color: #f8d7da;
+        border-left: 5px solid #dc3545;
+        color: #721c24;
+    }
+    
+    .option-item.missed {
+        background-color: #fff3cd;
+        border-left: 5px solid #ffc107;
+        color: #856404;
+    }
+    
+    .timer {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: var(--accent-color);
+        text-align: center;
+        margin: 20px 0;
+        padding: 12px 24px;
+        background-color: white;
+        border-radius: var(--border-radius);
+        box-shadow: var(--card-shadow);
+        display: inline-block;
+        border: 2px solid #f1f1f1;
+        transition: var(--transition);
+    }
+    
+    .timer.text-danger {
+        animation: pulse 1s infinite;
+    }
+    
+    @keyframes pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+        100% { transform: scale(1); }
+    }
+    
+    .ranking-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        border-radius: var(--border-radius);
+        overflow: hidden;
+    }
+    
+    .ranking-table th, .ranking-table td {
+        padding: 12px 15px;
+        text-align: left;
+        border-bottom: 1px solid #e0e0e0;
+        transition: var(--transition);
+    }
+    
+    .ranking-table th {
+        background-color: var(--primary-color);
+        color: white;
+        font-weight: 600;
+        position: sticky;
+        top: 0;
+    }
+    
+    .ranking-table tr:nth-child(even) {
+        background-color: #f8f9fa;
+    }
+    
+    .ranking-table tr:hover {
+        background-color: #f0f7ff;
+        transform: translateX(3px);
+    }
+    
+    .first-place {
+        background-color: #e8f5e9 !important;
+    }
+    
+    .second-place {
+        background-color: #e3f2fd !important;
+    }
+    
+    .third-place {
+        background-color: #fce4ec !important;
+    }
+    
+    .logo {
+        height: 40px;
+        margin-right: 10px;
+        filter: brightness(0) invert(1);
+        transition: var(--transition);
+    }
+    
+    .logo:hover {
+        transform: rotate(10deg);
+    }
+    
+    .welcome-section {
+        background: linear-gradient(135deg, var(--primary-color), var(--dark-color));
+        color: white;
+        padding: 5rem 0;
+        border-radius: var(--border-radius);
+        margin-bottom: 2.5rem;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .welcome-section::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url('https://i.postimg.cc/qqV3NyJB/logo-01.png') no-repeat;
+        background-size: 30%;
+        background-position: right bottom;
+        opacity: 0.05;
+        animation: float 6s ease-in-out infinite;
+    }
+    
+    @keyframes float {
+        0% { transform: translateY(0px); }
+        50% { transform: translateY(-20px); }
+        100% { transform: translateY(0px); }
+    }
+    
+    .welcome-section h1 {
+        font-weight: 800;
+        margin-bottom: 1.5rem;
+        font-size: 2.8rem;
+        position: relative;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        animation: fadeInDown 0.8s ease;
+    }
+    
+    @keyframes fadeInDown {
+        from { opacity: 0; transform: translateY(-30px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .section-title {
+        color: var(--dark-color);
+        font-weight: 700;
+        margin-bottom: 1.5rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 3px solid var(--primary-color);
+        font-size: 1.8rem;
+        position: relative;
+        display: inline-block;
+    }
+    
+    .section-title::after {
+        content: '';
+        position: absolute;
+        bottom: -3px;
+        left: 0;
+        width: 50px;
+        height: 3px;
+        background-color: var(--secondary-color);
+        animation: underlineExpand 0.5s ease-out forwards;
+    }
+    
+    @keyframes underlineExpand {
+        from { width: 0; }
+        to { width: 50px; }
+    }
+    
+    .tab-content {
+        padding: 1.5rem;
+        background-color: white;
+        border-radius: 0 0 var(--border-radius) var(--border-radius);
+        box-shadow: var(--card-shadow);
+        border: 1px solid #e0e0e0;
+        border-top: none;
+        transition: var(--transition);
+    }
+    
+    .nav-tabs {
+        border-bottom: 2px solid #e0e0e0;
+    }
+    
+    .nav-tabs .nav-link {
+        color: var(--dark-color);
+        font-weight: 600;
+        border-radius: var(--border-radius) var(--border-radius) 0 0 !important;
+        padding: 12px 24px;
+        transition: var(--transition);
+        border: none;
+        margin-right: 5px;
+        background-color: #f8f9fa;
+        position: relative;
+    }
+    
+    .nav-tabs .nav-link:hover {
+        border-color: transparent;
+        background-color: #e9ecef;
+        transform: translateY(-2px);
+    }
+    
+    .nav-tabs .nav-link.active {
+        color: white;
+        font-weight: 700;
+        background-color: var(--primary-color);
+        border-bottom: none;
+        box-shadow: 0 -4px 8px rgba(0, 0, 0, 0.1);
+    }
+    
+    .nav-tabs .nav-link.active::after {
+        content: '';
+        position: absolute;
+        bottom: -2px;
+        left: 0;
+        width: 100%;
+        height: 2px;
+        background-color: var(--primary-color);
+    }
+    
+    .progress {
+        height: 12px;
+        margin-bottom: 1.5rem;
+        border-radius: 6px;
+        background-color: #e9ecef;
+        box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+        overflow: visible;
+    }
+    
+    .progress-bar {
+        background-color: var(--primary-color);
+        border-radius: 6px;
+        transition: width 0.6s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .progress-bar::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(90deg, 
+            rgba(255,255,255,0) 0%, 
+            rgba(255,255,255,0.3) 50%, 
+            rgba(255,255,255,0) 100%);
+        animation: progressShine 2s infinite;
+    }
+    
+    @keyframes progressShine {
+        0% { transform: translateX(-100%); }
+        100% { transform: translateX(100%); }
+    }
+    
+    .result-summary {
+        text-align: center;
+        padding: 2.5rem;
+        background-color: white;
+        border-radius: var(--border-radius);
+        box-shadow: var(--card-shadow);
+        margin-bottom: 2.5rem;
+        border-top: 5px solid var(--primary-color);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .result-summary::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 5px;
+        background: linear-gradient(90deg, var(--primary-color), var(--secondary-color), var(--accent-color));
+    }
+    
+    .result-score {
+        font-size: 4rem;
+        font-weight: 800;
+        color: var(--primary-color);
+        margin: 1.5rem 0;
+        text-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
+        position: relative;
+        display: inline-block;
+    }
+    
+    .result-score::after {
+        content: '';
+        position: absolute;
+        bottom: -10px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 50%;
+        height: 3px;
+        background: linear-gradient(90deg, transparent, var(--primary-color), transparent);
+    }
+    
+    .result-details {
+        text-align: left;
+        margin-top: 1.5rem;
+        background-color: #f8f9fa;
+        padding: 1.5rem;
+        border-radius: var(--border-radius);
+        border-left: 3px solid var(--primary-color);
+    }
+    
+    .result-details-item {
+        padding: 12px 0;
+        border-bottom: 1px solid #eee;
+        display: flex;
+        justify-content: space-between;
+        font-weight: 500;
+        transition: var(--transition);
+    }
+    
+    .result-details-item:hover {
+        background-color: rgba(44, 62, 80, 0.05);
+        transform: translateX(5px);
+    }
+    
+    .result-details-item:last-child {
+        border-bottom: none;
+    }
+    
+    .footer {
+        background: linear-gradient(135deg, var(--dark-color), var(--primary-color));
+        color: white;
+        padding: 2rem 0;
+        margin-top: auto;
+        text-align: center;
+        position: relative;
+    }
+    
+    .footer::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 3px;
+        background: linear-gradient(90deg, var(--primary-color), var(--secondary-color), var(--accent-color));
+       }
     
     .card {
         animation: bounceIn 0.6s both;
