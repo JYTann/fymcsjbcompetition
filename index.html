@@ -811,6 +811,144 @@ body {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
+/* 防作弊系统样式 */
+.anti-cheat-alert {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+    color: white;
+    padding: 15px;
+    text-align: center;
+    z-index: 9999;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    animation: alertPulse 2s infinite;
+}
+
+.anti-cheat-warning {
+    background: linear-gradient(135deg, #ff9ff3, #f368e0);
+}
+
+.anti-cheat-info {
+    background: linear-gradient(135deg, #48dbfb, #0abde3);
+}
+
+@keyframes alertPulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.8; }
+    100% { opacity: 1; }
+}
+
+.cheat-detection-panel {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: var(--border-radius);
+    padding: 15px;
+    box-shadow: var(--card-shadow);
+    z-index: 9998;
+    backdrop-filter: blur(10px);
+    border-left: 4px solid var(--warning-color);
+    min-width: 250px;
+}
+
+.cheat-detection-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #eee;
+}
+
+.cheat-detection-item:last-child {
+    margin-bottom: 0;
+    padding-bottom: 0;
+    border-bottom: none;
+}
+
+.cheat-status {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    margin-right: 8px;
+}
+
+.cheat-status.safe {
+    background-color: var(--success-color);
+}
+
+.cheat-status.warning {
+    background-color: var(--warning-color);
+}
+
+.cheat-status.danger {
+    background-color: var(--accent-color);
+    animation: pulse 1s infinite;
+}
+
+.warning-counter {
+    background-color: var(--accent-color);
+    color: white;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.fullscreen-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.9);
+    color: white;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    text-align: center;
+    padding: 20px;
+}
+
+.fullscreen-overlay h2 {
+    font-size: 2rem;
+    margin-bottom: 20px;
+}
+
+.fullscreen-overlay p {
+    font-size: 1.2rem;
+    margin-bottom: 30px;
+    max-width: 600px;
+}
+
+/* 禁用文本选择 */
+.no-select {
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+/* 禁用右键菜单 */
+.no-context-menu {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
 /* 查询结果样式 */
 .result-container {
   background: linear-gradient(135deg, #f8f9fa, #e9ecef);
@@ -873,6 +1011,67 @@ body {
 </style>
 </head>
 <body>
+    <!-- 在body开始标签后添加 -->
+<div id="antiCheatAlert" class="anti-cheat-alert d-none">
+    <i class="fas fa-exclamation-triangle me-2"></i>
+    <span id="alertMessage">检测到可疑行为！请立即返回考试界面。</span>
+</div>
+
+<div id="cheatDetectionPanel" class="cheat-detection-panel d-none">
+    <h5 class="mb-3"><i class="fas fa-shield-alt me-2"></i>防作弊监控</h5>
+    
+    <div class="cheat-detection-item">
+        <div>
+            <span class="cheat-status safe" id="tabStatus"></span>
+            <span>标签页状态</span>
+        </div>
+        <span id="tabStatusText">正常</span>
+    </div>
+    
+    <div class="cheat-detection-item">
+        <div>
+            <span class="cheat-status safe" id="fullscreenStatus"></span>
+            <span>全屏状态</span>
+        </div>
+        <span id="fullscreenStatusText">正常</span>
+    </div>
+    
+    <div class="cheat-detection-item">
+        <div>
+            <span class="cheat-status safe" id="keyboardStatus"></span>
+            <span>键盘状态</span>
+        </div>
+        <span id="keyboardStatusText">正常</span>
+    </div>
+    
+    <div class="cheat-detection-item">
+        <div>
+            <span class="cheat-status safe" id="mouseStatus"></span>
+            <span>鼠标状态</span>
+        </div>
+        <span id="mouseStatusText">正常</span>
+    </div>
+    
+    <div class="cheat-detection-item">
+        <div>
+            <i class="fas fa-exclamation-triangle me-2 text-warning"></i>
+            <span>警告次数</span>
+        </div>
+        <span class="warning-counter" id="warningCount">0</span>
+    </div>
+</div>
+
+<div id="fullscreenOverlay" class="fullscreen-overlay d-none">
+    <i class="fas fa-expand-arrows-alt fa-5x mb-4"></i>
+    <h2>请返回全屏模式</h2>
+    <p>检测到您已退出全屏模式，请在10秒内返回全屏模式继续考试，否则系统将自动提交答卷。</p>
+    <div class="countdown-timer mb-4">
+        <span id="countdown">10</span> 秒
+    </div>
+    <button class="btn btn-primary btn-lg" id="returnToFullscreen">
+        <i class="fas fa-expand me-2"></i>返回全屏
+    </button>
+</div>
     <!-- 导航栏 -->
     <nav class="navbar navbar-expand-lg navbar-dark">
         <div class="container">
@@ -1733,6 +1932,13 @@ body {
         let currentImageUrl = null;
         let currentMonitoringUserId = null;
         let monitorInterval = null;
+        let cheatDetectionEnabled = false;
+let warningCount = 0;
+let maxWarnings = 5;
+let fullscreenCountdown = null;
+let fullscreenTimer = 10;
+let mouseLeaveCount = 0;
+let tabSwitchCount = 0;
         
         // DOM 元素
         const loginButton = document.getElementById('loginButton');
@@ -1953,6 +2159,282 @@ body {
             // 从Firebase加载数据
             loadQuizData();
         }
+
+// 初始化防作弊系统
+function initAntiCheatSystem() {
+    if (!cheatDetectionEnabled) {
+        cheatDetectionEnabled = true;
+        
+        // 启用全屏检测
+        document.addEventListener('fullscreenchange', handleFullscreenChange);
+        document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+        document.addEventListener('mozfullscreenchange', handleFullscreenChange);
+        document.addEventListener('MSFullscreenChange', handleFullscreenChange);
+        
+        // 启用标签页切换检测
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+        
+        // 启用键盘事件检测
+        document.addEventListener('keydown', handleKeyDown);
+        
+        // 启用鼠标离开检测
+        document.addEventListener('mouseleave', handleMouseLeave);
+        document.addEventListener('mouseenter', handleMouseEnter);
+        
+        // 禁用右键菜单
+        document.addEventListener('contextmenu', disableContextMenu);
+        
+        // 禁用文本选择
+        document.body.classList.add('no-select', 'no-context-menu');
+        
+        // 显示防作弊面板
+        document.getElementById('cheatDetectionPanel').classList.remove('d-none');
+        
+        console.log("防作弊系统已启用");
+    }
+}
+
+// 处理全屏变化
+function handleFullscreenChange() {
+    const isFullscreen = document.fullscreenElement || 
+                         document.webkitFullscreenElement || 
+                         document.mozFullScreenElement || 
+                         document.msFullscreenElement;
+    
+    if (isFullscreen) {
+        // 在全屏模式下
+        updateStatus('fullscreenStatus', 'safe', '正常');
+        document.getElementById('fullscreenOverlay').classList.add('d-none');
+        
+        if (fullscreenCountdown) {
+            clearInterval(fullscreenCountdown);
+            fullscreenCountdown = null;
+        }
+    } else {
+        // 退出全屏模式
+        updateStatus('fullscreenStatus', 'danger', '异常');
+        showAlert('检测到退出全屏模式！请在10秒内返回全屏。', 'danger');
+        
+        // 显示全屏覆盖层
+        document.getElementById('fullscreenOverlay').classList.remove('d-none');
+        
+        // 开始倒计时
+        fullscreenTimer = 10;
+        document.getElementById('countdown').textContent = fullscreenTimer;
+        
+        fullscreenCountdown = setInterval(() => {
+            fullscreenTimer--;
+            document.getElementById('countdown').textContent = fullscreenTimer;
+            
+            if (fullscreenTimer <= 0) {
+                clearInterval(fullscreenCountdown);
+                submitQuizForCheating("多次退出全屏模式");
+            }
+        }, 1000);
+        
+        // 记录警告
+        recordWarning("退出全屏模式");
+    }
+}
+
+// 处理标签页切换
+function handleVisibilityChange() {
+    if (document.hidden) {
+        // 切换到其他标签页
+        tabSwitchCount++;
+        updateStatus('tabStatus', 'danger', '异常');
+        showAlert('检测到切换标签页！请立即返回考试界面。', 'danger');
+        recordWarning("切换标签页");
+    } else {
+        // 返回考试标签页
+        updateStatus('tabStatus', 'safe', '正常');
+    }
+}
+
+// 处理键盘事件
+function handleKeyDown(e) {
+    // 禁用F12、Ctrl+Shift+I等开发者工具快捷键
+    if (e.keyCode === 123 || // F12
+        (e.ctrlKey && e.shiftKey && e.keyCode === 73) || // Ctrl+Shift+I
+        (e.ctrlKey && e.keyCode === 85) || // Ctrl+U (查看源代码)
+        (e.ctrlKey && e.keyCode === 83) || // Ctrl+S (保存)
+        (e.metaKey && e.altKey && e.keyCode === 73) // Cmd+Opt+I (Mac)
+    ) {
+        e.preventDefault();
+        updateStatus('keyboardStatus', 'danger', '异常');
+        showAlert('检测到禁用快捷键操作！', 'danger');
+        recordWarning("使用禁用快捷键");
+        return false;
+    }
+    
+    // 禁用复制粘贴快捷键（在考试期间）
+    if ((e.ctrlKey || e.metaKey) && 
+        (e.keyCode === 67 || e.keyCode === 86 || e.keyCode === 88)) { // C, V, X
+        e.preventDefault();
+        updateStatus('keyboardStatus', 'warning', '警告');
+        showAlert('考试期间禁止复制粘贴操作！', 'warning');
+        return false;
+    }
+}
+
+// 处理鼠标离开窗口
+function handleMouseLeave(e) {
+    if (e.clientY <= 0 || e.clientX <= 0 || 
+        e.clientX >= window.innerWidth || e.clientY >= window.innerHeight) {
+        mouseLeaveCount++;
+        
+        if (mouseLeaveCount > 2) {
+            updateStatus('mouseStatus', 'warning', '可疑');
+            showAlert('检测到鼠标频繁离开考试窗口！', 'warning');
+            recordWarning("鼠标离开考试窗口");
+        }
+    }
+}
+
+// 处理鼠标进入窗口
+function handleMouseEnter() {
+    updateStatus('mouseStatus', 'safe', '正常');
+}
+
+// 禁用右键菜单
+function disableContextMenu(e) {
+    e.preventDefault();
+    updateStatus('mouseStatus', 'warning', '警告');
+    showAlert('考试期间禁用右键菜单！', 'warning');
+    recordWarning("使用右键菜单");
+    return false;
+}
+
+// 更新状态显示
+function updateStatus(elementId, statusClass, statusText) {
+    const element = document.getElementById(elementId);
+    element.className = 'cheat-status ' + statusClass;
+    document.getElementById(elementId + 'Text').textContent = statusText;
+}
+
+// 显示警告提示
+function showAlert(message, type) {
+    const alert = document.getElementById('antiCheatAlert');
+    const messageElement = document.getElementById('alertMessage');
+    
+    alert.className = 'anti-cheat-alert';
+    
+    if (type === 'danger') {
+        alert.classList.add('anti-cheat-alert');
+    } else if (type === 'warning') {
+        alert.classList.add('anti-cheat-warning');
+    } else {
+        alert.classList.add('anti-cheat-info');
+    }
+    
+    messageElement.textContent = message;
+    alert.classList.remove('d-none');
+    
+    // 5秒后自动隐藏
+    setTimeout(() => {
+        alert.classList.add('d-none');
+    }, 5000);
+}
+
+// 记录警告
+function recordWarning(reason) {
+    warningCount++;
+    document.getElementById('warningCount').textContent = warningCount;
+    
+    // 保存警告记录到数据库
+    if (currentUser) {
+        const warningData = {
+            userId: currentUser.uid,
+            timestamp: new Date().getTime(),
+            reason: reason,
+            warningCount: warningCount
+        };
+        
+        database.ref('cheatWarnings/' + currentUser.uid).push(warningData);
+    }
+    
+    // 达到最大警告次数，自动提交
+    if (warningCount >= maxWarnings) {
+        submitQuizForCheating("达到最大警告次数");
+    }
+}
+
+// 因作弊自动提交
+function submitQuizForCheating(reason) {
+    if (quizTimer) clearInterval(quizTimer);
+    
+    // 记录作弊行为
+    if (currentUser) {
+        const cheatData = {
+            userId: currentUser.uid,
+            timestamp: new Date().getTime(),
+            reason: reason,
+            warningCount: warningCount,
+            tabSwitchCount: tabSwitchCount,
+            mouseLeaveCount: mouseLeaveCount
+        };
+        
+        database.ref('cheatViolations/' + currentUser.uid).set(cheatData);
+    }
+    
+    // 显示警告信息
+    Swal.fire({
+        title: '考试违规',
+        html: `检测到多次违规行为:<br><strong>${reason}</strong><br>系统已自动提交您的答卷。`,
+        icon: 'error',
+        confirmButtonText: '确定',
+        allowOutsideClick: false
+    }).then(() => {
+        // 强制提交答卷
+        submitQuiz();
+    });
+}
+
+// 在开始考试时启用防作弊系统
+function startQuizWithAntiCheat() {
+    // 首先尝试进入全屏模式
+    if (!document.fullscreenElement && 
+        !document.webkitFullscreenElement && 
+        !document.mozFullScreenElement && 
+        !document.msFullscreenElement) {
+        
+        const elem = document.documentElement;
+        
+        if (elem.requestFullscreen) {
+            elem.requestFullscreen();
+        } else if (elem.webkitRequestFullscreen) {
+            elem.webkitRequestFullscreen();
+        } else if (elem.mozRequestFullScreen) {
+            elem.mozRequestFullScreen();
+        } else if (elem.msRequestFullscreen) {
+            elem.msRequestFullscreen();
+        }
+    }
+    
+    // 初始化防作弊系统
+    initAntiCheatSystem();
+    
+    // 开始正常考试流程
+    initializeUserQuiz();
+}
+
+// 返回全屏按钮事件
+document.getElementById('returnToFullscreen').addEventListener('click', function() {
+    const elem = document.documentElement;
+    
+    if (elem.requestFullscreen) {
+        elem.requestFullscreen();
+    } else if (elem.webkitRequestFullscreen) {
+        elem.webkitRequestFullscreen();
+    } else if (elem.mozRequestFullScreen) {
+        elem.mozRequestFullScreen();
+    } else if (elem.msRequestFullscreen) {
+        elem.msRequestFullscreen();
+    }
+});
+
+// 修改开始考试按钮事件
+document.getElementById('startQuizBtn').addEventListener('click', startQuizWithAntiCheat);
         
         // 显示结果查询界面
         function showResultCheckView() {
