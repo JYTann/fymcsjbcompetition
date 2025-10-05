@@ -836,7 +836,7 @@ body {
   box-shadow: var(--card-shadow);
 }
 
-/* 成绩统计卡片深色样式 */
+/* 管理员面板特殊样式 */
 .admin-stats-card {
   background: white;
   border-radius: var(--border-radius);
@@ -844,19 +844,6 @@ body {
   box-shadow: var(--card-shadow);
   transition: var(--transition);
   border-top: 4px solid transparent;
-  position: relative;
-  overflow: hidden;
-}
-
-.admin-stats-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.1) 50%, transparent 70%);
-  animation: shimmer 3s infinite;
 }
 
 .admin-stats-card:hover {
@@ -864,132 +851,24 @@ body {
   box-shadow: var(--card-shadow-hover);
 }
 
-/* 深色统计卡片 */
 .admin-stats-card.bg-primary {
-  background: linear-gradient(135deg, #2c3e50, #34495e) !important;
-  border-top: 4px solid #3498db;
-  color: white;
+  border-top-color: var(--primary-color);
+  background: var(--gradient-primary) !important;
 }
 
 .admin-stats-card.bg-success {
-  background: linear-gradient(135deg, #27ae60, #2ecc71) !important;
-  border-top: 4px solid #2ecc71;
-  color: white;
+  border-top-color: var(--success-color);
+  background: var(--gradient-success) !important;
 }
 
 .admin-stats-card.bg-info {
-  background: linear-gradient(135deg, #2980b9, #3498db) !important;
-  border-top: 4px solid #3498db;
-  color: white;
+  border-top-color: var(--info-color);
+  background: linear-gradient(135deg, #4facfe, #00f2fe) !important;
 }
 
 .admin-stats-card.bg-warning {
-  background: linear-gradient(135deg, #d35400, #e67e22) !important;
-  border-top: 4px solid #f39c12;
-  color: white;
-}
-
-/* 统计卡片内容样式 */
-.admin-stats-card .card-body {
-  position: relative;
-  z-index: 2;
-}
-
-.admin-stats-card .card-title {
-  font-size: 1rem;
-  font-weight: 600;
-  margin-bottom: 0.5rem;
-  opacity: 0.9;
-}
-
-.admin-stats-card .card-text {
-  font-size: 2.5rem;
-  font-weight: 800;
-  margin-bottom: 0;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-}
-
-/* 图标装饰 */
-.admin-stats-card::after {
-  content: '';
-  position: absolute;
-  top: 20px;
-  right: 20px;
-  width: 60px;
-  height: 60px;
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 50%;
-  z-index: 1;
-}
-
-.admin-stats-card.bg-primary::after {
-  background: rgba(52, 152, 219, 0.2);
-}
-
-.admin-stats-card.bg-success::after {
-  background: rgba(46, 204, 113, 0.2);
-}
-
-.admin-stats-card.bg-info::after {
-  background: rgba(52, 152, 219, 0.2);
-}
-
-.admin-stats-card.bg-warning::after {
-  background: rgba(243, 156, 18, 0.2);
-}
-
-/* 悬停时的光效 */
-.admin-stats-card:hover::before {
-  animation: shimmer 1.5s infinite;
-}
-
-@keyframes shimmer {
-  0% { transform: translateX(-100%); }
-  100% { transform: translateX(100%); }
-}
-
-/* 响应式调整 */
-@media (max-width: 768px) {
-  .admin-stats-card {
-    padding: 1.25rem;
-  }
-  
-  .admin-stats-card .card-text {
-    font-size: 2rem;
-  }
-  
-  .admin-stats-card::after {
-    width: 40px;
-    height: 40px;
-    top: 15px;
-    right: 15px;
-  }
-}
-
-/* 可选：添加图标 */
-.admin-stats-card .stats-icon {
-  position: absolute;
-  top: 20px;
-  right: 20px;
-  font-size: 2.5rem;
-  opacity: 0.3;
-  z-index: 1;
-}
-
-.admin-stats-card.bg-primary .stats-icon {
-  color: #3498db;
-}
-
-.admin-stats-card.bg-success .stats-icon {
-  color: #2ecc71;
-}
-
-.admin-stats-card.bg-info .stats-icon {
-  color: #3498db;
-}
-
-.admin-stats-card.bg-warning .stats-icon {
-  color: #f39c12;
+  border-top-color: var(--warning-color);
+  background: linear-gradient(135deg, #f093fb, #f5576c) !important;
 }
 </style>
 </head>
@@ -1457,7 +1336,7 @@ body {
                                 <div class="card-body">
                                     <div class="row">
                                         <div class="col-md-6">
-                                            <div class="card text-white bg-primary mb-3">
+                                            <div class="card bg-primary mb-3">
                                                 <div class="card-body">
                                                     <h5 class="card-title">参赛人数</h5>
                                                     <p class="card-text display-4" id="totalParticipants">0</p>
@@ -1465,7 +1344,7 @@ body {
                                             </div>
                                         </div>
                                         <div class="col-md-6">
-                                            <div class="card text-white bg-success mb-3">
+                                            <div class="card bg-success mb-3">
                                                 <div class="card-body">
                                                     <h5 class="card-title">已完成人数</h5>
                                                     <p class="card-text display-4" id="completedParticipants">0</p>
@@ -1475,7 +1354,7 @@ body {
                                     </div>
                                     <div class="row">
                                         <div class="col-md-6">
-                                            <div class="card text-white bg-info mb-3">
+                                            <div class="card bg-info mb-3">
                                                 <div class="card-body">
                                                     <h5 class="card-title">平均分</h5>
                                                     <p class="card-text display-4" id="averageScore">0</p>
@@ -1483,7 +1362,7 @@ body {
                                             </div>
                                         </div>
                                         <div class="col-md-6">
-                                            <div class="card text-white bg-warning mb-3">
+                                            <div class="card bg-warning mb-3">
                                                 <div class="card-body">
                                                     <h5 class="card-title">最高分</h5>
                                                     <p class="card-text display-4" id="highestScore">0</p>
