@@ -2155,10 +2155,283 @@ let tabSwitchCount = 0;
                     updateUserUI();
                 }
             });
+
+            const paperForm = document.getElementById('paperForm');
+    const generatedPaperContainer = document.getElementById('generatedPaperContainer');
+    const regeneratePaperBtn = document.getElementById('regeneratePaperBtn');
+    const savePaperBtn = document.getElementById('savePaperBtn');
+    
+    if (paperForm) {
+        paperForm.addEventListener('submit', generatePaper);
+    }
+    if (regeneratePaperBtn) {
+        regeneratePaperBtn.addEventListener('click', regeneratePaper);
+    }
+    if (savePaperBtn) {
+        savePaperBtn.addEventListener('click', saveGeneratedPaper);
+    }
             
             // 从Firebase加载数据
             loadQuizData();
         }
+
+        // 智能组卷功能实现
+function generatePaper(e) {
+    e.preventDefault();
+    
+    // 显示加载状态
+    const loadingSwal = Swal.fire({
+        title: '正在生成试卷',
+        html: '请稍候，系统正在根据您的设置智能组卷...',
+        allowOutsideClick: false,
+        didOpen: () => {
+            Swal.showLoading();
+        }
+    });
+
+    // 获取表单数据
+    const paperName = document.getElementById('paperName').value;
+    const paperTotalPoints = parseInt(document.getElementById('paperTotalPoints').value);
+    
+    // 获取题目类型分布
+    const questionDist = {
+        single: parseInt(document.querySelector('.question-dist[data-type="single"]').value),
+        multiple: parseInt(document.querySelector('.question-dist[data-type="multiple"]').value),
+        short_answer: parseInt(document.querySelector('.question-dist[data-type="short_answer"]').value),
+        essay: parseInt(document.querySelector('.question-dist[data-type="essay"]').value)
+    };
+    
+    // 获取难度分布
+    const difficultyDist = {
+        easy: parseInt(document.querySelector('.difficulty-dist[data-level="easy"]').value),
+        medium: parseInt(document.querySelector('.difficulty-dist[data-level="medium"]').value),
+        hard: parseInt(document.querySelector('.difficulty-dist[data-level="hard"]').value)
+    };
+    
+    // 验证数据
+    const totalQuestions = Object.values(questionDist).reduce((sum, count) => sum + count, 0);
+    const totalDifficulty = Object.values(difficultyDist).reduce((sum, percent) => sum + percent, 0);
+    
+    if (totalQuestions === 0) {
+        loadingSwal.close();
+        Swal.fire('错误', '请至少设置一种题型的题目数量', 'error');
+        return;
+    }
+    
+    if (totalDifficulty !== 100) {
+        loadingSwal.close();
+        Swal.fire('错误', '题目难度分布总和必须为100%', 'error');
+        return;
+    }
+    
+    // 模拟生成试卷（实际应用中需要从数据库筛选题目）
+    setTimeout(() => {
+        loadingSwal.close();
+        const generatedPaper = simulatePaperGeneration(questionDist, difficultyDist, paperTotalPoints);
+        displayGeneratedPaper(generatedPaper, paperName);
+        Swal.fire('成功', '试卷生成完成！', 'success');
+    }, 2000);
+}
+
+// 模拟试卷生成（实际应用中需要连接数据库）
+function simulatePaperGeneration(questionDist, difficultyDist, totalPoints) {
+    const paper = [];
+    let questionNumber = 1;
+    
+    // 生成单选题
+    for (let i = 0; i < questionDist.single; i++) {
+        paper.push({
+            id: 'generated-' + Date.now() + '-' + i,
+            number: questionNumber++,
+            text: `智能生成的单选题示例 ${i + 1}`,
+            type: 'single',
+            points: 2,
+            difficulty: getRandomDifficulty(difficultyDist),
+            options: [
+                { text: '选项A' },
+                { text: '选项B' },
+                { text: '选项C' },
+                { text: '选项D' }
+            ],
+            correctAnswers: [Math.floor(Math.random() * 4)]
+        });
+    }
+    
+    // 生成多选题
+    for (let i = 0; i < questionDist.multiple; i++) {
+        paper.push({
+            id: 'generated-' + Date.now() + '-' + (i + questionDist.single),
+            number: questionNumber++,
+            text: `智能生成的多选题示例 ${i + 1}`,
+            type: 'multiple',
+            points: 3,
+            difficulty: getRandomDifficulty(difficultyDist),
+            options: [
+                { text: '选项A' },
+                { text: '选项B' },
+                { text: '选项C' },
+                { text: '选项D' }
+            ],
+            correctAnswers: [0, 1] // 示例正确答案
+        });
+    }
+    
+    // 生成问答题
+    for (let i = 0; i < questionDist.short_answer; i++) {
+        paper.push({
+            id: 'generated-' + Date.now() + '-' + (i + questionDist.single + questionDist.multiple),
+            number: questionNumber++,
+            text: `智能生成的问答题示例 ${i + 1}`,
+            type: 'short_answer',
+            points: 5,
+            difficulty: getRandomDifficulty(difficultyDist),
+            correctAnswerText: '这是问答题的参考答案'
+        });
+    }
+    
+    // 生成申论题
+    for (let i = 0; i < questionDist.essay; i++) {
+        paper.push({
+            id: 'generated-' + Date.now() + '-' + (i + questionDist.single + questionDist.multiple + questionDist.short_answer),
+            number: questionNumber++,
+            text: `智能生成的申论题示例 ${i + 1}`,
+            type: 'essay',
+            points: 10,
+            difficulty: getRandomDifficulty(difficultyDist),
+            correctAnswerText: '这是申论题的参考答案，需要详细阐述观点。'
+        });
+    }
+    
+    return paper;
+}
+
+// 根据难度分布随机获取难度级别
+function getRandomDifficulty(difficultyDist) {
+    const random = Math.random() * 100;
+    if (random < difficultyDist.easy) return 'easy';
+    if (random < difficultyDist.easy + difficultyDist.medium) return 'medium';
+    return 'hard';
+}
+
+// 显示生成的试卷
+function displayGeneratedPaper(paper, paperName) {
+    const container = document.getElementById('generatedPaperContainer');
+    const tableBody = document.querySelector('#generatedPaperTable tbody');
+    
+    // 清空表格
+    tableBody.innerHTML = '';
+    
+    // 填充表格
+    paper.forEach(question => {
+        const row = document.createElement('tr');
+        
+        let typeText = '';
+        switch (question.type) {
+            case 'single': typeText = '单选题'; break;
+            case 'multiple': typeText = '多选题'; break;
+            case 'short_answer': typeText = '问答题'; break;
+            case 'essay': typeText = '申论题'; break;
+        }
+        
+        let difficultyText = '';
+        switch (question.difficulty) {
+            case 'easy': difficultyText = '简单'; break;
+            case 'medium': difficultyText = '中等'; break;
+            case 'hard': difficultyText = '困难'; break;
+        }
+        
+        row.innerHTML = `
+            <td>${question.number}</td>
+            <td>${question.text}</td>
+            <td>${typeText}</td>
+            <td>${question.points}</td>
+            <td>${difficultyText}</td>
+            <td>
+                <button class="btn btn-sm btn-warning edit-generated-question" data-id="${question.id}">编辑</button>
+                <button class="btn btn-sm btn-danger remove-question" data-id="${question.id}">移除</button>
+            </td>
+        `;
+        
+        tableBody.appendChild(row);
+    });
+    
+    // 显示容器
+    container.style.display = 'block';
+    
+    // 添加事件监听器
+    document.querySelectorAll('.edit-generated-question').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const questionId = this.getAttribute('data-id');
+            editGeneratedQuestion(questionId, paper);
+        });
+    });
+    
+    document.querySelectorAll('.remove-question').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const questionId = this.getAttribute('data-id');
+            removeGeneratedQuestion(questionId, paper);
+        });
+    });
+}
+
+// 重新生成试卷
+function regeneratePaper() {
+    document.getElementById('paperForm').dispatchEvent(new Event('submit'));
+}
+
+// 保存生成的试卷
+function saveGeneratedPaper() {
+    const paperName = document.getElementById('paperName').value;
+    if (!paperName) {
+        Swal.fire('错误', '请输入试卷名称', 'error');
+        return;
+    }
+    
+    // 这里应该实现将试卷保存到数据库的逻辑
+    Swal.fire({
+        title: '保存试卷',
+        input: 'text',
+        inputLabel: '试卷描述',
+        inputPlaceholder: '请输入试卷描述...',
+        showCancelButton: true,
+        confirmButtonText: '保存',
+        cancelButtonText: '取消'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            const paperDescription = result.value || '';
+            
+            // 模拟保存到数据库
+            Swal.fire('成功', `试卷"${paperName}"已保存成功！`, 'success');
+        }
+    });
+}
+
+// 编辑生成的题目
+function editGeneratedQuestion(questionId, paper) {
+    const question = paper.find(q => q.id === questionId);
+    if (question) {
+        // 切换到题目管理标签页并编辑该题目
+        const questionsTab = document.getElementById('questions-tab');
+        if (questionsTab) {
+            questionsTab.click();
+            
+            // 模拟编辑题目（这里需要根据实际需求实现）
+            setTimeout(() => {
+                Swal.fire('提示', '请在题目管理页面编辑此题', 'info');
+            }, 500);
+        }
+    }
+}
+
+// 移除生成的题目
+function removeGeneratedQuestion(questionId, paper) {
+    const updatedPaper = paper.filter(q => q.id !== questionId);
+    // 重新显示更新后的试卷
+    const paperName = document.getElementById('paperName').value;
+    displayGeneratedPaper(updatedPaper, paperName);
+    
+    Swal.fire('成功', '题目已从试卷中移除', 'success');
+}
 
 // 初始化防作弊系统
 function initAntiCheatSystem() {
