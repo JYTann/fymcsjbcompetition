@@ -4005,34 +4005,48 @@ document.getElementById('startQuizBtn').addEventListener('click', startQuizWithA
             });
         }
         
-        // 更新成绩统计
         function updateResultsStatistics() {
-            database.ref('userAnswers').orderByChild('submitted').equalTo(true).once('value').then(snapshot => {
-                if (snapshot.exists()) {
-                    const results = [];
-                    let totalScore = 0;
-                    let highestScore = 0;
-                    
-                    snapshot.forEach(childSnapshot => {
-                        const result = childSnapshot.val();
-                        if (result.score !== undefined) {
-                            results.push(result);
-                            totalScore += result.score;
-                            if (result.score > highestScore) {
-                                highestScore = result.score;
-                            }
-                        }
-                    });
-                    
-                    const average = results.length > 0 ? Math.round(totalScore / results.length) : 0;
-                    
-                    averageScore.textContent = average;
-                    highestScore.textContent = highestScore;
-                }
-            }).catch(error => {
-                console.error("获取成绩统计错误:", error);
-            });
-        }
+    const avgEl = document.getElementById("averageScore");
+    const highEl = document.getElementById("highestScore");
+
+    database.ref('userAnswers')
+        .orderByChild('submitted')
+        .equalTo(true)
+        .once('value')
+        .then(snapshot => {
+            if (snapshot.exists()) {
+                const results = [];
+                let totalScore = 0;
+                let maxScore = 0;
+
+                snapshot.forEach(childSnapshot => {
+                    const result = childSnapshot.val();
+
+                    // 优先取最终总分：finalScore > score > 手动计算
+                    let score = result.finalScore || result.score || 0;
+
+                    // 如果手动评分只更新了 answers 内的分数，则自动重新汇总
+                    if (score === 0 && result.answers) {
+                        score = Object.values(result.answers)
+                                      .reduce((sum, ans) => sum + (ans.score || 0), 0);
+                    }
+
+                    results.push(score);
+                    totalScore += score;
+                    if (score > maxScore) maxScore = score;
+                });
+
+                const average = results.length > 0 ? Math.round(totalScore / results.length) : 0;
+
+                // 更新显示
+                avgEl.textContent = average;
+                highEl.textContent = maxScore;
+            }
+        })
+        .catch(error => {
+            console.error("获取成绩统计错误:", error);
+        });
+}
         
         function viewParticipantAnswers(userId) {
             showLoading('加载参赛者答题详情...');
@@ -4283,6 +4297,7 @@ document.getElementById('startQuizBtn').addEventListener('click', startQuizWithA
                 if (!isNaN(score)) totalScore += score;
             });
             updates[`userAnswers/${userId}/score`] = totalScore;
+            updates[`userAnswers/${userId}/finalScore`] = totalScore;
             
             // 3. 计算正确/错误计数 - 确保使用原始数据作为基础
             const originalAnswers = participantData.answers || [];
