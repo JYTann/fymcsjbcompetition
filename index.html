@@ -4249,6 +4249,11 @@ document.getElementById('startQuizBtn').addEventListener('click', startQuizWithA
         
         // 修改 saveParticipantScores 函数
         function saveParticipantScores(userId, questions, participantData) {
+            console.log("🧩 当前评分区 HTML:", document.body.innerHTML.slice(0, 500));
+console.log("🧩 当前页面中含有 .score-input 的元素数量:", document.querySelectorAll('.score-input').length);
+console.log("🧩 当前页面中含有 .manual-score-input 的元素数量:", document.querySelectorAll('.manual-score-input').length);
+console.log("🧩 当前页面中含有 input[data-question-id] 的元素数量:", document.querySelectorAll('input[data-question-id]').length);
+
     showLoading('正在保存评分...');
 
     const scoreInputs = document.querySelectorAll('.score-input, .manual-score-input, input[type="number"][data-question-id]');
