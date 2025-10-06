@@ -4251,7 +4251,7 @@ document.getElementById('startQuizBtn').addEventListener('click', startQuizWithA
         function saveParticipantScores(userId, questions, participantData) {
     showLoading('正在保存评分...');
 
-    const scoreInputs = document.querySelectorAll('.score-input');
+    const scoreInputs = document.querySelectorAll('.score-input, .manual-score-input, input[type="number"][data-question-id]');
     const updates = {};
     let hasError = false;
 
@@ -4294,6 +4294,7 @@ document.getElementById('startQuizBtn').addEventListener('click', startQuizWithA
     }
 
     // 2. 计算总分
+    console.log("找到的打分输入框数量:", scoreInputs.length); 
     let totalScore = 0;
     scoreInputs.forEach(input => {
         const s = parseInt(input.value);
