@@ -4256,7 +4256,11 @@ console.log("🧩 当前页面中含有 input[data-question-id] 的元素数量:
 
     showLoading('正在保存评分...');
 
-    const scoreInputs = document.querySelectorAll('.score-input, .manual-score-input, input[type="number"][data-question-id]');
+    // 在弹窗或评分区域中查找
+const scoreInputs = document.querySelectorAll(
+  '#gradingModal .score-input, #gradingModal input[data-question-id], .modal-body .score-input, .modal-body input[data-question-id]'
+);
+
     const updates = {};
     let hasError = false;
 
