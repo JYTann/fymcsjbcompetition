@@ -4300,6 +4300,10 @@ document.getElementById('startQuizBtn').addEventListener('click', startQuizWithA
         if (!isNaN(s)) totalScore += s;
     });
 
+            console.log("🧮 保存评分调试：", { totalScore, updatesBeforeSave: JSON.parse(JSON.stringify(updates)) });
+🧮 保存评分调试： { totalScore: 5, updatesBeforeSave: {...} }
+
+
     // ✅ 同步更新总分字段（关键！）
     updates[`userAnswers/${userId}/score`] = totalScore;
     updates[`userAnswers/${userId}/finalScore`] = totalScore;
