@@ -4249,114 +4249,114 @@ document.getElementById('startQuizBtn').addEventListener('click', startQuizWithA
         
         // 修改 saveParticipantScores 函数
         function saveParticipantScores(userId, questions, participantData) {
-            showLoading('正在保存评分...');
-            
-            const scoreInputs = document.querySelectorAll('.score-input');
-            const updates = {};
-            let hasError = false;
-            
-            // 1. 验证并收集更新数据
-            scoreInputs.forEach(input => {
-                const questionId = input.dataset.questionId;
-                const question = questions[questionId];
-                const score = input.value.trim() === '' ? null : parseInt(input.value);
-                
-                if (!isNaN(score)) {
-                    if (score < 0 || score > question.points) {
-                        hasError = true;
-                        input.classList.add('is-invalid');
-                    } else {
-                        input.classList.remove('is-invalid');
-                        const index = participantData.answers.findIndex(a => a.questionId === questionId);
-                        if (index !== -1) {
-                            updates[`userAnswers/${userId}/answers/${index}/score`] = score;
-                            updates[`userAnswers/${userId}/answers/${index}/isCorrect`] = (score === question.points);
-                            updates[`userAnswers/${userId}/answers/${index}/isGraded`] = true;
-                            updates[`userAnswers/${userId}/answers/${index}/isAnswered`] = true;
+    showLoading('正在保存评分...');
 
-                            // 补充答案（如果已存在）
-                            const originalAnswer = participantData.answers[index]?.answer || participantData.answers[index]?.answerText || '';
-                            if (originalAnswer) {
-                                updates[`userAnswers/${userId}/answers/${index}/answer`] = originalAnswer;
-                            }
-                        }
+    const scoreInputs = document.querySelectorAll('.score-input');
+    const updates = {};
+    let hasError = false;
+
+    // 1. 验证并收集更新数据
+    scoreInputs.forEach(input => {
+        const questionId = input.dataset.questionId;
+        const question = Object.values(questions).find(q => q.id === questionId);
+        const score = input.value.trim() === '' ? null : parseInt(input.value);
+
+        if (!question) return; // ✅ 跳过无效ID
+
+        if (!isNaN(score)) {
+            if (score < 0 || score > question.points) {
+                hasError = true;
+                input.classList.add('is-invalid');
+            } else {
+                input.classList.remove('is-invalid');
+                const index = participantData.answers.findIndex(a => a.questionId === questionId);
+                if (index !== -1) {
+                    updates[`userAnswers/${userId}/answers/${index}/score`] = score;
+                    updates[`userAnswers/${userId}/answers/${index}/isCorrect`] = (score === question.points);
+                    updates[`userAnswers/${userId}/answers/${index}/isGraded`] = true;
+                    updates[`userAnswers/${userId}/answers/${index}/isAnswered`] = true;
+
+                    const originalAnswer =
+                        participantData.answers[index]?.answer ||
+                        participantData.answers[index]?.answerText || '';
+                    if (originalAnswer) {
+                        updates[`userAnswers/${userId}/answers/${index}/answer`] = originalAnswer;
                     }
                 }
-            });
-            
-            if (hasError) {
-                hideLoading();
-                Swal.fire('错误', '部分分数超出允许范围（请检查红框处）', 'error');
-                return;
             }
-            
-            // 2. 计算总分
-            let totalScore = 0;
-            scoreInputs.forEach(input => {
-                const score = input.value.trim() === '' ? 0 : parseInt(input.value);
-                if (!isNaN(score)) totalScore += score;
-            });
-            updates[`userAnswers/${userId}/score`] = totalScore;
-            updates[`userAnswers/${userId}/finalScore`] = totalScore;
-            
-            // 3. 计算正确/错误计数 - 确保使用原始数据作为基础
-            const originalAnswers = participantData.answers || [];
-            let correctCount = 0;
-            let wrongCount = 0;
-
-            Object.values(questions).forEach(q => {
-                const index = originalAnswers.findIndex(a => a.questionId === q.id);
-                if (index === -1) return;
-
-                const updateKey = `userAnswers/${userId}/answers/${index}/score`;
-                const score = updates[updateKey] !== undefined
-                    ? updates[updateKey]
-                    : originalAnswers[index].score || 0;
-
-                if (score === q.points) correctCount++;
-                else if (score > 0) wrongCount++;
-            });
-
-            updates[`userAnswers/${userId}/correctCount`] = correctCount;
-            updates[`userAnswers/${userId}/wrongCount`] = wrongCount;
-
-            // 4. 确保保留原始数据中其他重要字段
-            if (participantData.startTime) {
-                updates[`userAnswers/${userId}/startTime`] = participantData.startTime;
-            }
-            if (participantData.endTime) {
-                updates[`userAnswers/${userId}/endTime`] = participantData.endTime;
-            }
-            updates[`userAnswers/${userId}/submitted`] = true;
-            
-            // 5. 执行批量更新
-            database.ref().update(updates)
-                .then(() => {
-                    hideLoading();
-                    Swal.fire({
-                        position: 'center',
-                        icon: 'success',
-                        title: '评分已保存',
-                        showConfirmButton: false,
-                        timer: 1500
-                    }).then(() => {
-                        // 重新加载数据以显示最新结果
-                        viewParticipantAnswers(userId);
-                        // 刷新成绩统计
-                        updateResultsStatistics();
-                    });
-                })
-                .catch(error => {
-                    hideLoading();
-                    console.error("保存评分错误:", error);
-                    Swal.fire({
-                        icon: 'error',
-                        title: '保存失败',
-                        text: '错误: ' + error.message,
-                        footer: '请检查网络连接后重试'
-                    });
-                });
         }
+    });
+
+    if (hasError) {
+        hideLoading();
+        Swal.fire('错误', '部分分数超出允许范围（请检查红框处）', 'error');
+        return;
+    }
+
+    // 2. 计算总分
+    let totalScore = 0;
+    scoreInputs.forEach(input => {
+        const s = parseInt(input.value);
+        if (!isNaN(s)) totalScore += s;
+    });
+
+    // ✅ 同步更新总分字段（关键！）
+    updates[`userAnswers/${userId}/score`] = totalScore;
+    updates[`userAnswers/${userId}/finalScore`] = totalScore;
+    updates[`userAnswers/${userId}/result/score`] = totalScore; // 兼容旧结构
+    updates[`userAnswers/${userId}/result/finalScore`] = totalScore;
+
+    // 3. 计算正确/错误
+    const originalAnswers = participantData.answers || [];
+    let correctCount = 0, wrongCount = 0;
+
+    Object.values(questions).forEach(q => {
+        const idx = originalAnswers.findIndex(a => a.questionId === q.id);
+        if (idx === -1) return;
+        const key = `userAnswers/${userId}/answers/${idx}/score`;
+        const score = updates[key] ?? originalAnswers[idx].score ?? 0;
+        if (score === q.points) correctCount++;
+        else if (score > 0) wrongCount++;
+    });
+
+    updates[`userAnswers/${userId}/correctCount`] = correctCount;
+    updates[`userAnswers/${userId}/wrongCount`] = wrongCount;
+
+    // 4. 保留时间信息
+    if (participantData.startTime)
+        updates[`userAnswers/${userId}/startTime`] = participantData.startTime;
+    if (participantData.endTime)
+        updates[`userAnswers/${userId}/endTime`] = participantData.endTime;
+
+    updates[`userAnswers/${userId}/submitted`] = true;
+
+    // 5. 写入数据库
+    database.ref().update(updates)
+        .then(() => {
+            hideLoading();
+            Swal.fire({
+                position: 'center',
+                icon: 'success',
+                title: '评分已保存',
+                showConfirmButton: false,
+                timer: 1500
+            }).then(() => {
+                // ✅ 即时刷新视图与统计
+                viewParticipantAnswers(userId);
+                setTimeout(updateResultsStatistics, 800);
+            });
+        })
+        .catch(error => {
+            hideLoading();
+            console.error("保存评分错误:", error);
+            Swal.fire({
+                icon: 'error',
+                title: '保存失败',
+                text: '错误: ' + error.message,
+                footer: '请检查网络连接后重试'
+            });
+        });
+}
 
         // 在考试开始前添加防作弊检测
         function startQuizWithAntiCheat() {
