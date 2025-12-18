@@ -6460,7 +6460,8 @@ function checkResult(e) {
                         查询到您的比赛成绩：<br>
                         <strong>得分: ${foundResult.score || 0}</strong><br>
                         正确题数: ${foundResult.correctCount || 0}<br>
-                        错误题数: ${foundResult.wrongCount || 0答卷。`;
+                        错误题数: ${foundResult.wrongCount || 0}<br>
+                        未答题数: ${foundResult.unansweredCount || 0}`;
                 } else {
                     messageP.textContent = '没有找到您的比赛记录。';
                 }
