@@ -3444,6 +3444,32 @@
             }
         }
 
+        // 初始化监控系统
+function initMonitor() {
+    // 清除现有的监控间隔
+    if (monitorInterval) {
+        clearInterval(monitorInterval);
+    }
+    
+    // 更新监控列表
+    updateMonitorList();
+    
+    // 如果有选中的参赛者，开始监控
+    if (currentMonitoringUserId) {
+        monitorParticipant(currentMonitoringUserId);
+    }
+    
+    // 设置定时刷新监控数据（每30秒刷新一次）
+    monitorInterval = setInterval(() => {
+        if (currentMonitoringUserId) {
+            monitorParticipant(currentMonitoringUserId);
+        }
+        updateMonitorList();
+    }, 30000);
+    
+    console.log("监控系统已初始化");
+}
+
         // 初始化用户答题
         function initializeUserQuiz() {
             if (!quizData.questions || quizData.questions.length === 0) {
