@@ -5513,88 +5513,220 @@ function saveQuestion(event) {
 
         // 更新成绩统计
         function updateResultsStatistics() {
-            const avgEl = document.getElementById("adminAverageScore");
-            const highEl = document.getElementById("adminHighestScore");
-            const avgAccuracyBar = document.getElementById("avgAccuracyBar");
-            const avgAccuracyText = document.getElementById("avgAccuracyText");
-            const avgTimeUsed = document.getElementById("avgTimeUsed");
-            const fastestSubmit = document.getElementById("fastestSubmit");
+    const avgEl = document.getElementById("adminAverageScore");
+    const highEl = document.getElementById("adminHighestScore");
+    const avgAccuracyBar = document.getElementById("avgAccuracyBar");
+    const avgAccuracyText = document.getElementById("avgAccuracyText");
+    const avgTimeUsed = document.getElementById("avgTimeUsed");
+    const fastestSubmit = document.getElementById("fastestSubmit");
 
-            database.ref('userAnswers')
-                .orderByChild('submitted')
-                .equalTo(true)
-                .once('value')
-                .then(snapshot => {
-                    if (snapshot.exists()) {
-                        const results = [];
-                        let totalScore = 0;
-                        let maxScore = 0;
-                        let totalTime = 0;
-                        let minTime = Infinity;
-                        let totalQuestions = 0;
-                        let totalCorrect = 0;
+    database.ref('userAnswers')
+        .orderByChild('submitted')
+        .equalTo(true)
+        .once('value')
+        .then(snapshot => {
+            if (snapshot.exists()) {
+                const results = [];
+                const allResults = []; // 保存完整结果用于表格显示
+                let totalScore = 0;
+                let maxScore = 0;
+                let totalTime = 0;
+                let minTime = Infinity;
+                let totalQuestions = 0;
+                let totalCorrect = 0;
 
-                        snapshot.forEach(childSnapshot => {
-                            const result = childSnapshot.val();
-                            
-                            let score = result.finalScore || result.score || result.totalScore || 0;
-                            
-                            console.log("用户成绩:", result.userInfo?.name, "分数:", score);
-                            
-                            results.push(score);
-                            totalScore += score;
-                            if (score > maxScore) maxScore = score;
-                            
-                            if (result.endTime && result.startTime) {
-                                const timeUsed = result.endTime - result.startTime;
-                                totalTime += timeUsed;
-                                if (timeUsed < minTime) minTime = timeUsed;
-                            }
-                            
-                            if (result.correctCount && quizData.questions.length > 0) {
-                                totalQuestions += quizData.questions.length;
-                                totalCorrect += result.correctCount;
-                            }
-                        });
-
-                        const average = results.length > 0 ? Math.round(totalScore / results.length) : 0;
-                        const avgTime = results.length > 0 ? Math.floor(totalTime / results.length / 1000) : 0;
-                        const fastestTime = minTime !== Infinity ? Math.floor(minTime / 1000) : 0;
-                        const avgAccuracy = totalQuestions > 0 ? Math.round((totalCorrect / totalQuestions) * 100) : 0;
-                        
-                        console.log("统计结果 - 平均分:", average, "最高分:", maxScore, "人数:", results.length);
-
-                        avgEl.textContent = average;
-                        highEl.textContent = maxScore;
-                        
-                        avgAccuracyBar.style.width = `${avgAccuracy}%`;
-                        avgAccuracyText.textContent = `${avgAccuracy}%`;
-                        
-                        const avgMinutes = Math.floor(avgTime / 60);
-                        const avgSeconds = avgTime % 60;
-                        avgTimeUsed.textContent = `${avgMinutes}分${avgSeconds}秒`;
-                        
-                        const fastMinutes = Math.floor(fastestTime / 60);
-                        const fastSeconds = fastestTime % 60;
-                        fastestSubmit.textContent = `${fastMinutes}分${fastSeconds}秒`;
-                        
-                        updateScoreDistribution(results);
-                    } else {
-                        console.log("无成绩数据");
-                        avgEl.textContent = 0;
-                        highEl.textContent = 0;
-                        avgAccuracyBar.style.width = '0%';
-                        avgAccuracyText.textContent = '0%';
-                        avgTimeUsed.textContent = '0分0秒';
-                        fastestSubmit.textContent = '0分0秒';
+                snapshot.forEach(childSnapshot => {
+                    const result = childSnapshot.val();
+                    result.userId = childSnapshot.key; // 保存用户ID
+                    
+                    let score = result.finalScore || result.score || result.totalScore || 0;
+                    
+                    console.log("用户成绩:", result.userInfo?.name, "分数:", score);
+                    
+                    results.push(score);
+                    allResults.push(result); // 保存完整结果
+                    totalScore += score;
+                    if (score > maxScore) maxScore = score;
+                    
+                    if (result.endTime && result.startTime) {
+                        const timeUsed = result.endTime - result.startTime;
+                        totalTime += timeUsed;
+                        if (timeUsed < minTime) minTime = timeUsed;
                     }
-                })
-                .catch(error => {
-                    console.error("获取成绩统计错误:", error);
-                    avgEl.textContent = '错误';
-                    highEl.textContent = '错误';
+                    
+                    if (result.correctCount && quizData.questions.length > 0) {
+                        totalQuestions += quizData.questions.length;
+                        totalCorrect += result.correctCount;
+                    }
                 });
+
+                const average = results.length > 0 ? Math.round(totalScore / results.length) : 0;
+                const avgTime = results.length > 0 ? Math.floor(totalTime / results.length / 1000) : 0;
+                const fastestTime = minTime !== Infinity ? Math.floor(minTime / 1000) : 0;
+                const avgAccuracy = totalQuestions > 0 ? Math.round((totalCorrect / totalQuestions) * 100) : 0;
+                
+                console.log("统计结果 - 平均分:", average, "最高分:", maxScore, "人数:", results.length);
+
+                avgEl.textContent = average;
+                highEl.textContent = maxScore;
+                
+                avgAccuracyBar.style.width = `${avgAccuracy}%`;
+                avgAccuracyText.textContent = `${avgAccuracy}%`;
+                
+                const avgMinutes = Math.floor(avgTime / 60);
+                const avgSeconds = avgTime % 60;
+                avgTimeUsed.textContent = `${avgMinutes}分${avgSeconds}秒`;
+                
+                const fastMinutes = Math.floor(fastestTime / 60);
+                const fastSeconds = fastestTime % 60;
+                fastestSubmit.textContent = `${fastMinutes}分${fastSeconds}秒`;
+                
+                updateScoreDistribution(results);
+                
+                // ============ 新增：更新详细成绩表格 ============
+                updateDetailedResultsTable(allResults);
+                
+            } else {
+                console.log("无成绩数据");
+                avgEl.textContent = 0;
+                highEl.textContent = 0;
+                avgAccuracyBar.style.width = '0%';
+                avgAccuracyText.textContent = '0%';
+                avgTimeUsed.textContent = '0分0秒';
+                fastestSubmit.textContent = '0分0秒';
+                
+                // ============ 新增：显示空表格 ============
+                const detailedResultsBody = document.getElementById('detailedResultsBody');
+                if (detailedResultsBody) {
+                    detailedResultsBody.innerHTML = `
+                        <tr>
+                            <td colspan="9" class="text-center py-4 text-muted">
+                                <i class="fas fa-info-circle me-2"></i>
+                                暂无成绩数据
+                            </td>
+                        </tr>
+                    `;
+                }
+            }
+        })
+        .catch(error => {
+            console.error("获取成绩统计错误:", error);
+            avgEl.textContent = '错误';
+            highEl.textContent = '错误';
+            
+            // ============ 新增：显示错误信息 ============
+            const detailedResultsBody = document.getElementById('detailedResultsBody');
+            if (detailedResultsBody) {
+                detailedResultsBody.innerHTML = `
+                    <tr>
+                        <td colspan="9" class="text-center py-4 text-danger">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            加载失败: ${error.message}
+                        </td>
+                    </tr>
+                `;
+            }
+        });
+}
+        function updateDetailedResultsTable(results) {
+    const detailedResultsBody = document.getElementById('detailedResultsBody');
+    
+    if (!detailedResultsBody) {
+        console.error("找不到详细成绩表格元素");
+        return;
+    }
+    
+    // 清空表格
+    detailedResultsBody.innerHTML = '';
+    
+    if (!results || results.length === 0) {
+        detailedResultsBody.innerHTML = `
+            <tr>
+                <td colspan="9" class="text-center py-4 text-muted">
+                    <i class="fas fa-info-circle me-2"></i>
+                    暂无成绩数据
+                </td>
+            </tr>
+        `;
+        return;
+    }
+    
+    console.log(`更新详细成绩表格，共 ${results.length} 条记录`);
+    
+    // 按分数排序（降序）
+    results.sort((a, b) => {
+        const scoreA = a.finalScore || a.score || a.totalScore || 0;
+        const scoreB = b.finalScore || b.score || b.totalScore || 0;
+        return scoreB - scoreA; // 降序排列
+    });
+    
+    // 渲染每一行
+    results.forEach((result, index) => {
+        const userInfo = result.userInfo || {};
+        const score = result.finalScore || result.score || result.totalScore || 0;
+        const correctCount = result.correctCount || 0;
+        const wrongCount = result.wrongCount || 0;
+        
+        // 计算用时
+        let timeUsed = "0:00";
+        if (result.startTime && result.endTime) {
+            const seconds = Math.floor((result.endTime - result.startTime) / 1000);
+            const minutes = Math.floor(seconds / 60);
+            const remainingSeconds = seconds % 60;
+            timeUsed = `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
         }
+        
+        const row = document.createElement('tr');
+        
+        // 设置前三名的特殊样式
+        if (index === 0) row.classList.add('first-place');
+        else if (index === 1) row.classList.add('second-place');
+        else if (index === 2) row.classList.add('third-place');
+        
+        row.innerHTML = `
+            <td>${index + 1}</td>
+            <td>${userInfo.name || '未知'}</td>
+            <td>${userInfo.class || '未知'}</td>
+            <td>${userInfo.group === 'highschool' ? '高中组' : (userInfo.group === 'middleschool' ? '初中组' : '未知')}</td>
+            <td>${correctCount}</td>
+            <td>${wrongCount}</td>
+            <td><strong>${score}</strong></td>
+            <td>${timeUsed}</td>
+            <td>
+                <button class="btn btn-sm btn-info view-participant-answers" 
+                        data-user-id="${result.userId || ''}">
+                    <i class="fas fa-eye me-1"></i>查看详情
+                </button>
+            </td>
+        `;
+        
+        detailedResultsBody.appendChild(row);
+    });
+    
+    // 重新绑定查看详情按钮事件
+    bindViewAnswersButtons();
+}
+
+// ============ 新增：绑定查看详情按钮事件 ============
+function bindViewAnswersButtons() {
+    // 移除之前的事件监听器
+    document.querySelectorAll('.view-participant-answers').forEach(btn => {
+        btn.removeEventListener('click', handleViewAnswers);
+    });
+    
+    // 添加新的事件监听器
+    document.querySelectorAll('.view-participant-answers').forEach(btn => {
+        btn.addEventListener('click', handleViewAnswers);
+    });
+}
+
+// ============ 新增：处理查看详情按钮点击 ============
+function handleViewAnswers(event) {
+    const userId = event.currentTarget.getAttribute('data-user-id');
+    if (userId) {
+        viewParticipantAnswers(userId);
+    }
+}
 
         // 更新成绩分布
         function updateScoreDistribution(results) {
@@ -6193,6 +6325,7 @@ function saveQuestion(event) {
                 allowOutsideClick: false,
                 didOpen: () => Swal.showLoading()
             });
+
 
             Promise.all([
                 database.ref('quiz/settings').once('value'),
