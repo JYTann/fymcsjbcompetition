@@ -2365,15 +2365,152 @@
                     </div>
                 </div>
                 <div class="tab-pane fade" id="awards" role="tabpanel">
-                    <div class="card">
-                        <div class="card-header">
-                            <i class="fas fa-trophy me-2"></i>晋级/获奖管理
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <span><i class="fas fa-trophy me-2"></i>晋级/获奖管理</span>
+            <div>
+                <button class="btn btn-sm btn-primary me-2" id="addAwardBtn">
+                    <i class="fas fa-plus me-1"></i>添加获奖者
+                </button>
+                <button class="btn btn-sm btn-success" id="autoGenerateAwardsBtn">
+                    <i class="fas fa-magic me-1"></i>自动生成
+                </button>
+            </div>
+        </div>
+        <div class="card-body">
+            <!-- 晋级设置表单 -->
+            <form id="awardSettingsForm" class="mb-4">
+                <h5><i class="fas fa-cog me-2"></i>晋级设置</h5>
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <label for="awardMode" class="form-label">晋级模式</label>
+                        <select class="form-select" id="awardMode" required>
+                            <option value="auto">自动晋级</option>
+                            <option value="manual">手动设置</option>
+                            <option value="mixed">混合模式</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="minimumScore" class="form-label">最低晋级分数</label>
+                        <input type="number" class="form-control" id="minimumScore" min="0" max="100" value="60" required>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="qualifyPercentage" class="form-label">晋级比例 (%)</label>
+                        <input type="number" class="form-control" id="qualifyPercentage" min="0" max="100" value="30" required>
+                    </div>
+                </div>
+                
+                <div id="autoSettings" style="display: none;">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="highschoolQualifyCount" class="form-label">高中组晋级名额</label>
+                            <input type="number" class="form-control" id="highschoolQualifyCount" min="0" value="10" required>
                         </div>
-                        <div class="card-body">
-                            <!-- 这里放置完整的晋级管理面板内容 -->
+                        <div class="col-md-6">
+                            <label for="middleschoolQualifyCount" class="form-label">初中组晋级名额</label>
+                            <input type="number" class="form-control" id="middleschoolQualifyCount" min="0" value="10" required>
                         </div>
                     </div>
                 </div>
+                
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="highschoolFirstPrize" class="form-label">高中组一等奖奖品</label>
+                        <input type="text" class="form-control" id="highschoolFirstPrize" placeholder="例如：笔记本电脑">
+                    </div>
+                    <div class="col-md-6">
+                        <label for="middleschoolFirstPrize" class="form-label">初中组一等奖奖品</label>
+                        <input type="text" class="form-control" id="middleschoolFirstPrize" placeholder="例如：平板电脑">
+                    </div>
+                </div>
+                
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save me-1"></i>保存设置
+                </button>
+            </form>
+            
+            <hr>
+            
+            <!-- 快速操作 -->
+            <div class="row mb-4">
+                <div class="col-md-12">
+                    <h5><i class="fas fa-bolt me-2"></i>快速操作</h5>
+                    <div class="btn-group" role="group">
+                        <button class="btn btn-outline-primary" id="exportAwardsBtn">
+                            <i class="fas fa-download me-1"></i>导出名单
+                        </button>
+                        <button class="btn btn-outline-success" id="importAwardsBtn">
+                            <i class="fas fa-upload me-1"></i>导入名单
+                        </button>
+                        <button class="btn btn-outline-danger" id="clearAwardsBtn">
+                            <i class="fas fa-trash me-1"></i>清空名单
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 统计信息 -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card bg-primary text-white">
+                        <div class="card-body text-center">
+                            <h6 class="card-title">总获奖人数</h6>
+                            <h2 id="totalAwardsCount">0</h2>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-success text-white">
+                        <div class="card-body text-center">
+                            <h6 class="card-title">今日新增</h6>
+                            <h2 id="todayAwardsCount">0</h2>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-info text-white">
+                        <div class="card-body text-center">
+                            <h6 class="card-title">高中组</h6>
+                            <h2 id="highschoolAwardsCount">0</h2>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-warning text-white">
+                        <div class="card-body text-center">
+                            <h6 class="card-title">初中组</h6>
+                            <h2 id="middleschoolAwardsCount">0</h2>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 获奖名单表格 -->
+            <h5><i class="fas fa-list me-2"></i>获奖/晋级名单</h5>
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>序号</th>
+                            <th>姓名</th>
+                            <th>班级</th>
+                            <th>学号</th>
+                            <th>组别</th>
+                            <th>奖项</th>
+                            <th>得分</th>
+                            <th>排名</th>
+                            <th>备注</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="awardsListBody">
+                        <!-- 获奖名单将通过JavaScript动态填充 -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
             </div>
         </div>
     </div>
@@ -5836,8 +5973,16 @@ function bindAwardEventListeners() {
 
 // 更新晋级模式UI
 function updateAwardModeUI() {
-    const mode = document.getElementById('awardMode').value;
+    const awardModeElement = document.getElementById('awardMode');
     const autoSettings = document.getElementById('autoSettings');
+    
+    // 添加空值检查
+    if (!awardModeElement || !autoSettings) {
+        console.warn('晋级管理相关元素尚未加载');
+        return;
+    }
+    
+    const mode = awardModeElement.value;
     
     if (mode === 'auto' || mode === 'mixed') {
         autoSettings.style.display = 'block';
