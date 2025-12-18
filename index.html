@@ -2695,6 +2695,14 @@
                 },
                 placeholder: '请输入参考答案...'
             });
+
+            bindAwardEventListeners();
+            updateAwardModeUI();
+
+            // 当切换到晋级管理选项卡时加载数据
+            document.getElementById('awards-tab')?.addEventListener('click', function() {
+                loadAwardsList();
+            });
             
             // 监听编辑器内容变化
             quill.on('text-change', function() {
@@ -6364,21 +6372,6 @@ function parseAndImportAwardsCSV(csvData) {
             console.error("导入晋级名单错误:", error);
             Swal.fire('错误', '导入失败: ' + error.message, 'error');
         });
-}
-
-// 在init()函数中调用
-function init() {
-    // ... 其他初始化代码 ...
-    
-    bindAwardEventListeners();
-    updateAwardModeUI();
-    
-    // 当切换到晋级管理选项卡时加载数据
-    document.getElementById('awards-tab')?.addEventListener('click', function() {
-        loadAwardsList();
-    });
-    
-    // ... 其他代码 ...
 }
 
 // 更新查询结果功能，使其能够正确查询晋级状态
