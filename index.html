@@ -4437,27 +4437,31 @@ function initMonitor() {
         }
         
         // 添加选项
-        function addOption() {
-            const optionIndex = document.getElementById('optionsContainer').children.length;
-            const optionHTML = `
-                <div class="input-group mb-2 option-item" data-index="${optionIndex}">
-                    <span class="input-group-text">${String.fromCharCode(65 + optionIndex)}</span>
-                    <input type="text" class="form-control option-text" placeholder="选项内容" required>
-                    <button class="btn btn-outline-danger remove-option" type="button">×</button>
-                </div>
-            `;
-            
-            document.getElementById('optionsContainer').insertAdjacentHTML('beforeend', optionHTML);
-            
-            const removeBtn = document.getElementById('optionsContainer').lastElementChild.querySelector('.remove-option');
-            removeBtn.addEventListener('click', function() {
-                this.closest('.option-item').remove();
-                updateOptionIndexes();
-                updateCorrectAnswersUI();
-            });
-            
-            updateCorrectAnswersUI();
-        }
+        // 添加选项
+function addOption() {
+    const optionIndex = document.getElementById('optionsContainer').children.length;
+    const questionType = document.getElementById('questionType').value;
+    const isRequired = questionType === 'single' || questionType === 'multiple';
+    
+    const optionHTML = `
+        <div class="input-group mb-2 option-item" data-index="${optionIndex}">
+            <span class="input-group-text">${String.fromCharCode(65 + optionIndex)}</span>
+            <input type="text" class="form-control option-text" placeholder="选项内容" ${isRequired ? 'required' : ''}>
+            <button class="btn btn-outline-danger remove-option" type="button">×</button>
+        </div>
+    `;
+    
+    document.getElementById('optionsContainer').insertAdjacentHTML('beforeend', optionHTML);
+    
+    const removeBtn = document.getElementById('optionsContainer').lastElementChild.querySelector('.remove-option');
+    removeBtn.addEventListener('click', function() {
+        this.closest('.option-item').remove();
+        updateOptionIndexes();
+        updateCorrectAnswersUI();
+    });
+    
+    updateCorrectAnswersUI();
+}
         
         // 更新选项索引
         function updateOptionIndexes() {
@@ -4508,24 +4512,36 @@ function initMonitor() {
         }
         
         // 更新题目类型UI
-        function updateQuestionTypeUI() {
-            const type = document.getElementById('questionType').value;
-            
-            if (type === 'single' || type === 'multiple') {
-                document.getElementById('optionsSection').style.display = 'block';
-                document.getElementById('correctAnswersSection').style.display = 'block';
-                document.getElementById('correctAnswerContainer').style.display = 'none';
-                
-                if (document.getElementById('optionsContainer').children.length === 0) {
-                    addOption();
-                    addOption();
-                }
-            } else {
-                document.getElementById('optionsSection').style.display = 'none';
-                document.getElementById('correctAnswersSection').style.display = 'none';
-                document.getElementById('correctAnswerContainer').style.display = 'block';
-            }
+        // 更新题目类型UI
+function updateQuestionTypeUI() {
+    const type = document.getElementById('questionType').value;
+    const optionInputs = document.querySelectorAll('.option-text');
+    
+    if (type === 'single' || type === 'multiple') {
+        document.getElementById('optionsSection').style.display = 'block';
+        document.getElementById('correctAnswersSection').style.display = 'block';
+        document.getElementById('correctAnswerContainer').style.display = 'none';
+        
+        // 为选择题的选项添加required属性
+        optionInputs.forEach(input => {
+            input.setAttribute('required', 'required');
+        });
+        
+        if (document.getElementById('optionsContainer').children.length === 0) {
+            addOption();
+            addOption();
         }
+    } else {
+        document.getElementById('optionsSection').style.display = 'none';
+        document.getElementById('correctAnswersSection').style.display = 'none';
+        document.getElementById('correctAnswerContainer').style.display = 'block';
+        
+        // 为非选择题的选项移除required属性
+        optionInputs.forEach(input => {
+            input.removeAttribute('required');
+        });
+    }
+}
         
         // 编辑题目
         function editQuestion(id) {
@@ -4628,88 +4644,101 @@ function initMonitor() {
         }
         
         // 保存题目
-        function saveQuestion(event) {
-            event.preventDefault();
+function saveQuestion(event) {
+    event.preventDefault();
 
-            const id = document.getElementById('questionId').value || database.ref().child('questions').push().key;
-            const type = document.getElementById('questionType').value;
-            const difficulty = document.getElementById('questionDifficulty').value;
-            const points = parseInt(document.getElementById('questionPoints').value);
-            const text = quill.root.innerHTML.trim();
+    const id = document.getElementById('questionId').value || database.ref().child('questions').push().key;
+    const type = document.getElementById('questionType').value;
+    const difficulty = document.getElementById('questionDifficulty').value;
+    const points = parseInt(document.getElementById('questionPoints').value);
+    const text = quill.root.innerHTML.trim();
 
-            if (!text || text === '<p><br></p>') {
-                Swal.fire('错误', '题目内容不能为空', 'error');
-                return;
-            }
+    if (!text || text === '<p><br></p>') {
+        Swal.fire('错误', '题目内容不能为空', 'error');
+        return;
+    }
 
-            let options = [];
-            let correctAnswers = [];
-            let correctAnswerText = '';
+    // 如果是问答题或申论题，临时移除选项的required属性
+    if (type === 'short_answer' || type === 'essay') {
+        const optionInputs = document.querySelectorAll('.option-text');
+        optionInputs.forEach(input => {
+            input.removeAttribute('required');
+        });
+    }
 
-            if (type === 'short_answer' || type === 'essay') {
-                correctAnswerText = document.getElementById('correctAnswerText').value.trim();
-            } else if (type === 'single' || type === 'multiple') {
-                options = Array.from(document.getElementById('optionsContainer').querySelectorAll('.form-control')).map(input => ({
-                    text: input.value.trim()
-                }));
+    let options = [];
+    let correctAnswers = [];
+    let correctAnswerText = '';
 
-                if (options.some(opt => !opt.text)) {
-                    Swal.fire('错误', '所有选项都必须填写', 'error');
-                    return;
-                }
+    if (type === 'short_answer' || type === 'essay') {
+        correctAnswerText = document.getElementById('correctAnswerText').value.trim();
+    } else if (type === 'single' || type === 'multiple') {
+        // 如果是选择题，确保选项有required属性
+        const optionInputs = document.querySelectorAll('.option-text');
+        optionInputs.forEach(input => {
+            input.setAttribute('required', 'required');
+        });
+        
+        options = Array.from(document.getElementById('optionsContainer').querySelectorAll('.form-control')).map(input => ({
+            text: input.value.trim()
+        }));
 
-                const correctInputs = document.getElementById('correctAnswersContainer').querySelectorAll('input[type="checkbox"], input[type="radio"]');
-                correctInputs.forEach((input, index) => {
-                    if (input.checked) correctAnswers.push(index);
-                });
-
-                if (correctAnswers.length === 0) {
-                    Swal.fire('错误', '请选择至少一个正确答案', 'error');
-                    return;
-                }
-            }
-
-            const questionData = {
-                id,
-                type,
-                difficulty,
-                points,
-                text,
-                imageUrl: currentImageUrl || '',
-                options,
-                correctAnswers,
-                correctAnswerText
-            };
-
-            database.ref('questions/' + id).set(questionData)
-                .then(() => {
-                    Swal.fire('成功', '题目已保存', 'success');
-                    clearQuestionForm();
-                    loadQuizData();
-                })
-                .catch(error => {
-                    console.error("保存失败：", error);
-                    Swal.fire('错误', '保存题目失败: ' + error.message, 'error');
-                });
+        if (options.some(opt => !opt.text)) {
+            Swal.fire('错误', '所有选项都必须填写', 'error');
+            return;
         }
 
+        const correctInputs = document.getElementById('correctAnswersContainer').querySelectorAll('input[type="checkbox"], input[type="radio"]');
+        correctInputs.forEach((input, index) => {
+            if (input.checked) correctAnswers.push(index);
+        });
+
+        if (correctAnswers.length === 0) {
+            Swal.fire('错误', '请选择至少一个正确答案', 'error');
+            return;
+        }
+    }
+
+    const questionData = {
+        id,
+        type,
+        difficulty,
+        points,
+        text,
+        imageUrl: currentImageUrl || '',
+        options,
+        correctAnswers,
+        correctAnswerText
+    };
+
+    database.ref('questions/' + id).set(questionData)
+        .then(() => {
+            Swal.fire('成功', '题目已保存', 'success');
+            clearQuestionForm();
+            loadQuizData();
+        })
+        .catch(error => {
+            console.error("保存失败：", error);
+            Swal.fire('错误', '保存题目失败: ' + error.message, 'error');
+        });
+}
         function clearQuestionForm() {
-            document.getElementById('questionId').value = '';
-            document.getElementById('questionType').value = 'single';
-            document.getElementById('questionDifficulty').value = 'medium';
-            document.getElementById('questionPoints').value = 5;
-            quill.setText('');
-            answerQuill.setText('');
-            document.getElementById('questionText').value = '';
-            document.getElementById('correctAnswerText').value = '';
-            currentImageUrl = '';
-            const imagePreview = document.getElementById('imagePreview');
-            imagePreview.src = '';
-            imagePreview.classList.add('d-none');
-            document.getElementById('optionsContainer').innerHTML = '';
-            document.getElementById('correctAnswersContainer').innerHTML = '';
-            updateQuestionTypeUI();
-        }
+    document.getElementById('questionId').value = '';
+    document.getElementById('questionType').value = 'single';
+    document.getElementById('questionDifficulty').value = 'medium';
+    document.getElementById('questionPoints').value = 5;
+    quill.setText('');
+    answerQuill.setText('');
+    document.getElementById('questionText').value = '';
+    document.getElementById('correctAnswerText').value = '';
+    currentImageUrl = '';
+    const imagePreview = document.getElementById('imagePreview');
+    imagePreview.src = '';
+    imagePreview.classList.add('d-none');
+    document.getElementById('optionsContainer').innerHTML = '';
+    document.getElementById('correctAnswersContainer').innerHTML = '';
+    updateQuestionTypeUI();
+}
 
         // 删除题目
         function deleteQuestion(id) {
