@@ -2834,8 +2834,13 @@
             });
 
             bindAwardEventListeners();
-            updateAwardModeUI();
-
+            document.getElementById('awards-tab')?.addEventListener('click', function() {
+                loadAwardsList();
+                setTimeout(() => {
+                    updateAwardModeUI(); // 现在元素已经加载，可以安全调用
+                }, 100);
+            });
+            
             // 当切换到晋级管理选项卡时加载数据
             document.getElementById('awards-tab')?.addEventListener('click', function() {
                 loadAwardsList();
