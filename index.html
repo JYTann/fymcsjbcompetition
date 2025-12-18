@@ -1840,6 +1840,11 @@
                     </button>
                 </li>
                 <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="awards-tab" data-bs-toggle="tab" data-bs-target="#awards" type="button">
+                        <i class="fas fa-trophy me-1"></i>晋级/获奖管理
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
                     <button class="nav-link" id="paper-tab" data-bs-toggle="tab" data-bs-target="#paper" type="button">
                         <i class="fas fa-file-alt me-1"></i>智能组卷
                     </button>
@@ -2359,6 +2364,16 @@
                         </div>
                     </div>
                 </div>
+                <div class="tab-pane fade" id="awards" role="tabpanel">
+                    <div class="card">
+                        <div class="card-header">
+                            <i class="fas fa-trophy me-2"></i>晋级/获奖管理
+                        </div>
+                        <div class="card-body">
+                            <!-- 这里放置完整的晋级管理面板内容 -->
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -2498,7 +2513,72 @@
             </div>
         </div>
     </div>
-
+<div class="modal fade" id="awardModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-trophy me-2"></i>添加/编辑获奖者</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="awardForm">
+                        <input type="hidden" id="awardId">
+                        <div class="mb-3">
+                            <label for="awardName" class="form-label">姓名</label>
+                            <input type="text" class="form-control" id="awardName" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="awardClass" class="form-label">班级</label>
+                            <input type="text" class="form-control" id="awardClass" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="awardStudentId" class="form-label">学号</label>
+                            <input type="text" class="form-control" id="awardStudentId" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="awardGroup" class="form-label">组别</label>
+                            <select class="form-select" id="awardGroup" required>
+                                <option value="">请选择组别</option>
+                                <option value="highschool">高中组</option>
+                                <option value="middleschool">初中组</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="awardType" class="form-label">奖项/状态</label>
+                            <select class="form-select" id="awardType" required>
+                                <option value="">请选择</option>
+                                <option value="champion">冠军</option>
+                                <option value="second">亚军</option>
+                                <option value="third">季军</option>
+                                <option value="excellent">优秀奖</option>
+                                <option value="qualify">晋级</option>
+                                <option value="participate">参与奖</option>
+                            </select>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="awardScore" class="form-label">得分</label>
+                                <input type="number" class="form-control" id="awardScore" min="0">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="awardRank" class="form-label">排名</label>
+                                <input type="number" class="form-control" id="awardRank" min="1">
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="awardNote" class="form-label">备注</label>
+                            <textarea class="form-control" id="awardNote" rows="3" placeholder="可填写奖励详情或其他备注"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" id="saveAwardBtn">保存</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- ============ 结束：添加获奖者模态框 ============ -->
     <!-- 页脚 -->
     <footer class="footer mt-auto">
         <div class="container">
@@ -2795,6 +2875,7 @@
             
             // 键盘快捷键
             document.addEventListener('keydown', handleKeyboardShortcuts);
+            bindAwardEventListeners();
         }
 
         // 键盘快捷键处理
@@ -5728,6 +5809,678 @@ function handleViewAnswers(event) {
     }
 }
 
+        // 在init()函数中绑定新的事件监听器
+function bindAwardEventListeners() {
+    // 晋级设置表单
+    document.getElementById('awardSettingsForm')?.addEventListener('submit', saveAwardSettings);
+    
+    // 快速操作按钮
+    document.getElementById('autoGenerateAwardsBtn')?.addEventListener('click', autoGenerateAwards);
+    document.getElementById('clearAwardsBtn')?.addEventListener('click', clearAwards);
+    document.getElementById('exportAwardsBtn')?.addEventListener('click', exportAwards);
+    document.getElementById('importAwardsBtn')?.addEventListener('click', importAwards);
+    document.getElementById('addAwardBtn')?.addEventListener('click', showAddAwardModal);
+    document.getElementById('saveAwardBtn')?.addEventListener('click', saveAward);
+    
+    // 晋级模式切换
+    document.getElementById('awardMode')?.addEventListener('change', updateAwardModeUI);
+}
+
+// 更新晋级模式UI
+function updateAwardModeUI() {
+    const mode = document.getElementById('awardMode').value;
+    const autoSettings = document.getElementById('autoSettings');
+    
+    if (mode === 'auto' || mode === 'mixed') {
+        autoSettings.style.display = 'block';
+    } else {
+        autoSettings.style.display = 'none';
+    }
+}
+
+// 保存晋级设置
+function saveAwardSettings(e) {
+    e.preventDefault();
+    
+    const settings = {
+        mode: document.getElementById('awardMode').value,
+        highschoolQualifyCount: parseInt(document.getElementById('highschoolQualifyCount').value),
+        middleschoolQualifyCount: parseInt(document.getElementById('middleschoolQualifyCount').value),
+        minimumScore: parseInt(document.getElementById('minimumScore').value),
+        qualifyPercentage: parseInt(document.getElementById('qualifyPercentage').value),
+        highschoolFirstPrize: document.getElementById('highschoolFirstPrize').value,
+        middleschoolFirstPrize: document.getElementById('middleschoolFirstPrize').value,
+        lastUpdated: new Date().getTime()
+    };
+    
+    database.ref('awardSettings').set(settings)
+        .then(() => {
+            Swal.fire('成功', '晋级设置已保存', 'success');
+        })
+        .catch(error => {
+            console.error("保存晋级设置错误:", error);
+            Swal.fire('错误', '保存失败: ' + error.message, 'error');
+        });
+}
+
+// 自动生成晋级名单
+function autoGenerateAwards() {
+    Swal.fire({
+        title: '自动生成晋级名单',
+        html: '确定要根据当前成绩自动生成晋级名单吗？',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: '确定',
+        cancelButtonText: '取消'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            showLoading('正在生成晋级名单...');
+            
+            // 获取所有已提交的成绩
+            database.ref('userAnswers')
+                .orderByChild('submitted')
+                .equalTo(true)
+                .once('value')
+                .then(snapshot => {
+                    if (!snapshot.exists()) {
+                        hideLoading();
+                        Swal.fire('提示', '没有找到已提交的成绩数据', 'info');
+                        return;
+                    }
+                    
+                    const allResults = [];
+                    snapshot.forEach(childSnapshot => {
+                        const result = childSnapshot.val();
+                        if (result.userInfo && result.score !== undefined) {
+                            allResults.push({
+                                ...result,
+                                userId: childSnapshot.key
+                            });
+                        }
+                    });
+                    
+                    // 分组
+                    const highschoolResults = allResults.filter(r => r.userInfo.group === 'highschool');
+                    const middleschoolResults = allResults.filter(r => r.userInfo.group === 'middleschool');
+                    
+                    // 排序
+                    highschoolResults.sort((a, b) => b.score - a.score || (a.endTime - a.startTime) - (b.endTime - b.startTime));
+                    middleschoolResults.sort((a, b) => b.score - a.score || (a.endTime - a.startTime) - (b.endTime - b.startTime));
+                    
+                    // 获取设置
+                    database.ref('awardSettings').once('value').then(settingsSnapshot => {
+                        const settings = settingsSnapshot.exists() ? settingsSnapshot.val() : {
+                            highschoolQualifyCount: 10,
+                            middleschoolQualifyCount: 10,
+                            minimumScore: 60
+                        };
+                        
+                        const awards = [];
+                        let awardId = 1;
+                        
+                        // 生成高中组获奖名单
+                        const hsCount = Math.min(settings.highschoolQualifyCount, highschoolResults.length);
+                        for (let i = 0; i < hsCount; i++) {
+                            const result = highschoolResults[i];
+                            if (result.score >= (settings.minimumScore || 0)) {
+                                awards.push({
+                                    id: `award-${awardId++}`,
+                                    name: result.userInfo.name,
+                                    class: result.userInfo.class,
+                                    studentId: result.userInfo.studentId || '',
+                                    group: 'highschool',
+                                    award: i === 0 ? '冠军' : i === 1 ? '亚军' : i === 2 ? '季军' : '晋级',
+                                    score: result.score,
+                                    rank: i + 1,
+                                    timestamp: new Date().getTime()
+                                });
+                            }
+                        }
+                        
+                        // 生成初中组获奖名单
+                        const msCount = Math.min(settings.middleschoolQualifyCount, middleschoolResults.length);
+                        for (let i = 0; i < msCount; i++) {
+                            const result = middleschoolResults[i];
+                            if (result.score >= (settings.minimumScore || 0)) {
+                                awards.push({
+                                    id: `award-${awardId++}`,
+                                    name: result.userInfo.name,
+                                    class: result.userInfo.class,
+                                    studentId: result.userInfo.studentId || '',
+                                    group: 'middleschool',
+                                    award: i === 0 ? '冠军' : i === 1 ? '亚军' : i === 2 ? '季军' : '晋级',
+                                    score: result.score,
+                                    rank: i + 1,
+                                    timestamp: new Date().getTime()
+                                });
+                            }
+                        }
+                        
+                        // 保存到数据库
+                        const updates = {};
+                        awards.forEach(award => {
+                            updates[`awards/${award.id}`] = award;
+                        });
+                        
+                        database.ref().update(updates)
+                            .then(() => {
+                                hideLoading();
+                                Swal.fire('成功', `已生成 ${awards.length} 名晋级/获奖者名单`, 'success');
+                                loadAwardsList();
+                            })
+                            .catch(error => {
+                                hideLoading();
+                                console.error("保存晋级名单错误:", error);
+                                Swal.fire('错误', '保存失败: ' + error.message, 'error');
+                            });
+                    });
+                })
+                .catch(error => {
+                    hideLoading();
+                    console.error("获取成绩数据错误:", error);
+                    Swal.fire('错误', '获取成绩数据失败: ' + error.message, 'error');
+                });
+        }
+    });
+}
+
+// 加载晋级名单
+function loadAwardsList() {
+    const awardsListBody = document.getElementById('awardsListBody');
+    if (!awardsListBody) return;
+    
+    awardsListBody.innerHTML = '<tr><td colspan="10" class="text-center"><div class="spinner-border"></div></td></tr>';
+    
+    database.ref('awards').once('value').then(snapshot => {
+        awardsListBody.innerHTML = '';
+        
+        if (!snapshot.exists()) {
+            awardsListBody.innerHTML = '<tr><td colspan="10" class="text-center text-muted">暂无晋级/获奖数据</td></tr>';
+            
+            // 更新统计
+            document.getElementById('totalAwardsCount').textContent = '0';
+            document.getElementById('todayAwardsCount').textContent = '0';
+            return;
+        }
+        
+        const awards = [];
+        let todayCount = 0;
+        const today = new Date().toDateString();
+        
+        snapshot.forEach(childSnapshot => {
+            const award = childSnapshot.val();
+            awards.push(award);
+            
+            // 统计今日新增
+            const awardDate = new Date(award.timestamp).toDateString();
+            if (awardDate === today) {
+                todayCount++;
+            }
+        });
+        
+        // 按组别和排名排序
+        awards.sort((a, b) => {
+            if (a.group !== b.group) return a.group.localeCompare(b.group);
+            if (a.award !== b.award) {
+                const awardOrder = { '冠军': 1, '亚军': 2, '季军': 3, '晋级': 4, '优秀奖': 5, '参与奖': 6 };
+                return (awardOrder[a.award] || 7) - (awardOrder[b.award] || 7);
+            }
+            return (a.rank || 999) - (b.rank || 999);
+        });
+        
+        // 显示列表
+        awards.forEach((award, index) => {
+            const row = document.createElement('tr');
+            
+            // 设置不同奖项的颜色
+            let awardClass = '';
+            switch(award.award) {
+                case '冠军': awardClass = 'table-success'; break;
+                case '亚军': awardClass = 'table-info'; break;
+                case '季军': awardClass = 'table-warning'; break;
+                case '晋级': awardClass = ''; break;
+                default: awardClass = 'table-light';
+            }
+            
+            row.className = awardClass;
+            row.innerHTML = `
+                <td>${index + 1}</td>
+                <td><strong>${award.name}</strong></td>
+                <td>${award.class}</td>
+                <td>${award.studentId || ''}</td>
+                <td>${award.group === 'highschool' ? '高中组' : '初中组'}</td>
+                <td>
+                    <span class="badge ${getAwardBadgeClass(award.award)}">
+                        ${award.award}
+                    </span>
+                </td>
+                <td>${award.score || '-'}</td>
+                <td>${award.rank || '-'}</td>
+                <td>${award.note || ''}</td>
+                <td>
+                    <button class="btn btn-sm btn-primary edit-award me-1" data-id="${award.id}">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="btn btn-sm btn-danger delete-award" data-id="${award.id}">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </td>
+            `;
+            
+            awardsListBody.appendChild(row);
+        });
+        
+        // 更新统计
+        document.getElementById('totalAwardsCount').textContent = awards.length;
+        document.getElementById('todayAwardsCount').textContent = todayCount;
+        
+        // 绑定操作按钮事件
+        bindAwardActionButtons();
+        
+    }).catch(error => {
+        console.error("加载晋级名单错误:", error);
+        awardsListBody.innerHTML = '<tr><td colspan="10" class="text-center text-danger">加载失败</td></tr>';
+    });
+}
+
+// 获取奖项徽章样式
+function getAwardBadgeClass(award) {
+    switch(award) {
+        case '冠军': return 'bg-success';
+        case '亚军': return 'bg-info';
+        case '季军': return 'bg-warning';
+        case '晋级': return 'bg-primary';
+        case '优秀奖': return 'bg-secondary';
+        default: return 'bg-light text-dark';
+    }
+}
+
+// 绑定晋级操作按钮事件
+function bindAwardActionButtons() {
+    document.querySelectorAll('.edit-award').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const awardId = this.getAttribute('data-id');
+            editAward(awardId);
+        });
+    });
+    
+    document.querySelectorAll('.delete-award').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const awardId = this.getAttribute('data-id');
+            deleteAward(awardId);
+        });
+    });
+}
+
+// 显示添加获奖者模态框
+function showAddAwardModal() {
+    document.getElementById('awardForm').reset();
+    document.getElementById('awardId').value = '';
+    
+    const modal = new bootstrap.Modal(document.getElementById('awardModal'));
+    modal.show();
+}
+
+// 编辑获奖者
+function editAward(awardId) {
+    showLoading('加载获奖者信息...');
+    
+    database.ref('awards/' + awardId).once('value').then(snapshot => {
+        hideLoading();
+        
+        if (snapshot.exists()) {
+            const award = snapshot.val();
+            
+            document.getElementById('awardForm').reset();
+            document.getElementById('awardId').value = award.id;
+            document.getElementById('awardName').value = award.name || '';
+            document.getElementById('awardClass').value = award.class || '';
+            document.getElementById('awardStudentId').value = award.studentId || '';
+            document.getElementById('awardGroup').value = award.group || '';
+            document.getElementById('awardType').value = award.awardType || award.award || '';
+            document.getElementById('awardScore').value = award.score || '';
+            document.getElementById('awardRank').value = award.rank || '';
+            document.getElementById('awardNote').value = award.note || '';
+            
+            const modal = new bootstrap.Modal(document.getElementById('awardModal'));
+            modal.show();
+        } else {
+            Swal.fire('错误', '找不到该获奖者信息', 'error');
+        }
+    }).catch(error => {
+        hideLoading();
+        console.error("加载获奖者信息错误:", error);
+        Swal.fire('错误', '加载失败: ' + error.message, 'error');
+    });
+}
+
+// 保存获奖者
+function saveAward() {
+    const awardId = document.getElementById('awardId').value || database.ref().child('awards').push().key;
+    const awardType = document.getElementById('awardType').value;
+    
+    const awardData = {
+        id: awardId,
+        name: document.getElementById('awardName').value.trim(),
+        class: document.getElementById('awardClass').value.trim(),
+        studentId: document.getElementById('awardStudentId').value.trim(),
+        group: document.getElementById('awardGroup').value,
+        award: document.getElementById('awardType').value,
+        awardType: document.getElementById('awardType').value,
+        score: document.getElementById('awardScore').value ? parseInt(document.getElementById('awardScore').value) : null,
+        rank: document.getElementById('awardRank').value ? parseInt(document.getElementById('awardRank').value) : null,
+        note: document.getElementById('awardNote').value.trim(),
+        timestamp: new Date().getTime()
+    };
+    
+    if (!awardData.name || !awardData.class || !awardData.group || !awardData.award) {
+        Swal.fire('错误', '请填写所有必填字段', 'error');
+        return;
+    }
+    
+    database.ref('awards/' + awardId).set(awardData)
+        .then(() => {
+            bootstrap.Modal.getInstance(document.getElementById('awardModal')).hide();
+            Swal.fire('成功', '获奖者信息已保存', 'success');
+            loadAwardsList();
+        })
+        .catch(error => {
+            console.error("保存获奖者信息错误:", error);
+            Swal.fire('错误', '保存失败: ' + error.message, 'error');
+        });
+}
+
+// 删除获奖者
+function deleteAward(awardId) {
+    Swal.fire({
+        title: '确认删除？',
+        text: '确定要删除这个获奖者记录吗？',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: '删除',
+        cancelButtonText: '取消'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            database.ref('awards/' + awardId).remove()
+                .then(() => {
+                    Swal.fire('已删除', '获奖者记录已删除', 'success');
+                    loadAwardsList();
+                })
+                .catch(error => {
+                    console.error("删除获奖者错误:", error);
+                    Swal.fire('错误', '删除失败: ' + error.message, 'error');
+                });
+        }
+    });
+}
+
+// 清空晋级名单
+function clearAwards() {
+    Swal.fire({
+        title: '确认清空？',
+        text: '确定要清空所有晋级/获奖名单吗？此操作不可恢复！',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: '清空',
+        cancelButtonText: '取消',
+        confirmButtonColor: '#dc3545'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            database.ref('awards').remove()
+                .then(() => {
+                    Swal.fire('已清空', '晋级名单已清空', 'success');
+                    loadAwardsList();
+                })
+                .catch(error => {
+                    console.error("清空晋级名单错误:", error);
+                    Swal.fire('错误', '清空失败: ' + error.message, 'error');
+                });
+        }
+    });
+}
+
+// 导出晋级名单
+function exportAwards() {
+    database.ref('awards').once('value').then(snapshot => {
+        if (!snapshot.exists()) {
+            Swal.fire('提示', '没有可导出的晋级名单', 'info');
+            return;
+        }
+        
+        const awards = [];
+        snapshot.forEach(childSnapshot => {
+            awards.push(childSnapshot.val());
+        });
+        
+        // 创建CSV
+        let csv = '序号,姓名,班级,学号,组别,奖项,得分,排名,备注\n';
+        
+        awards.forEach((award, index) => {
+            csv += `${index + 1},${award.name},${award.class},${award.studentId || ''},`;
+            csv += `${award.group === 'highschool' ? '高中组' : '初中组'},`;
+            csv += `${award.award},${award.score || ''},${award.rank || ''},${award.note || ''}\n`;
+        });
+        
+        const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+        saveAs(blob, `晋级名单_${new Date().toISOString().slice(0, 10)}.csv`);
+        
+    }).catch(error => {
+        console.error("导出晋级名单错误:", error);
+        Swal.fire('错误', '导出失败: ' + error.message, 'error');
+    });
+}
+
+// 导入晋级名单
+function importAwards() {
+    Swal.fire({
+        title: '导入晋级名单',
+        html: `
+            <p>请选择导入方式：</p>
+            <div class="d-grid gap-2">
+                <button class="btn btn-primary" id="importAwardsCSV">从CSV文件导入</button>
+                <button class="btn btn-success" id="importAwardsJSON">从JSON文件导入</button>
+            </div>
+        `,
+        showConfirmButton: false,
+        showCloseButton: true
+    }).then(() => {
+        document.getElementById('importAwardsCSV').addEventListener('click', () => {
+            Swal.close();
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.csv';
+            input.onchange = e => {
+                const file = e.target.files[0];
+                const reader = new FileReader();
+                reader.onload = event => {
+                    try {
+                        const csvData = event.target.result;
+                        parseAndImportAwardsCSV(csvData);
+                    } catch (error) {
+                        Swal.fire('错误', '解析CSV文件失败', 'error');
+                    }
+                };
+                reader.readAsText(file, 'UTF-8');
+            };
+            input.click();
+        });
+    });
+}
+
+// 解析并导入CSV
+function parseAndImportAwardsCSV(csvData) {
+    showLoading('正在解析并导入数据...');
+    
+    const lines = csvData.split('\n');
+    const awards = [];
+    let awardId = 1;
+    
+    // 跳过标题行
+    for (let i = 1; i < lines.length; i++) {
+        const line = lines[i].trim();
+        if (!line) continue;
+        
+        const columns = line.split(',');
+        if (columns.length >= 8) {
+            const award = {
+                id: `imported-${Date.now()}-${awardId++}`,
+                name: columns[1]?.trim() || '',
+                class: columns[2]?.trim() || '',
+                studentId: columns[3]?.trim() || '',
+                group: columns[4]?.includes('高中') ? 'highschool' : 'middleschool',
+                award: columns[5]?.trim() || '晋级',
+                score: columns[6] ? parseInt(columns[6]) : null,
+                rank: columns[7] ? parseInt(columns[7]) : null,
+                note: columns[8]?.trim() || '',
+                timestamp: new Date().getTime()
+            };
+            
+            if (award.name && award.class) {
+                awards.push(award);
+            }
+        }
+    }
+    
+    if (awards.length === 0) {
+        hideLoading();
+        Swal.fire('错误', 'CSV文件中没有有效的晋级数据', 'error');
+        return;
+    }
+    
+    // 保存到数据库
+    const updates = {};
+    awards.forEach(award => {
+        updates[`awards/${award.id}`] = award;
+    });
+    
+    database.ref().update(updates)
+        .then(() => {
+            hideLoading();
+            Swal.fire('成功', `成功导入 ${awards.length} 条晋级记录`, 'success');
+            loadAwardsList();
+        })
+        .catch(error => {
+            hideLoading();
+            console.error("导入晋级名单错误:", error);
+            Swal.fire('错误', '导入失败: ' + error.message, 'error');
+        });
+}
+
+// 在init()函数中调用
+function init() {
+    // ... 其他初始化代码 ...
+    
+    bindAwardEventListeners();
+    updateAwardModeUI();
+    
+    // 当切换到晋级管理选项卡时加载数据
+    document.getElementById('awards-tab')?.addEventListener('click', function() {
+        loadAwardsList();
+    });
+    
+    // ... 其他代码 ...
+}
+
+// 更新查询结果功能，使其能够正确查询晋级状态
+function checkResult(e) {
+    e.preventDefault();
+    
+    const name = document.getElementById('checkName').value.trim();
+    const className = document.getElementById('checkClass').value.trim();
+    const studentId = document.getElementById('checkStudentId').value.trim();
+    
+    if (!name || !className || !studentId) {
+        Swal.fire('错误', '请填写所有查询信息', 'error');
+        return;
+    }
+    
+    showLoading('查询中...');
+    
+    // 首先查询获奖/晋级名单
+    database.ref('awards').once('value').then(awardsSnapshot => {
+        let foundAward = null;
+        
+        if (awardsSnapshot.exists()) {
+            awardsSnapshot.forEach(childSnapshot => {
+                const award = childSnapshot.val();
+                if (award.name === name && award.class === className && award.studentId === studentId) {
+                    foundAward = award;
+                }
+            });
+        }
+        
+        // 如果找到获奖记录
+        if (foundAward) {
+            hideLoading();
+            
+            const resultContainer = document.getElementById('resultCheckContainer');
+            const successDiv = document.getElementById('resultCheckSuccess');
+            const infoDiv = document.getElementById('resultCheckInfo');
+            const detailsP = document.getElementById('resultCheckDetails');
+            const messageP = document.getElementById('resultCheckMessage');
+            
+            resultContainer.classList.remove('d-none');
+            successDiv.style.display = 'block';
+            infoDiv.style.display = 'none';
+            
+            let details = `<strong>恭喜！您已${foundAward.award}</strong><br>`;
+            details += `姓名: ${foundAward.name}<br>`;
+            details += `班级: ${foundAward.class}<br>`;
+            details += `组别: ${foundAward.group === 'highschool' ? '高中组' : '初中组'}<br>`;
+            details += `奖项: ${foundAward.award}<br>`;
+            if (foundAward.score) details += `得分: ${foundAward.score}<br>`;
+            if (foundAward.rank) details += `排名: 第${foundAward.rank}名<br>`;
+            if (foundAward.note) details += `备注: ${foundAward.note}<br>`;
+            
+            detailsP.innerHTML = details;
+            
+        } else {
+            // 如果没有获奖记录，查询普通成绩
+            database.ref('userAnswers').once('value').then(snapshot => {
+                hideLoading();
+                
+                const resultContainer = document.getElementById('resultCheckContainer');
+                const successDiv = document.getElementById('resultCheckSuccess');
+                const infoDiv = document.getElementById('resultCheckInfo');
+                const detailsP = document.getElementById('resultCheckDetails');
+                const messageP = document.getElementById('resultCheckMessage');
+                
+                resultContainer.classList.remove('d-none');
+                successDiv.style.display = 'none';
+                infoDiv.style.display = 'block';
+                
+                let foundResult = null;
+                if (snapshot.exists()) {
+                    snapshot.forEach(childSnapshot => {
+                        const result = childSnapshot.val();
+                        if (result.userInfo && 
+                            result.userInfo.name === name && 
+                            result.userInfo.class === className && 
+                            result.userInfo.studentId === studentId) {
+                            foundResult = result;
+                        }
+                    });
+                }
+                
+                if (foundResult && foundResult.submitted) {
+                    messageP.innerHTML = `
+                        查询到您的比赛成绩：<br>
+                        <strong>得分: ${foundResult.score || 0}</strong><br>
+                        正确题数: ${foundResult.correctCount || 0}<br>
+                        错误题数: ${foundResult.wrongCount || 0答卷。`;
+                } else {
+                    messageP.textContent = '没有找到您的比赛记录。';
+                }
+            });
+        }
+        
+    }).catch(error => {
+        hideLoading();
+        console.error("查询结果错误:", error);
+        Swal.fire('错误', '查询结果失败: ' + error.message, 'error');
+    });
+}
+
         // 更新成绩分布
         function updateScoreDistribution(results) {
             const scoreDistribution = document.getElementById('scoreDistribution');
@@ -6312,6 +7065,7 @@ function handleViewAnswers(event) {
             document.getElementById('adminView').classList.add('d-none');
             document.getElementById('resultCheckView').classList.add('d-none');
         }
+
         
         function showAdminView() {
             if (!currentUser || !userInfo || !userInfo.isAdmin) {
