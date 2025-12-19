@@ -3885,7 +3885,13 @@ function checkCompetitionTime() {
                     });
                     
                     if (result.isConfirmed) {
-                        // 开始新的一轮答题
+                         console.log("用户选择重新答题，重新初始化");
+                        // 先重置所有状态
+                        userAnswers = [];
+                        markedQuestions = new Set();
+                        currentQuestionIndex = 0;
+                        
+                        // 然后初始化
                         initializeUserQuiz();
                     } else {
                         // 查看上次结果
@@ -8132,6 +8138,45 @@ function addDebugButtons() {
         document.addEventListener('DOMContentLoaded', () => {
             init();
         });
+
+        // 添加刷新恢复功能
+function handlePageRefresh() {
+    // 检查是否是刷新后进入答题页面
+    const isQuizViewVisible = !document.getElementById('quizView').classList.contains('d-none');
+    
+    if (isQuizViewVisible && currentUser) {
+        console.log("检测到刷新后在答题页面，检查状态...");
+        
+        // 延迟检查，确保数据加载完成
+        setTimeout(() => {
+            // 检查 userAnswers 是否有效
+            if (!userAnswers || !Array.isArray(userAnswers) || userAnswers.length === 0) {
+                console.warn("刷新后 userAnswers 无效，尝试从 Firebase 恢复");
+                
+                // 尝试从 Firebase 恢复数据
+                database.ref('userAnswers/' + currentUser.uid).once('value').then(snapshot => {
+                    if (snapshot.exists()) {
+                        const data = snapshot.val();
+                        if (data && !data.submitted) {
+                            console.log("找到未提交的数据，恢复进度");
+                            loadUserProgress(data);
+                        }
+                    }
+                }).catch(error => {
+                    console.error("恢复数据失败:", error);
+                });
+            }
+        }, 1000);
+    }
+}
+
+// 在 DOMContentLoaded 事件中添加
+document.addEventListener('DOMContentLoaded', () => {
+    init();
+    
+    // 添加刷新处理
+    setTimeout(handlePageRefresh, 1500);
+});
     </script>
 </body>
 </html>
