@@ -3832,9 +3832,62 @@
                 return;
             }
             
+            // ============ 修复时间计算逻辑 ============
             // 检查是否超过个人答题时间
             const quizDuration = quizData.settings.duration * 60 * 1000; // 转为毫秒
-            const timeElapsed = new Date().getTime() - (answerData.startTime || new Date().getTime());
+            
+            // 获取准确的开始时间
+            const startTime = answerData.startTime;
+            
+            if (!startTime) {
+                // 如果没有开始时间，说明数据异常，重新开始
+                console.warn("答题数据异常：缺少开始时间，重新开始答题");
+                hideLoading();
+                initializeUserQuiz();
+                return;
+            }
+            
+            // 计算已用时间
+            const currentTime = new Date().getTime();
+            let timeElapsed = currentTime - startTime;
+            
+            // 验证时间合理性
+            if (timeElapsed < 0) {
+                // 时间异常（开始时间晚于当前时间）
+                console.warn("时间计算异常：开始时间晚于当前时间");
+                // 使用合理值（假设刚刚开始）
+                timeElapsed = 0;
+            }
+            
+            // 添加额外的合理性检查
+            const maxReasonableTime = quizDuration * 2; // 最多允许2倍比赛时间
+            
+            if (timeElapsed > maxReasonableTime) {
+                // 时间异常，可能是浏览器时间被修改
+                console.warn("检测到异常时间数据：", {
+                    startTime: new Date(startTime).toLocaleString(),
+                    currentTime: new Date(currentTime).toLocaleString(),
+                    timeElapsedSeconds: Math.floor(timeElapsed / 1000),
+                    maxAllowedSeconds: quizDuration / 1000
+                });
+                
+                // 使用保守的时间估计
+                // 根据答题进度估算时间
+                const answeredQuestions = answerData.answers?.filter(a => 
+                    (a.selectedOptions && a.selectedOptions.length > 0) || 
+                    (a.answerText && a.answerText.trim() !== '')
+                ).length || 0;
+                
+                // 假设每道题平均需要15-30秒
+                const estimatedTimePerQuestion = 20000; // 20秒
+                timeElapsed = Math.min(answeredQuestions * estimatedTimePerQuestion, quizDuration);
+                
+                console.log("使用估算时间：", {
+                    answeredQuestions,
+                    estimatedTime: timeElapsed / 1000
+                });
+            }
+            // ============ 修复结束 ============
             
             if (timeElapsed > quizDuration) {
                 // 个人时间已用完，自动提交
@@ -3996,10 +4049,29 @@ function updateMonitorList() {
 function loadUserProgress(answerData) {
     userAnswers = Array.isArray(answerData.answers) ? answerData.answers : [];
     currentQuestionIndex = answerData.currentQuestionIndex || 0;
-    quizStartTime = answerData.startTime || new Date().getTime();
     
-    const timeElapsed = Math.floor((new Date().getTime() - quizStartTime) / 1000);
+    // ============ 修复开始时间处理 ============
+    // 确保使用正确的开始时间
+    quizStartTime = answerData.startTime;
+    
+    if (!quizStartTime) {
+        // 如果没有开始时间，使用当前时间
+        console.warn("警告：答题数据缺少开始时间，使用当前时间");
+        quizStartTime = new Date().getTime();
+        
+        // 立即保存修复后的开始时间
+        setTimeout(() => {
+            if (currentUser) {
+                database.ref('userAnswers/' + currentUser.uid + '/startTime').set(quizStartTime);
+            }
+        }, 1000);
+    }
+    
+    // 计算剩余时间
+    const currentTime = new Date().getTime();
+    const timeElapsed = Math.max(0, Math.floor((currentTime - quizStartTime) / 1000));
     timeRemaining = Math.max(0, quizData.settings.duration * 60 - timeElapsed);
+    // ============ 修复结束 ============
     
     // 恢复标记的题目
     markedQuestions = new Set(answerData.markedQuestions || []);
@@ -4017,13 +4089,26 @@ function loadUserProgress(answerData) {
 }
         
         // 开始计时器
-        // 开始计时器
 function startTimer() {
     // 清除可能存在的旧计时器
     if (quizTimer) {
         clearInterval(quizTimer);
         quizTimer = null;
     }
+    
+    // ============ 修复计时器同步 ============
+    // 重新计算准确时间
+    const currentTime = new Date().getTime();
+    const actualTimeElapsed = Math.max(0, Math.floor((currentTime - quizStartTime) / 1000));
+    timeRemaining = Math.max(0, quizData.settings.duration * 60 - actualTimeElapsed);
+    
+    console.log("计时器启动：", {
+        startTime: new Date(quizStartTime).toLocaleTimeString(),
+        currentTime: new Date(currentTime).toLocaleTimeString(),
+        timeElapsed: actualTimeElapsed,
+        timeRemaining: timeRemaining
+    });
+    // ============ 修复结束 ============
     
     updateTimerDisplay();
     quizTimer = setInterval(() => {
@@ -4335,7 +4420,7 @@ function startTimer() {
         }
         
         // 提交答卷
-        // 提交答卷 - 修复版本
+// 提交答卷 - 修复版本
 async function submitQuiz() {
     const submitConfirmModal = bootstrap.Modal.getInstance(document.getElementById('submitConfirmModal'));
     if (submitConfirmModal) submitConfirmModal.hide();
@@ -4399,10 +4484,44 @@ async function submitQuiz() {
 
     const totalScore = calculateTotalScore();
     const endTime = new Date().getTime();
+    
+    // ============ 修复时间计算逻辑 ============
+    // 确保使用正确的开始时间
+    const actualStartTime = quizStartTime;
+    
+    // 计算用时（秒）
+    let timeUsed = Math.floor((endTime - actualStartTime) / 1000);
+    
+    // 验证时间合理性
+    const maxQuizTime = quizData.settings.duration * 60; // 比赛最大时间（秒）
+    
+    // 如果时间异常，进行修正
+    if (timeUsed < 0) {
+        console.warn("时间计算异常：负值，使用默认值");
+        timeUsed = Math.max(0, timeUsed); // 确保不为负
+    }
+    
+    // 如果时间超过最大比赛时间，使用最大比赛时间
+    if (timeUsed > maxQuizTime * 1.5) { // 允许50%的缓冲
+        console.warn(`时间异常：${timeUsed}秒超过合理范围，使用最大值`);
+        timeUsed = maxQuizTime;
+    }
+    
+    // 确保时间不超过比赛时长
+    timeUsed = Math.min(timeUsed, maxQuizTime);
+    
+    // 记录详细时间信息用于调试
+    console.log("时间计算详情：", {
+        startTime: new Date(actualStartTime).toLocaleTimeString(),
+        endTime: new Date(endTime).toLocaleTimeString(),
+        calculatedTime: timeUsed,
+        maxAllowedTime: maxQuizTime
+    });
+    // ============ 修复结束 ============
 
     const resultData = {
         answers: userAnswers,
-        startTime: quizStartTime,
+        startTime: actualStartTime,  // 使用正确的开始时间
         endTime: endTime,
         submitted: true,
         userId: currentUser.uid,
@@ -4430,7 +4549,7 @@ async function submitQuiz() {
         retryCount: (userAnswers.retryCount || 0) + 1,
         submissionTime: endTime,
         status: 'completed',  // 添加明确的状态字段
-        timeUsed: Math.floor((endTime - quizStartTime) / 1000),  // 总用时（秒）
+        timeUsed: timeUsed,  // 使用计算出的准确时间
         lastUpdated: firebase.database.ServerValue.TIMESTAMP
     };
 
@@ -4456,7 +4575,7 @@ async function submitQuiz() {
         // 显示成功提示
         await Swal.fire({
             title: '提交成功！',
-            text: `您的答卷已成功提交，得分：${totalScore}`,
+            text: `您的答卷已成功提交，得分：${totalScore}，用时：${Math.floor(timeUsed/60)}分${timeUsed%60}秒`,
             icon: 'success',
             confirmButtonText: '查看成绩'
         });
@@ -4474,6 +4593,7 @@ async function submitQuiz() {
         Swal.fire('错误', '提交答卷失败，请重试', 'error');
     }
 }
+        
         function calculateSimilarity(str1, str2) {
             const set1 = new Set(str1.split(/\s+/));
             const set2 = new Set(str2.split(/\s+/));
@@ -4714,44 +4834,67 @@ async function submitQuiz() {
         }
         
         // 显示排名
-        function displayRanking(allResults, highschoolResults, middleschoolResults) {
-            const displayRankingTable = (results, tbodyId, showGroup = false) => {
-                const tbody = document.getElementById(tbodyId);
-                tbody.innerHTML = '';
-                
-                results.forEach((result, index) => {
-                    const timeUsed = Math.floor((result.endTime - result.startTime) / 1000);
-                    const minutes = Math.floor(timeUsed / 60);
-                    const seconds = timeUsed % 60;
-                    
-                    let rowClass = '';
-                    if (index === 0) rowClass = 'first-place';
-                    else if (index === 1) rowClass = 'second-place';
-                    else if (index === 2) rowClass = 'third-place';
-                    
-                    let row = `<tr class="${rowClass}">
-                        <td>${index + 1}</td>
-                        <td>${result.userInfo.name}</td>
-                        <td>${result.userInfo.class}</td>`;
-                    
-                    if (showGroup) {
-                        row += `<td>${result.userInfo.group === 'highschool' ? '高中' : '初中'}</td>`;
-                    }
-                    
-                    row += `<td>${result.correctCount || 0}</td>
-                        <td>${result.wrongCount || 0}</td>
-                        <td>${result.score || 0}</td>
-                        <td>${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}</td>
-                    </tr>`;
-                    
-                    tbody.innerHTML += row;
-                });
-            };
+        // 显示排名 - 修改时间显示
+function displayRanking(allResults, highschoolResults, middleschoolResults) {
+    const displayRankingTable = (results, tbodyId, showGroup = false) => {
+        const tbody = document.getElementById(tbodyId);
+        tbody.innerHTML = '';
+        
+        results.forEach((result, index) => {
+            // ============ 修复时间显示逻辑 ============
+            let timeUsed = result.timeUsed; // 优先使用存储的时间
             
-            displayRankingTable(highschoolResults, 'highschoolRankingBody');
-            displayRankingTable(middleschoolResults, 'middleschoolRankingBody');
-            displayRankingTable(allResults, 'overallRankingBody', true);
-        }
+            // 如果没有存储的时间，则计算
+            if (!timeUsed && result.startTime && result.endTime) {
+                timeUsed = Math.floor((result.endTime - result.startTime) / 1000);
+            }
+            
+            // 验证时间合理性
+            const maxQuizTime = quizData.settings.duration * 60;
+            if (!timeUsed || timeUsed > maxQuizTime * 1.5) {
+                // 时间异常，使用合理估算
+                const answeredQuestions = result.answers?.filter(a => 
+                    a.selectedOptions?.length > 0 || a.answerText?.trim()
+                ).length || 0;
+                // 假设每道题平均需要15-30秒
+                timeUsed = Math.min(answeredQuestions * 25, maxQuizTime);
+            }
+            
+            // 确保不为负
+            timeUsed = Math.max(0, timeUsed || 0);
+            
+            const minutes = Math.floor(timeUsed / 60);
+            const seconds = timeUsed % 60;
+            // ============ 修复结束 ============
+            
+            let rowClass = '';
+            if (index === 0) rowClass = 'first-place';
+            else if (index === 1) rowClass = 'second-place';
+            else if (index === 2) rowClass = 'third-place';
+            
+            let row = `<tr class="${rowClass}">
+                <td>${index + 1}</td>
+                <td>${result.userInfo.name}</td>
+                <td>${result.userInfo.class}</td>`;
+            
+            if (showGroup) {
+                row += `<td>${result.userInfo.group === 'highschool' ? '高中' : '初中'}</td>`;
+            }
+            
+            row += `<td>${result.correctCount || 0}</td>
+                <td>${result.wrongCount || 0}</td>
+                <td>${result.score || 0}</td>
+                <td>${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}</td>
+            </tr>`;
+            
+            tbody.innerHTML += row;
+        });
+    };
+    
+    displayRankingTable(highschoolResults, 'highschoolRankingBody');
+    displayRankingTable(middleschoolResults, 'middleschoolRankingBody');
+    displayRankingTable(allResults, 'overallRankingBody', true);
+}
         
         // 更新用户排名
         function updateUserRanking(allResults, highschoolResults, middleschoolResults) {
@@ -7665,6 +7808,96 @@ function showResultView() {
     
     // 显示结果
     displayResults();
+}
+
+        // 时间调试函数
+function logTimeDebug(userId) {
+    database.ref('userAnswers/' + userId).once('value').then(snapshot => {
+        if (snapshot.exists()) {
+            const data = snapshot.val();
+            console.log("时间调试信息：", {
+                userId: userId,
+                userName: data.userInfo?.name,
+                startTime: data.startTime ? new Date(data.startTime).toLocaleString() : '无',
+                endTime: data.endTime ? new Date(data.endTime).toLocaleString() : '无',
+                storedTimeUsed: data.timeUsed || '无',
+                calculatedTime: data.startTime && data.endTime ? 
+                    Math.floor((data.endTime - data.startTime) / 1000) : '无法计算',
+                submitted: data.submitted || false
+            });
+        }
+    });
+}
+
+// 在管理员界面添加调试按钮（可选）
+function addDebugButtons() {
+    // 在管理员面板添加调试按钮
+    const debugHTML = `
+        <div class="card mt-4">
+            <div class="card-header">
+                <i class="fas fa-bug me-2"></i>时间调试工具
+            </div>
+            <div class="card-body">
+                <div class="input-group mb-3">
+                    <input type="text" id="debugUserId" class="form-control" placeholder="输入用户ID">
+                    <button class="btn btn-warning" onclick="logTimeDebug(document.getElementById('debugUserId').value)">
+                        调试时间
+                    </button>
+                </div>
+                <button class="btn btn-info" onclick="fixAllTimeData()">
+                    修复所有时间数据
+                </button>
+            </div>
+        </div>
+    `;
+    
+    // 添加到管理员面板的合适位置
+    document.getElementById('settings').insertAdjacentHTML('beforeend', debugHTML);
+}
+
+        // 时间调试函数
+function logTimeDebug(userId) {
+    database.ref('userAnswers/' + userId).once('value').then(snapshot => {
+        if (snapshot.exists()) {
+            const data = snapshot.val();
+            console.log("时间调试信息：", {
+                userId: userId,
+                userName: data.userInfo?.name,
+                startTime: data.startTime ? new Date(data.startTime).toLocaleString() : '无',
+                endTime: data.endTime ? new Date(data.endTime).toLocaleString() : '无',
+                storedTimeUsed: data.timeUsed || '无',
+                calculatedTime: data.startTime && data.endTime ? 
+                    Math.floor((data.endTime - data.startTime) / 1000) : '无法计算',
+                submitted: data.submitted || false
+            });
+        }
+    });
+}
+
+// 在管理员界面添加调试按钮（可选）
+function addDebugButtons() {
+    // 在管理员面板添加调试按钮
+    const debugHTML = `
+        <div class="card mt-4">
+            <div class="card-header">
+                <i class="fas fa-bug me-2"></i>时间调试工具
+            </div>
+            <div class="card-body">
+                <div class="input-group mb-3">
+                    <input type="text" id="debugUserId" class="form-control" placeholder="输入用户ID">
+                    <button class="btn btn-warning" onclick="logTimeDebug(document.getElementById('debugUserId').value)">
+                        调试时间
+                    </button>
+                </div>
+                <button class="btn btn-info" onclick="fixAllTimeData()">
+                    修复所有时间数据
+                </button>
+            </div>
+        </div>
+    `;
+    
+    // 添加到管理员面板的合适位置
+    document.getElementById('settings').insertAdjacentHTML('beforeend', debugHTML);
 }
         
         function showRankingView() {
