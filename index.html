@@ -2902,6 +2902,14 @@ function checkCompetitionTime() {
                 placeholder: '请输入参考答案...'
             });
 
+            // 确保防作弊系统初始状态
+            cheatDetectionEnabled = false;
+            
+            // 初始化防作弊面板（但不启用监控）
+            document.getElementById('cheatDetectionPanel').classList.add('d-none');
+            document.getElementById('antiCheatAlert').classList.add('d-none');
+            document.getElementById('fullscreenOverlay').classList.add('d-none');
+
             bindAwardEventListeners();
             document.getElementById('awards-tab')?.addEventListener('click', function() {
                 loadAwardsList();
@@ -3407,37 +3415,95 @@ function checkCompetitionTime() {
 
         // 防作弊系统
         function initAntiCheatSystem() {
-            if (!cheatDetectionEnabled && quizData.settings.enableAntiCheat) {
-                cheatDetectionEnabled = true;
-                
-                // 启用全屏检测
-                document.addEventListener('fullscreenchange', handleFullscreenChange);
-                document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
-                document.addEventListener('mozfullscreenchange', handleFullscreenChange);
-                document.addEventListener('MSFullscreenChange', handleFullscreenChange);
-                
-                // 启用标签页切换检测
-                document.addEventListener('visibilitychange', handleVisibilityChange);
-                
-                // 启用键盘事件检测
-                document.addEventListener('keydown', handleKeyDown);
-                
-                // 启用鼠标离开检测
-                document.addEventListener('mouseleave', handleMouseLeave);
-                document.addEventListener('mouseenter', handleMouseEnter);
-                
-                // 禁用右键菜单
-                document.addEventListener('contextmenu', disableContextMenu);
-                
-                // 禁用文本选择
-                document.body.classList.add('no-select', 'no-context-menu');
-                
-                // 显示防作弊面板
-                document.getElementById('cheatDetectionPanel').classList.remove('d-none');
-                
-                console.log("防作弊系统已启用");
-            }
-        }
+    console.log("初始化防作弊系统...");
+    
+    if (cheatDetectionEnabled) {
+        console.log("防作弊系统已经启用，先清理旧的监听器");
+        cleanupAntiCheatSystem();
+    }
+    
+    if (!quizData.settings.enableAntiCheat) {
+        console.log("防作弊系统被禁用");
+        return;
+    }
+    
+    cheatDetectionEnabled = true;
+    
+    // 重置所有计数器
+    warningCount = 0;
+    tabSwitchCount = 0;
+    mouseLeaveCount = 0;
+    document.getElementById('warningCount').textContent = '0';
+    
+    // 重新显示防作弊面板
+    const cheatPanel = document.getElementById('cheatDetectionPanel');
+    if (cheatPanel) {
+        cheatPanel.classList.remove('d-none');
+    }
+    
+    // 重置状态显示
+    updateStatus('tabStatus', 'safe', '正常');
+    updateStatus('fullscreenStatus', 'safe', '正常');
+    updateStatus('keyboardStatus', 'safe', '正常');
+    updateStatus('mouseStatus', 'safe', '正常');
+    
+    // 绑定所有事件监听器
+    bindAntiCheatEvents();
+    
+    console.log("防作弊系统已初始化完成");
+}
+
+        // 新增：清理防作弊系统函数
+function cleanupAntiCheatSystem() {
+    console.log("清理防作弊系统...");
+    
+    // 移除事件监听器
+    document.removeEventListener('fullscreenchange', handleFullscreenChange);
+    document.removeEventListener('webkitfullscreenchange', handleFullscreenChange);
+    document.removeEventListener('mozfullscreenchange', handleFullscreenChange);
+    document.removeEventListener('MSFullscreenChange', handleFullscreenChange);
+    
+    document.removeEventListener('visibilitychange', handleVisibilityChange);
+    document.removeEventListener('mouseleave', handleMouseLeave);
+    document.removeEventListener('mouseenter', handleMouseEnter);
+    document.removeEventListener('contextmenu', disableContextMenu);
+    
+    // 注意：键盘事件已经在 handleKeyboardShortcuts 中处理，不要重复移除
+    
+    // 停止所有计时器
+    if (fullscreenCountdown) {
+        clearInterval(fullscreenCountdown);
+        fullscreenCountdown = null;
+    }
+    
+    cheatDetectionEnabled = false;
+}
+
+        // 新增：绑定防作弊事件
+function bindAntiCheatEvents() {
+    console.log("绑定防作弊事件监听器...");
+    
+    // 启用全屏检测
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+    document.addEventListener('mozfullscreenchange', handleFullscreenChange);
+    document.addEventListener('MSFullscreenChange', handleFullscreenChange);
+    
+    // 启用标签页切换检测
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    // 启用鼠标离开检测
+    document.addEventListener('mouseleave', handleMouseLeave);
+    document.addEventListener('mouseenter', handleMouseEnter);
+    
+    // 禁用右键菜单
+    document.addEventListener('contextmenu', disableContextMenu);
+    
+    // 禁用文本选择
+    document.body.classList.add('no-select', 'no-context-menu');
+    
+    console.log("防作弊事件监听器绑定完成");
+}
 
         function handleFullscreenChange() {
             const isFullscreen = document.fullscreenElement || 
@@ -3754,23 +3820,23 @@ function checkCompetitionTime() {
 
         // 检查比赛状态
         function checkQuizStatus() {
-            database.ref('quiz/settings/status').once('value').then(snapshot => {
-                const status = snapshot.val() || 'not_started';
-                
-                if (status === 'in_progress') {
-                    checkUserQuizStatus();
-                } else if (status === 'ended') {
-                    showResultView();
-                    loadUserResults();
-                } else {
-                    showWelcomeView();
-                    Swal.fire('提示', '比赛尚未开始，请等待管理员开始比赛', 'info');
-                }
-            }).catch(error => {
-                console.error("获取比赛状态错误:", error);
-                Swal.fire('错误', '获取比赛状态失败', 'error');
-            });
+    database.ref('quiz/settings/status').once('value').then(snapshot => {
+        const status = snapshot.val() || 'not_started';
+        
+        if (status === 'in_progress') {
+            checkUserQuizStatus();
+        } else if (status === 'ended') {
+            showResultView();
+            loadUserResults();
+        } else {
+            showWelcomeView();
+            Swal.fire('提示', '比赛尚未开始，请等待管理员开始比赛', 'info');
         }
+    }).catch(error => {
+        console.error("获取比赛状态错误:", error);
+        Swal.fire('错误', '获取比赛状态失败', 'error');
+    });
+}
 
         // 检查用户答题状态
         async function checkUserQuizStatus() {
@@ -4004,6 +4070,17 @@ function checkCompetitionTime() {
             
             hideLoading();
             loadUserProgress(answerData);
+
+if (quizData.settings.enableAntiCheat) {
+    console.log("重新初始化防作弊系统...");
+    setTimeout(() => {
+        initAntiCheatSystem();
+        // 尝试重新进入全屏模式
+        setTimeout(() => {
+            requestFullscreen();
+        }, 500);
+    }, 100);
+}
             showQuizView();
         }
     } catch (error) {
@@ -4146,7 +4223,9 @@ function updateMonitorList() {
             // 如果启用了防作弊系统，开始监控
             if (quizData.settings.enableAntiCheat) {
                 initAntiCheatSystem();
-                requestFullscreen();
+                setTimeout(() => {
+                    requestFullscreen();
+                }, 1000);
             }
             
             startTimer();
@@ -4663,12 +4742,8 @@ function updateQuestionNavDots() {
             submitConfirmModal.show();
         }
         
-        // 提交答卷
 // 提交答卷 - 修复版本
 async function submitQuiz() {
-    const submitConfirmModal = bootstrap.Modal.getInstance(document.getElementById('submitConfirmModal'));
-    if (submitConfirmModal) submitConfirmModal.hide();
-
     // 确保停止所有计时器和监控
     if (quizTimer) {
         clearInterval(quizTimer);
@@ -4681,7 +4756,15 @@ async function submitQuiz() {
     }
     
     // 关闭防作弊监控
-    cheatDetectionEnabled = false;
+    cleanupAntiCheatSystem();
+    
+    // 隐藏防作弊相关元素
+    document.getElementById('cheatDetectionPanel').classList.add('d-none');
+    document.getElementById('antiCheatAlert').classList.add('d-none');
+    document.getElementById('fullscreenOverlay').classList.add('d-none');
+    
+    // 移除防作弊CSS类
+    document.body.classList.remove('no-select', 'no-context-menu');
 
     try {
         // 保存当前题目的答案
