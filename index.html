@@ -1072,6 +1072,41 @@
         display: inline-block;
     }
 
+            .warning-badge {
+        background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+        color: white;
+        font-weight: bold;
+        border-radius: 12px;
+        padding: 2px 8px;
+        font-size: 0.75rem;
+        display: inline-block;
+        min-width: 20px;
+        text-align: center;
+    }
+    
+    .warning-badge.safe {
+        background: linear-gradient(135deg, #48dbfb, #0abde3);
+    }
+    
+    .warning-badge.warning {
+        background: linear-gradient(135deg, #ff9ff3, #f368e0);
+    }
+    
+    .warning-badge.danger {
+        background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+        animation: pulse 0.8s infinite;
+    }
+    
+    /* 警告记录表格样式 */
+    .warning-record-table {
+        font-size: 0.85rem;
+    }
+    
+    .warning-record-table th {
+        background-color: #f8f9fa;
+        font-weight: 600;
+    }
+
     /* 成绩分布样式 */
     .score-distribution {
         display: flex;
@@ -2026,6 +2061,7 @@
                                             <th>状态</th>
                                             <th>答题进度</th>
                                             <th>得分</th>
+                                            <th>警告次数</th>
                                             <th>操作</th>
                                         </tr>
                                     </thead>
@@ -2053,6 +2089,25 @@
                                 </div>
                             </div>
                             
+                             <!-- 警告记录详情模态框 - 新增 -->
+    <div class="modal fade" id="warningDetailsModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-exclamation-triangle me-2"></i>作弊警告记录</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="warningDetailsContent">
+                        <!-- 动态内容将通过JavaScript填充 -->
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+                </div>
+            </div>
+        </div>
+    </div>
                             <!-- 详细成绩列表 -->
                             <div class="card">
                                 <div class="card-header d-flex justify-content-between align-items-center">
@@ -2747,7 +2802,6 @@
             </div>
         </div>
     </footer>
-
     <!-- 快捷键提示 -->
     <div class="shortcut-hint d-none" id="shortcutHint">
         <div class="shortcut-item">
@@ -2904,6 +2958,8 @@ function checkCompetitionTime() {
 
             // 确保防作弊系统初始状态
             cheatDetectionEnabled = false;
+
+            bindEventListeners();
             
             // 初始化防作弊面板（但不启用监控）
             document.getElementById('cheatDetectionPanel').classList.add('d-none');
@@ -3079,6 +3135,7 @@ function checkCompetitionTime() {
             
             // 导航相关
             document.getElementById('adminLink').addEventListener('click', showAdminView);
+            document.getElementById('viewAllWarningsBtn')?.addEventListener('click', viewAllWarnings);
             document.getElementById('quizLink').addEventListener('click', function(e) {
     e.preventDefault();
     
@@ -3134,7 +3191,13 @@ function checkCompetitionTime() {
             document.getElementById('exportResultsBtn').addEventListener('click', showExportConfirm);
             document.getElementById('exportAllResultsBtn').addEventListener('click', exportAllResults);
             document.getElementById('confirmExportBtn').addEventListener('click', exportResults);
-          
+            
+            document.addEventListener('click', function(e) {
+            if (e.target.closest('.view-warnings-btn')) {
+                const userId = e.target.closest('.view-warnings-btn').getAttribute('data-user-id');
+                viewParticipantWarnings(userId);
+            }
+        });
             // 新增：监听结果显示选项变化
             document.getElementById('showResultsImmediately').addEventListener('change', function() {
                 const resultsDelaySection = document.getElementById('resultsDelaySection');
@@ -6096,6 +6159,7 @@ function saveQuestion(event) {
             const participantListBody = document.getElementById('participantListBody');
             participantListBody.innerHTML = '';
             
+            // 获取所有参赛者数据
             database.ref('userAnswers').once('value').then(snapshot => {
                 if (snapshot.exists()) {
                     const participants = [];
@@ -6103,62 +6167,104 @@ function saveQuestion(event) {
                     snapshot.forEach(childSnapshot => {
                         const participant = childSnapshot.val();
                         if (participant.userInfo) {
-                            participants.push(participant);
+                            participants.push({
+                                ...participant,
+                                userId: childSnapshot.key
+                            });
                         }
                     });
                     
-                    const totalParticipants = participants.length;
-                    const completedParticipants = participants.filter(p => p.submitted).length;
-                    
-                    document.getElementById('adminTotalParticipants').textContent = totalParticipants;
-                    document.getElementById('adminCompletedParticipants').textContent = completedParticipants;
-                    
-                    participants.forEach(participant => {
-                        const answers = Array.isArray(participant.answers) ? participant.answers : [];
-                        const questions = Array.isArray(quizData.questions) ? quizData.questions : [];
-
-                        const progressCount = answers.filter(a => {
-                            const question = questions.find(q => q.id === a.questionId);
-                            if (!question) return false;
-
-                            if (question.type === 'single' || question.type === 'multiple') {
-                                return Array.isArray(a.selectedOptions) && a.selectedOptions.length > 0;
-                            } else {
-                                return typeof a.answerText === 'string' && a.answerText.trim() !== '';
-                            }
-                        }).length;
-
-                        const progress = questions.length > 0 ? Math.round((progressCount / questions.length) * 100) : 0;
-                        const status = participant.submitted ? '已完成' : '进行中';
-
-                        participantListBody.innerHTML += `
-                            <tr>
-                                <td>${participant.userInfo.name}</td>
-                                <td>${participant.userInfo.class}</td>
-                                <td>${participant.userInfo.group === 'highschool' ? '高中' : '初中'}</td>
-                                <td>
-                                    <span class="badge ${participant.submitted ? 'bg-success' : 'bg-warning'}">${status}</span>
-                                </td>
-                                <td>
-                                    <div class="progress" style="height: 20px;">
-                                        <div class="progress-bar" role="progressbar" style="width: ${progress}%" aria-valuenow="${progress}" aria-valuemin="0" aria-valuemax="100">${progress}%</div>
-                                    </div>
-                                </td>
-                                <td>${participant.score || '未评分'}</td>
-                                <td>
-                                    <button class="btn btn-sm btn-info view-answers" data-id="${participant.userId}">查看详情</button>
-                                </td>
-                            </tr>
-                        `;
+                    // 获取所有参赛者的警告次数
+                    const warningPromises = participants.map(participant => {
+                        return database.ref('cheatWarnings/' + participant.userId + '/current').once('value')
+                            .then(warningSnapshot => {
+                                return {
+                                    ...participant,
+                                    warningCount: warningSnapshot.exists() ? warningSnapshot.val() : 0
+                                };
+                            });
                     });
                     
-                    updateMonitorList();
-                    
-                    document.querySelectorAll('.view-answers').forEach(btn => {
-                        btn.addEventListener('click', function() {
-                            const userId = this.getAttribute('data-id');
-                            viewParticipantAnswers(userId);
+                    Promise.all(warningPromises).then(participantsWithWarnings => {
+                        // 按警告次数降序排序
+                        participantsWithWarnings.sort((a, b) => b.warningCount - a.warningCount);
+                        
+                        participantsWithWarnings.forEach(participant => {
+                            const answers = Array.isArray(participant.answers) ? participant.answers : [];
+                            const questions = Array.isArray(quizData.questions) ? quizData.questions : [];
+
+                            const progressCount = answers.filter(a => {
+                                const question = questions.find(q => q.id === a.questionId);
+                                if (!question) return false;
+
+                                if (question.type === 'single' || question.type === 'multiple') {
+                                    return Array.isArray(a.selectedOptions) && a.selectedOptions.length > 0;
+                                } else {
+                                    return typeof a.answerText === 'string' && a.answerText.trim() !== '';
+                                }
+                            }).length;
+
+                            const progress = questions.length > 0 ? Math.round((progressCount / questions.length) * 100) : 0;
+                            const status = participant.submitted ? '已完成' : '进行中';
+                            
+                            // 根据警告次数设置徽章样式
+                            let warningBadgeClass = 'warning-badge safe';
+                            if (participant.warningCount > 2) {
+                                warningBadgeClass = 'warning-badge warning';
+                            }
+                            if (participant.warningCount > 5) {
+                                warningBadgeClass = 'warning-badge danger';
+                            }
+
+                            participantListBody.innerHTML += `
+                                <tr>
+                                    <td>${participant.userInfo.name}</td>
+                                    <td>${participant.userInfo.class}</td>
+                                    <td>${participant.userInfo.group === 'highschool' ? '高中' : '初中'}</td>
+                                    <td>
+                                        <span class="badge ${participant.submitted ? 'bg-success' : 'bg-warning'}">${status}</span>
+                                    </td>
+                                    <td>
+                                        <div class="progress" style="height: 20px;">
+                                            <div class="progress-bar" role="progressbar" style="width: ${progress}%" aria-valuenow="${progress}" aria-valuemin="0" aria-valuemax="100">${progress}%</div>
+                                        </div>
+                                    </td>
+                                    <td>${participant.score || '未评分'}</td>
+                                    <td>
+                                        <span class="${warningBadgeClass}" title="当前警告次数">
+                                            ${participant.warningCount}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <button class="btn btn-sm btn-info view-answers me-1" data-id="${participant.userId}">查看详情</button>
+                                        <button class="btn btn-sm btn-warning view-warnings" data-id="${participant.userId}" title="查看警告记录">
+                                            <i class="fas fa-exclamation-triangle"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            `;
                         });
+                        
+                        updateMonitorList();
+                        
+                        // 绑定查看详情按钮事件
+                        document.querySelectorAll('.view-answers').forEach(btn => {
+                            btn.addEventListener('click', function() {
+                                const userId = this.getAttribute('data-id');
+                                viewParticipantAnswers(userId);
+                            });
+                        });
+                        
+                        // 绑定查看警告记录按钮事件
+                        document.querySelectorAll('.view-warnings').forEach(btn => {
+                            btn.addEventListener('click', function() {
+                                const userId = this.getAttribute('data-id');
+                                viewParticipantWarnings(userId);
+                            });
+                        });
+                        
+                    }).catch(error => {
+                        console.error("获取警告次数错误:", error);
                     });
                 }
             }).catch(error => {
@@ -6178,38 +6284,68 @@ function saveQuestion(event) {
                     snapshot.forEach(childSnapshot => {
                         const participant = childSnapshot.val();
                         if (participant.userInfo) {
-                            participants.push(participant);
+                            participants.push({
+                                ...participant,
+                                userId: childSnapshot.key
+                            });
                         }
                     });
                     
-                    participants.sort((a, b) => (b.lastUpdated || 0) - (a.lastUpdated || 0));
+                    // 获取警告次数
+                    const warningPromises = participants.map(participant => {
+                        return database.ref('cheatWarnings/' + participant.userId + '/current').once('value')
+                            .then(warningSnapshot => {
+                                return {
+                                    ...participant,
+                                    warningCount: warningSnapshot.exists() ? warningSnapshot.val() : 0
+                                };
+                            });
+                    });
                     
-                    participants.forEach(participant => {
-                        const progress = calculateProgress(participant);
-                        const isActive = participant.userId === currentMonitoringUserId;
+                    Promise.all(warningPromises).then(participantsWithWarnings => {
+                        participantsWithWarnings.sort((a, b) => (b.lastUpdated || 0) - (a.lastUpdated || 0));
                         
-                        const item = document.createElement('button');
-                        item.className = `list-group-item list-group-item-action d-flex justify-content-between align-items-center ${isActive ? 'active' : ''}`;
-                        item.innerHTML = `
-                            <div>
-                                <strong>${participant.userInfo.name}</strong>
-                                <div class="text-muted small">
-                                    ${participant.userInfo.class} - 
-                                    ${participant.userInfo.group === 'highschool' ? '高中' : '初中'}
+                        participantsWithWarnings.forEach(participant => {
+                            const progress = calculateProgress(participant);
+                            const isActive = participant.userId === currentMonitoringUserId;
+                            
+                            // 根据警告次数设置徽章样式
+                            let warningBadgeClass = 'warning-badge safe';
+                            if (participant.warningCount > 2) {
+                                warningBadgeClass = 'warning-badge warning';
+                            }
+                            if (participant.warningCount > 5) {
+                                warningBadgeClass = 'warning-badge danger';
+                            }
+
+                            const item = document.createElement('button');
+                            item.className = `list-group-item list-group-item-action d-flex justify-content-between align-items-center ${isActive ? 'active' : ''}`;
+                            item.innerHTML = `
+                                <div>
+                                    <strong>${participant.userInfo.name}</strong>
+                                    <div class="text-muted small">
+                                        ${participant.userInfo.class} - 
+                                        ${participant.userInfo.group === 'highschool' ? '高中' : '初中'}
+                                    </div>
                                 </div>
-                            </div>
-                            <span class="badge ${participant.submitted ? 'bg-success' : 'bg-warning'} rounded-pill">
-                                ${participant.submitted ? '已完成' : progress}%
-                            </span>
-                        `;
-                        
-                        item.addEventListener('click', () => {
-                            currentMonitoringUserId = participant.userId;
-                            updateMonitorList();
-                            monitorParticipant(participant.userId);
+                                <div>
+                                    <span class="${warningBadgeClass}" style="margin-right: 8px;" title="警告次数">
+                                        ${participant.warningCount}
+                                    </span>
+                                    <span class="badge ${participant.submitted ? 'bg-success' : 'bg-warning'} rounded-pill">
+                                        ${participant.submitted ? '已完成' : progress}%
+                                    </span>
+                                </div>
+                            `;
+                            
+                            item.addEventListener('click', () => {
+                                currentMonitoringUserId = participant.userId;
+                                updateMonitorList();
+                                monitorParticipant(participant.userId);
+                            });
+                            
+                            monitorList.appendChild(item);
                         });
-                        
-                        monitorList.appendChild(item);
                     });
                 } else {
                     monitorList.innerHTML = '<div class="list-group-item text-muted">暂无参赛者数据</div>';
@@ -6243,41 +6379,52 @@ function saveQuestion(event) {
             
             monitorView.innerHTML = '<div class="text-center py-5"><div class="spinner-border text-primary"></div><p>加载中...</p></div>';
             
-            if (!quizData.questions || quizData.questions.length === 0) {
-                loadQuizData().then(() => {
-                    loadParticipantData(userId);
-                });
-            } else {
-                loadParticipantData(userId);
-            }
-            
-            function loadParticipantData(userId) {
-                database.ref(`userAnswers/${userId}`).once('value').then(snapshot => {
-                    if (snapshot.exists()) {
-                        const participant = snapshot.val();
-                        monitorView.innerHTML = renderParticipantMonitorView(participant);
-                    } else {
-                        monitorView.innerHTML = '<div class="alert alert-warning">未找到参赛者数据</div>';
-                    }
-                }).catch(error => {
-                    console.error("监控参赛者错误:", error);
-                    monitorView.innerHTML = `<div class="alert alert-danger">加载失败: ${error.message}</div>`;
-                });
-            }
+            // 获取参赛者基本信息和警告次数
+            Promise.all([
+                database.ref(`userAnswers/${userId}`).once('value'),
+                database.ref(`cheatWarnings/${userId}`).once('value')
+            ]).then(([participantSnapshot, warningsSnapshot]) => {
+                if (participantSnapshot.exists()) {
+                    const participant = participantSnapshot.val();
+                    const warningsData = warningsSnapshot.exists() ? warningsSnapshot.val() : { current: 0 };
+                    
+                    // 添加警告次数到监控视图
+                    monitorView.innerHTML = renderParticipantMonitorView(participant, warningsData);
+                } else {
+                    monitorView.innerHTML = '<div class="alert alert-warning">未找到参赛者数据</div>';
+                }
+            }).catch(error => {
+                console.error("监控参赛者错误:", error);
+                monitorView.innerHTML = `<div class="alert alert-danger">加载失败: ${error.message}</div>`;
+            });
         }
 
         // 渲染参赛者监控视图
         function renderParticipantMonitorView(participant) {
+            const warningCount = warningsData.current || 0;
+            let warningBadgeClass = 'badge bg-success';
+            if (warningCount > 2) {
+                warningBadgeClass = 'badge bg-warning';
+            }
+            if (warningCount > 5) {
+                warningBadgeClass = 'badge bg-danger';
+            }
+            
             let html = `
                 <div class="participant-header mb-4">
                     <div class="d-flex justify-content-between align-items-center">
                         <h4>${participant.userInfo.name} 的答题情况</h4>
-                        <span class="badge ${participant.submitted ? 'bg-success' : 'bg-primary'}">
-                            ${participant.submitted ? '已提交' : '答题中'}
-                        </span>
+                        <div>
+                            <span class="badge ${participant.submitted ? 'bg-success' : 'bg-primary'} me-2">
+                                ${participant.submitted ? '已提交' : '答题中'}
+                            </span>
+                            <span class="${warningBadgeClass}" title="警告次数">
+                                警告: ${warningCount}次
+                            </span>
+                        </div>
                     </div>
                     <div class="row mt-2">
-                        <div class="col-md-3">
+                        <div class="col-md-2">
                             <div class="card bg-light">
                                 <div class="card-body py-2">
                                     <small class="text-muted">班级</small>
@@ -6285,7 +6432,7 @@ function saveQuestion(event) {
                                 </div>
                             </div>
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-md-2">
                             <div class="card bg-light">
                                 <div class="card-body py-2">
                                     <small class="text-muted">组别</small>
@@ -6293,7 +6440,7 @@ function saveQuestion(event) {
                                 </div>
                             </div>
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-md-2">
                             <div class="card bg-light">
                                 <div class="card-body py-2">
                                     <small class="text-muted">进度</small>
@@ -6301,11 +6448,24 @@ function saveQuestion(event) {
                                 </div>
                             </div>
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-md-2">
                             <div class="card bg-light">
                                 <div class="card-body py-2">
                                     <small class="text-muted">得分</small>
                                     <div>${participant.score || '未评分'}</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card ${warningCount > 0 ? 'border-warning' : 'border-light'}">
+                                <div class="card-body py-2">
+                                    <small class="text-muted">防作弊监控</small>
+                                    <div>
+                                        <button class="btn btn-sm btn-warning view-warnings-btn" data-user-id="${participant.userId}">
+                                            <i class="fas fa-exclamation-triangle me-1"></i>
+                                            查看警告记录 (${warningCount}次)
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -6386,6 +6546,278 @@ function saveQuestion(event) {
             html += `</div>`;
             
             return html;
+        }
+
+        function viewParticipantWarnings(userId) {
+            showLoading('加载警告记录...');
+            
+            // 获取用户基本信息和警告记录
+            Promise.all([
+                database.ref(`userAnswers/${userId}/userInfo`).once('value'),
+                database.ref(`cheatWarnings/${userId}`).once('value')
+            ]).then(([userInfoSnapshot, warningsSnapshot]) => {
+                hideLoading();
+                
+                if (!userInfoSnapshot.exists()) {
+                    Swal.fire('错误', '找不到该参赛者信息', 'error');
+                    return;
+                }
+                
+                const userInfo = userInfoSnapshot.val();
+                const warningsData = warningsSnapshot.exists() ? warningsSnapshot.val() : { current: 0 };
+                const currentWarnings = warningsData.current || 0;
+                const warningHistory = warningsData.history ? Object.values(warningsData.history) : [];
+                
+                // 按时间排序（最新的在前）
+                warningHistory.sort((a, b) => b.timestamp - a.timestamp);
+                
+                let warningHTML = `
+                    <div class="warning-details">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <h5>${userInfo.name} - 作弊警告记录</h5>
+                            <span class="badge ${currentWarnings === 0 ? 'bg-success' : currentWarnings > 5 ? 'bg-danger' : 'bg-warning'}">
+                                当前警告次数: ${currentWarnings}
+                            </span>
+                        </div>
+                        <div class="mb-4">
+                            <p><strong>班级:</strong> ${userInfo.class || '未知'}</p>
+                            <p><strong>组别:</strong> ${userInfo.group === 'highschool' ? '高中组' : '初中组'}</p>
+                            <p><strong>学号:</strong> ${userInfo.studentId || '未知'}</p>
+                        </div>
+                `;
+                
+                if (warningHistory.length > 0) {
+                    warningHTML += `
+                        <h6 class="mb-3">警告历史记录</h6>
+                        <div class="table-responsive">
+                            <table class="table table-sm warning-record-table">
+                                <thead>
+                                    <tr>
+                                        <th>时间</th>
+                                        <th>原因</th>
+                                        <th>当前警告次数</th>
+                                        <th>标签页切换</th>
+                                        <th>鼠标离开</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                    `;
+                    
+                    warningHistory.forEach(record => {
+                        const time = new Date(record.timestamp).toLocaleString('zh-CN');
+                        warningHTML += `
+                            <tr>
+                                <td>${time}</td>
+                                <td>${record.reason || '未知原因'}</td>
+                                <td>${record.warningCount || 0}</td>
+                                <td>${record.tabSwitchCount || 0}</td>
+                                <td>${record.mouseLeaveCount || 0}</td>
+                            </tr>
+                        `;
+                    });
+                    
+                    warningHTML += `
+                                </tbody>
+                            </table>
+                        </div>
+                    `;
+                } else {
+                    warningHTML += `
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            暂无警告历史记录
+                        </div>
+                    `;
+                }
+                
+                warningHTML += `</div>`;
+                
+                // 显示在模态框中
+                const warningDetailsModal = new bootstrap.Modal(document.getElementById('warningDetailsModal'));
+                document.getElementById('warningDetailsContent').innerHTML = warningHTML;
+                warningDetailsModal.show();
+                
+                // 绑定重置按钮事件（如果有）
+                const resetBtn = document.querySelector('.reset-warnings-btn');
+                if (resetBtn) {
+                    resetBtn.addEventListener('click', () => {
+                        resetParticipantWarnings(userId, userInfo.name);
+                    });
+                }
+                
+            }).catch(error => {
+                hideLoading();
+                console.error("加载警告记录错误:", error);
+                Swal.fire('错误', '加载警告记录失败: ' + error.message, 'error');
+            });
+        }
+        
+        // 新增：查看所有参赛者警告记录
+        function viewAllWarnings() {
+            showLoading('正在加载所有参赛者警告记录...');
+            
+            // 获取所有用户和他们的警告次数
+            Promise.all([
+                database.ref('userAnswers').once('value'),
+                database.ref('cheatWarnings').once('value')
+            ]).then(([usersSnapshot, warningsSnapshot]) => {
+                hideLoading();
+                
+                const users = [];
+                const warnings = warningsSnapshot.exists() ? warningsSnapshot.val() : {};
+                
+                if (usersSnapshot.exists()) {
+                    usersSnapshot.forEach(childSnapshot => {
+                        const user = childSnapshot.val();
+                        if (user.userInfo) {
+                            users.push({
+                                ...user,
+                                userId: childSnapshot.key
+                            });
+                        }
+                    });
+                }
+                
+                // 为每个用户添加警告次数
+                const usersWithWarnings = users.map(user => {
+                    const userWarnings = warnings[user.userId] || { current: 0 };
+                    return {
+                        ...user,
+                        warningCount: userWarnings.current || 0
+                    };
+                });
+                
+                // 按警告次数降序排序
+                usersWithWarnings.sort((a, b) => b.warningCount - a.warningCount);
+                
+                let warningsHTML = `
+                    <div class="all-warnings-details">
+                        <h5 class="mb-4">所有参赛者警告记录</h5>
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            共 ${usersWithWarnings.length} 名参赛者，其中 ${usersWithWarnings.filter(u => u.warningCount > 0).length} 名有警告记录
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>排名</th>
+                                        <th>姓名</th>
+                                        <th>班级</th>
+                                        <th>组别</th>
+                                        <th>状态</th>
+                                        <th>警告次数</th>
+                                        <th>操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                `;
+                
+                usersWithWarnings.forEach((user, index) => {
+                    const status = user.submitted ? '已完成' : '进行中';
+                    let warningBadgeClass = 'badge bg-success';
+                    if (user.warningCount > 2) {
+                        warningBadgeClass = 'badge bg-warning';
+                    }
+                    if (user.warningCount > 5) {
+                        warningBadgeClass = 'badge bg-danger';
+                    }
+                    
+                    warningsHTML += `
+                        <tr>
+                            <td>${index + 1}</td>
+                            <td>${user.userInfo.name}</td>
+                            <td>${user.userInfo.class}</td>
+                            <td>${user.userInfo.group === 'highschool' ? '高中' : '初中'}</td>
+                            <td>
+                                <span class="badge ${status === '已完成' ? 'bg-success' : 'bg-warning'}">
+                                    ${status}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="${warningBadgeClass}">
+                                    ${user.warningCount}
+                                </span>
+                            </td>
+                            <td>
+                                <button class="btn btn-sm btn-outline-warning view-user-warnings" 
+                                        data-user-id="${user.userId}">
+                                    <i class="fas fa-exclamation-triangle"></i> 查看详情
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                });
+                
+                warningsHTML += `
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                `;
+                
+                // 显示在模态框中
+                const warningDetailsModal = new bootstrap.Modal(document.getElementById('warningDetailsModal'));
+                document.getElementById('warningDetailsContent').innerHTML = warningsHTML;
+                warningDetailsModal.show();
+                
+                // 绑定查看详情按钮事件
+                document.querySelectorAll('.view-user-warnings').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const userId = this.getAttribute('data-user-id');
+                        warningDetailsModal.hide();
+                        viewParticipantWarnings(userId);
+                    });
+                });
+                
+            }).catch(error => {
+                hideLoading();
+                console.error("加载所有警告记录错误:", error);
+                Swal.fire('错误', '加载警告记录失败: ' + error.message, 'error');
+            });
+        }
+        
+        // 新增：重置参赛者警告次数
+        function resetParticipantWarnings(userId, userName) {
+            Swal.fire({
+                title: '确认重置警告次数？',
+                html: `确定要重置 <strong>${userName}</strong> 的警告次数吗？<br>
+                       此操作会将当前警告次数重置为0，但保留历史记录。`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: '重置',
+                cancelButtonText: '取消',
+                confirmButtonColor: '#ffc107'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    showLoading('正在重置警告次数...');
+                    
+                    const resetData = {
+                        current: 0,
+                        lastReset: new Date().getTime(),
+                        resetBy: userInfo.name || '管理员',
+                        resetReason: '手动重置'
+                    };
+                    
+                    database.ref('cheatWarnings/' + userId).update(resetData)
+                        .then(() => {
+                            hideLoading();
+                            Swal.fire('成功', '已重置警告次数', 'success');
+                            
+                            // 更新列表
+                            updateParticipantList();
+                            updateMonitorList();
+                            
+                            // 关闭模态框
+                            bootstrap.Modal.getInstance(document.getElementById('warningDetailsModal')).hide();
+                        })
+                        .catch(error => {
+                            hideLoading();
+                            console.error("重置警告次数错误:", error);
+                            Swal.fire('错误', '重置失败: ' + error.message, 'error');
+                        });
+                }
+            });
         }
 
         // 刷新监控
