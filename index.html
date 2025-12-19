@@ -2817,7 +2817,43 @@
         let mouseLeaveCount = 0;
         let tabSwitchCount = 0;
         let markedQuestions = new Set();
-        
+        // ============ 比赛时间验证函数 ============
+function isWithinCompetitionTime() {
+    const currentTime = new Date().getTime();
+    const startTime = quizData.settings.startTime;
+    const endTime = quizData.settings.endTime;
+    
+    // 如果没有设置开始结束时间，默认为非比赛时间
+    if (!startTime || !endTime) {
+        console.warn("比赛时间未设置");
+        return false;
+    }
+    
+    return currentTime >= startTime && currentTime <= endTime;
+}
+
+function isCompetitionActive() {
+    return quizData.settings.status === 'in_progress';
+}
+
+function checkCompetitionTime() {
+    if (!isCompetitionActive()) {
+        return { allowed: false, reason: '比赛尚未开始或已结束' };
+    }
+    
+    if (!isWithinCompetitionTime()) {
+        return { 
+            allowed: false, 
+            reason: `不在比赛时间内<br>
+                    当前时间：${new Date().toLocaleString()}<br>
+                    比赛时间：${quizData.settings.startTime ? 
+                      new Date(quizData.settings.startTime).toLocaleString() + ' - ' +
+                      new Date(quizData.settings.endTime).toLocaleString() : '未设置'}` 
+        };
+    }
+    
+    return { allowed: true, reason: '' };
+}
         // 初始化函数
         function init() {
             // 初始化富文本编辑器
@@ -3018,7 +3054,23 @@
             
             // 导航相关
             document.getElementById('adminLink').addEventListener('click', showAdminView);
-            document.getElementById('quizLink').addEventListener('click', showQuizView);
+            document.getElementById('quizLink').addEventListener('click', function(e) {
+    e.preventDefault();
+    
+    // 先检查比赛时间
+    const timeCheck = checkCompetitionTime();
+    if (!timeCheck.allowed) {
+        Swal.fire({
+            title: '无法进入答题',
+            html: timeCheck.reason,
+            icon: 'warning',
+            confirmButtonText: '确定'
+        });
+        return;
+    }
+    
+    showQuizView();
+});
             document.getElementById('checkResultBtn').addEventListener('click', showResultCheckView);
             
             // 答题相关
@@ -3710,6 +3762,18 @@
             throw new Error('用户未登录');
         }
 
+        const timeCheck = checkCompetitionTime();
+        if (!timeCheck.allowed) {
+            Swal.fire({
+                title: '无法答题',
+                html: timeCheck.reason,
+                icon: 'info',
+                confirmButtonText: '确定'
+            });
+            showWelcomeView();
+            return;
+        }
+
         showLoading('正在获取答题状态...');
 
         // 在开始之前，确保清除任何可能存在的计时器
@@ -4015,6 +4079,18 @@ function updateMonitorList() {
 
         // 初始化用户答题
         function initializeUserQuiz() {
+
+            const timeCheck = checkCompetitionTime();
+    if (!timeCheck.allowed) {
+        Swal.fire({
+            title: '无法开始答题',
+            html: timeCheck.reason,
+            icon: 'error',
+            confirmButtonText: '确定'
+        });
+        showWelcomeView();
+        return;
+    }
             if (!quizData.questions || quizData.questions.length === 0) {
                 Swal.fire('错误', '题目数据未加载，请稍后再试', 'error');
                 return;
@@ -7775,6 +7851,18 @@ function exportToPDF(results) {
         }
         
         function showQuizView() {
+            const timeCheck = checkCompetitionTime();
+    if (!timeCheck.allowed) {
+        Swal.fire({
+            title: '无法进入答题',
+            html: timeCheck.reason,
+            icon: 'warning',
+            confirmButtonText: '确定'
+        }).then(() => {
+            showWelcomeView(); // 返回欢迎页
+        });
+        return;
+    }
             document.getElementById('welcomeView').classList.add('d-none');
             document.getElementById('quizView').classList.remove('d-none');
             document.getElementById('resultView').classList.add('d-none');
