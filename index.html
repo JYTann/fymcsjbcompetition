@@ -3779,6 +3779,16 @@ function checkCompetitionTime() {
             throw new Error('用户未登录');
         }
 
+         if (!userAnswers || !Array.isArray(userAnswers)) {
+            userAnswers = [];
+            console.log("初始化 userAnswers");
+        }
+        
+        if (!markedQuestions || !(markedQuestions instanceof Set)) {
+            markedQuestions = new Set();
+            console.log("初始化 markedQuestions");
+        }
+
         const timeCheck = checkCompetitionTime();
         if (!timeCheck.allowed) {
             Swal.fire({
@@ -4322,6 +4332,11 @@ function startTimer() {
             isMarked: false
         };
     }
+
+            if (!markedQuestions || !(markedQuestions instanceof Set)) {
+        markedQuestions = new Set();
+        console.warn("重新初始化 markedQuestions");
+    }
             
             const question = quizData.questions[index];
             const userAnswer = (userAnswers[index] && typeof userAnswers[index] === 'object') ? userAnswers[index] : {
@@ -4448,38 +4463,78 @@ function selectOption(questionIndex, optionIndex) {
 }
         
         // 更新题目导航点
-        function updateQuestionNavDots() {
-            const dotsContainer = document.getElementById('questionNavDots');
-            dotsContainer.innerHTML = '';
-            
-            quizData.questions.forEach((_, index) => {
-                const dot = document.createElement('div');
-                dot.className = 'nav-dot';
-                
-                if (index === currentQuestionIndex) {
-                    dot.classList.add('current');
-                } else if (markedQuestions.has(index)) {
-                    dot.classList.add('answered');
-                    dot.innerHTML = '<i class="fas fa-flag"></i>';
-                } else if (userAnswers[index] && (
-                    (quizData.questions[index].type === 'single' || quizData.questions[index].type === 'multiple') ? 
-                    userAnswers[index].selectedOptions.length > 0 : 
-                    userAnswers[index].answerText.trim() !== ''
-                )) {
+        // 修改 updateQuestionNavDots 函数，添加安全检查
+function updateQuestionNavDots() {
+    const dotsContainer = document.getElementById('questionNavDots');
+    if (!dotsContainer) return;
+    
+    dotsContainer.innerHTML = '';
+    
+    // 确保 quizData.questions 是有效的数组
+    if (!quizData.questions || !Array.isArray(quizData.questions) || quizData.questions.length === 0) {
+        console.warn("无法更新导航点：题目数据无效或为空");
+        return;
+    }
+    
+    // 确保 userAnswers 是有效的数组
+    if (!userAnswers || !Array.isArray(userAnswers)) {
+        userAnswers = [];
+        console.warn("userAnswers 未初始化，已重新初始化");
+    }
+    
+    quizData.questions.forEach((_, index) => {
+        const dot = document.createElement('div');
+        dot.className = 'nav-dot';
+        
+        // 获取用户答案，确保它是有效对象
+        let userAnswer = {};
+        if (userAnswers[index] && typeof userAnswers[index] === 'object') {
+            userAnswer = userAnswers[index];
+        }
+        
+        // 确保必要属性存在
+        if (!userAnswer.selectedOptions || !Array.isArray(userAnswer.selectedOptions)) {
+            userAnswer.selectedOptions = [];
+        }
+        if (!userAnswer.answerText || typeof userAnswer.answerText !== 'string') {
+            userAnswer.answerText = '';
+        }
+        
+        if (index === currentQuestionIndex) {
+            dot.classList.add('current');
+        } else if (markedQuestions.has(index)) {
+            dot.classList.add('answered');
+            dot.innerHTML = '<i class="fas fa-flag"></i>';
+        } else {
+            const question = quizData.questions[index];
+            if (!question) {
+                dot.classList.add('unanswered');
+            } else if (question.type === 'single' || question.type === 'multiple') {
+                // 检查选择题是否已回答
+                if (userAnswer.selectedOptions && userAnswer.selectedOptions.length > 0) {
                     dot.classList.add('answered');
                 } else {
                     dot.classList.add('unanswered');
                 }
-                
-                dot.textContent = index + 1;
-                dot.addEventListener('click', () => {
-                    currentQuestionIndex = index;
-                    displayQuestion(currentQuestionIndex);
-                });
-                
-                dotsContainer.appendChild(dot);
-            });
+            } else {
+                // 检查问答题是否已回答
+                if (userAnswer.answerText && userAnswer.answerText.trim() !== '') {
+                    dot.classList.add('answered');
+                } else {
+                    dot.classList.add('unanswered');
+                }
+            }
         }
+        
+        dot.textContent = index + 1;
+        dot.addEventListener('click', () => {
+            currentQuestionIndex = index;
+            displayQuestion(currentQuestionIndex);
+        });
+        
+        dotsContainer.appendChild(dot);
+    });
+}
         
         // 标记/取消标记题目
         function toggleMarkQuestion() {
