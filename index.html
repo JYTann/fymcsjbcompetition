@@ -3032,30 +3032,26 @@ function checkCompetitionTime() {
 
         // 在init()函数中添加页面状态检查
         function checkPageStateOnLoad() {
-            if (currentUser && !document.getElementById('quizView').classList.contains('d-none')) {
-        // 检查是否已经提交
-                database.ref('userAnswers/' + currentUser.uid + '/submitted').once('value')
-                    .then(snapshot => {
-                        if (snapshot.exists() && snapshot.val() === true) {
-                    // 如果已经提交，自动跳转到结果页面
-                            console.log("检测到已提交的答卷，跳转到结果页");
-                            showResultView();
-            
-                    // 确保所有计时器都停止
-                            if (quizTimer) {
-                                clearInterval(quizTimer);
-                                quizTimer = null;
-                            }
-                    
-                    // 加载结果
-                            loadUserResults();
-                        }
-                    })
-                    .catch(error => {
-                        console.error("检查提交状态错误:", error);
-                    });
+    if (currentUser && !userInfo?.isAdmin) {
+        // 延迟执行，确保DOM和用户信息完全加载
+        setTimeout(() => {
+            // 只检查是否在答题界面且未提交
+            if (!document.getElementById('quizView').classList.contains('d-none')) {
+                const localSubmitted = localStorage.getItem(`quiz_submitted_${currentUser.uid}`);
+                
+                if (localSubmitted === 'true') {
+                    console.log("页面加载时检测到本地已提交标记");
+                    // 直接跳转到结果页，不重复检查
+                    showResultView();
+                    loadUserResults();
+                } else {
+                    // 正常检查答题状态
+                    checkUserQuizStatus();
+                }
             }
-        }
+        }, 800); // 增加延迟确保完全加载
+    }
+}
 
 // 在页面加载时调用
         document.addEventListener('DOMContentLoaded', () => {
@@ -3072,8 +3068,8 @@ function checkCompetitionTime() {
             
             // 导航相关
             document.getElementById('adminLink').addEventListener('click', showAdminView);
-            // 修改答题链接点击事件
-document.getElementById('quizLink').addEventListener('click', function(e) {
+            // ============ 优化答题链接点击事件 ============
+document.getElementById('quizLink')?.addEventListener('click', function(e) {
     e.preventDefault();
     
     // 检查是否是管理员
@@ -3087,22 +3083,16 @@ document.getElementById('quizLink').addEventListener('click', function(e) {
         return;
     }
     
-    // 检查本地标记是否显示已提交
+    // 首先检查本地标记
     const localSubmitted = localStorage.getItem(`quiz_submitted_${currentUser.uid}`);
     if (localSubmitted === 'true') {
-        Swal.fire({
-            title: '已提交',
-            text: '您已经提交过答卷了，不能重新答题',
-            icon: 'warning',
-            confirmButtonText: '查看成绩'
-        }).then(() => {
-            showResultView();
-            loadUserResults();
-        });
+        // 如果本地标记显示已提交，直接跳转到结果
+        showResultView();
+        loadUserResults();
         return;
     }
     
-    // 先检查比赛时间
+    // 检查比赛时间
     const timeCheck = checkCompetitionTime();
     if (!timeCheck.allowed) {
         Swal.fire({
@@ -3114,7 +3104,7 @@ document.getElementById('quizLink').addEventListener('click', function(e) {
         return;
     }
     
-    // 调用检查答题状态函数
+    // 直接调用检查函数
     checkUserQuizStatus();
 });
             document.getElementById('checkResultBtn').addEventListener('click', showResultCheckView);
@@ -3843,14 +3833,26 @@ async function checkPageStateOnLoad() {
     }
 }
 
-        // 检查用户答题状态
+let isCheckingQuizStatus = false;
+let retryCount = 0;
+const MAX_RETRY_COUNT = 3;
+
 async function checkUserQuizStatus() {
+    // 防止重复执行
+    if (isCheckingQuizStatus) {
+        console.log("已在检查答题状态，跳过重复调用");
+        return;
+    }
+    
+    isCheckingQuizStatus = true;
+    retryCount = 0;
+
     try {
         if (!currentUser || !currentUser.uid) {
             throw new Error('用户未登录');
         }
 
-        // ============ 新增：检查是否是管理员 ============
+        // ============ 检查是否是管理员 ============
         if (userInfo && userInfo.isAdmin) {
             hideLoading();
             Swal.fire({
@@ -3862,7 +3864,6 @@ async function checkUserQuizStatus() {
             showWelcomeView();
             return;
         }
-        // ============ 新增结束 ============
 
         const timeCheck = checkCompetitionTime();
         if (!timeCheck.allowed) {
@@ -3903,8 +3904,27 @@ async function checkUserQuizStatus() {
 
         const answerData = snapshot.val();
         
-        // ============ 新增：更严格的提交状态检查 ============
-        if (answerData.submitted === true) {
+        // ============ 更严格的提交状态检查 ============
+        const isSubmitted = answerData.submitted === true;
+        const localSubmitted = localStorage.getItem(`quiz_submitted_${currentUser.uid}`) === 'true';
+        
+        // 优先使用数据库状态，但如果本地标记显示已提交且数据库不同步，也认为已提交
+        if (isSubmitted || localSubmitted) {
+            console.log("用户已提交答题", { 
+                dbSubmitted: isSubmitted, 
+                localSubmitted: localSubmitted 
+            });
+            
+            // 如果数据库显示未提交但本地标记显示已提交，同步数据库状态
+            if (!isSubmitted && localSubmitted) {
+                console.log("同步提交状态到数据库");
+                await database.ref('userAnswers/' + currentUser.uid).update({
+                    submitted: true,
+                    status: 'completed',
+                    lastUpdated: firebase.database.ServerValue.TIMESTAMP
+                });
+            }
+            
             // 已提交，检查是否允许重新答题
             const retakeMode = quizData.settings.retakeMode || 
                               (quizData.settings.allowRetake ? 'allow_unlimited' : 'disallow');
@@ -3934,31 +3954,25 @@ async function checkUserQuizStatus() {
                             confirmButtonText: '确定'
                         });
                         showWelcomeView();
-                        
-                        // ============ 新增：设置本地标记防止重新进入 ============
-                        localStorage.setItem(`quiz_submitted_${currentUser.uid}`, 'true');
                         return;
                     }
                 }
                 
                 hideLoading();
                 showResultView();
-                
-                // ============ 新增：设置本地标记防止重新进入 ============
-                localStorage.setItem(`quiz_submitted_${currentUser.uid}`, 'true');
                 return;
             } else {
                 // 允许重新答题
-                const retryCount = answerData.retryCount || 0;
+                const dbRetryCount = answerData.retryCount || 0;
                 let canRetake = true;
                 let message = '您已经完成了一次答题。是否要重新答题？';
                 
                 if (retakeMode === 'allow_limited') {
                     const maxRetries = quizData.settings.retakeLimit || 3;
-                    if (retryCount >= maxRetries) {
+                    if (dbRetryCount >= maxRetries) {
                         canRetake = false;
                     } else {
-                        message = `您已经完成了一次答题。<br>剩余重试次数: ${maxRetries - retryCount}<br>是否要重新答题？`;
+                        message = `您已经完成了一次答题。<br>剩余重试次数: ${maxRetries - dbRetryCount}<br>是否要重新答题？`;
                     }
                 }
                 
@@ -3967,9 +3981,6 @@ async function checkUserQuizStatus() {
                     await loadUserResults();
                     hideLoading();
                     showResultView();
-                    
-                    // ============ 新增：设置本地标记防止重新进入 ============
-                    localStorage.setItem(`quiz_submitted_${currentUser.uid}`, 'true');
                 } else {
                     hideLoading();
                     const result = await Swal.fire({
@@ -3982,36 +3993,32 @@ async function checkUserQuizStatus() {
                     });
                     
                     if (result.isConfirmed) {
+                        // 清除本地标记，开始新的一轮
+                        localStorage.removeItem(`quiz_submitted_${currentUser.uid}`);
+                        localStorage.removeItem(`quiz_in_progress_${currentUser.uid}`);
+                        
+                        // 增加重试计数
+                        const newRetryCount = dbRetryCount + 1;
+                        await database.ref('userAnswers/' + currentUser.uid).update({
+                            retryCount: newRetryCount
+                        });
+                        
                         // 开始新的一轮答题
                         initializeUserQuiz();
                     } else {
                         // 查看上次结果
                         await loadUserResults();
                         showResultView();
-                        
-                        // ============ 新增：设置本地标记防止重新进入 ============
-                        localStorage.setItem(`quiz_submitted_${currentUser.uid}`, 'true');
                     }
                 }
             }
         } else {
-            // ============ 新增：检查本地标记 ============
-            const localSubmitted = localStorage.getItem(`quiz_submitted_${currentUser.uid}`);
-            if (localSubmitted === 'true') {
-                // 本地标记显示已提交，但数据库可能不同步，强制检查
-                hideLoading();
-                Swal.fire({
-                    title: '答题状态异常',
-                    text: '检测到答题状态异常，正在重新检查...',
-                    icon: 'warning'
-                });
-                
-                // 强制重新检查
-                await checkUserQuizStatus();
-                return;
-            }
-            
             // 未提交，继续上次答题
+            console.log("用户未提交答题，继续答题流程");
+            
+            // 清除可能存在的错误本地标记
+            localStorage.removeItem(`quiz_submitted_${currentUser.uid}`);
+            
             // 检查是否超过比赛时间
             if (quizData.settings.endTime && new Date().getTime() > quizData.settings.endTime) {
                 // 比赛时间已结束，自动提交
@@ -4056,13 +4063,7 @@ async function checkUserQuizStatus() {
             const maxReasonableTime = quizDuration * 2;
             
             if (timeElapsed > maxReasonableTime) {
-                console.warn("检测到异常时间数据：", {
-                    startTime: new Date(startTime).toLocaleString(),
-                    currentTime: new Date(currentTime).toLocaleString(),
-                    timeElapsedSeconds: Math.floor(timeElapsed / 1000),
-                    maxAllowedSeconds: quizDuration / 1000
-                });
-                
+                console.warn("检测到异常时间数据，使用估算时间");
                 const answeredQuestions = answerData.answers?.filter(a => 
                     (a.selectedOptions && a.selectedOptions.length > 0) || 
                     (a.answerText && a.answerText.trim() !== '')
@@ -4070,11 +4071,6 @@ async function checkUserQuizStatus() {
                 
                 const estimatedTimePerQuestion = 20000;
                 timeElapsed = Math.min(answeredQuestions * estimatedTimePerQuestion, quizDuration);
-                
-                console.log("使用估算时间：", {
-                    answeredQuestions,
-                    estimatedTime: timeElapsed / 1000
-                });
             }
             
             if (timeElapsed > quizDuration) {
@@ -4094,12 +4090,8 @@ async function checkUserQuizStatus() {
             
             hideLoading();
             
-            // ============ 新增：检查是否正在答题中 ============
-            const isInQuiz = localStorage.getItem(`quiz_in_progress_${currentUser.uid}`);
-            if (!isInQuiz) {
-                // 设置本地标记
-                localStorage.setItem(`quiz_in_progress_${currentUser.uid}`, 'true');
-            }
+            // 设置正在答题的本地标记
+            localStorage.setItem(`quiz_in_progress_${currentUser.uid}`, 'true');
             
             loadUserProgress(answerData);
             showQuizView();
@@ -4107,8 +4099,24 @@ async function checkUserQuizStatus() {
     } catch (error) {
         console.error("获取答题状态失败:", error);
         hideLoading();
-        Swal.fire('错误', `获取答题状态失败: ${error.message}`, 'error');
-        showWelcomeView();
+        
+        // 增加重试计数
+        retryCount++;
+        if (retryCount < MAX_RETRY_COUNT) {
+            console.log(`重试检查答题状态 (${retryCount}/${MAX_RETRY_COUNT})`);
+            setTimeout(() => {
+                isCheckingQuizStatus = false;
+                checkUserQuizStatus();
+            }, 1000);
+        } else {
+            Swal.fire('错误', `获取答题状态失败: ${error.message}`, 'error');
+            showWelcomeView();
+        }
+    } finally {
+        // 延迟释放锁，防止快速重复调用
+        setTimeout(() => {
+            isCheckingQuizStatus = false;
+        }, 500);
     }
 }
 
@@ -4661,6 +4669,8 @@ async function submitQuiz() {
     cheatDetectionEnabled = false;
 
     try {
+        localStorage.setItem(`quiz_submitted_${currentUser.uid}`, 'true');
+        localStorage.removeItem(`quiz_in_progress_${currentUser.uid}`);
         // 保存当前题目的答案
         const currentQ = quizData.questions[currentQuestionIndex];
         if (currentQ && (currentQ.type === 'short_answer' || currentQ.type === 'essay')) {
