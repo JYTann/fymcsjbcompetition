@@ -2976,6 +2976,39 @@
             }, 5000);
         }
 
+        // 在init()函数中添加页面状态检查
+        function checkPageStateOnLoad() {
+            if (currentUser && !document.getElementById('quizView').classList.contains('d-none')) {
+        // 检查是否已经提交
+                database.ref('userAnswers/' + currentUser.uid + '/submitted').once('value')
+                    .then(snapshot => {
+                        if (snapshot.exists() && snapshot.val() === true) {
+                    // 如果已经提交，自动跳转到结果页面
+                            console.log("检测到已提交的答卷，跳转到结果页");
+                            showResultView();
+            
+                    // 确保所有计时器都停止
+                            if (quizTimer) {
+                                clearInterval(quizTimer);
+                                quizTimer = null;
+                            }
+                    
+                    // 加载结果
+                            loadUserResults();
+                        }
+                    })
+                    .catch(error => {
+                        console.error("检查提交状态错误:", error);
+                    });
+            }
+        }
+
+// 在页面加载时调用
+        document.addEventListener('DOMContentLoaded', () => {
+            init();
+            setTimeout(checkPageStateOnLoad, 1000); // 延迟1秒等待用户信息加载
+        });
+
         // 绑定所有事件监听器
         function bindEventListeners() {
             // 登录相关
@@ -3671,7 +3704,7 @@
         }
 
         // 检查用户答题状态
-async function checkUserQuizStatus() {
+        async function checkUserQuizStatus() {
     try {
         if (!currentUser || !currentUser.uid) {
             throw new Error('用户未登录');
@@ -3679,10 +3712,24 @@ async function checkUserQuizStatus() {
 
         showLoading('正在获取答题状态...');
 
+        // 在开始之前，确保清除任何可能存在的计时器
+        if (quizTimer) {
+            clearInterval(quizTimer);
+            quizTimer = null;
+        }
+        
+        // 确保停止防作弊系统
+        cheatDetectionEnabled = false;
+        if (fullscreenCountdown) {
+            clearInterval(fullscreenCountdown);
+            fullscreenCountdown = null;
+        }
+
         const snapshot = await database.ref('userAnswers/' + currentUser.uid).once('value');
         
         if (!snapshot.exists()) {
             // 首次答题
+            hideLoading();
             initializeUserQuiz();
             return;
         }
@@ -3693,6 +3740,9 @@ async function checkUserQuizStatus() {
             // 已提交，检查是否允许重新答题
             const retakeMode = quizData.settings.retakeMode || 
                               (quizData.settings.allowRetake ? 'allow_unlimited' : 'disallow');
+            
+            // 更新管理员状态
+            await updateAdminMonitorStatus(currentUser.uid, 'completed');
             
             if (retakeMode === 'disallow') {
                 // 不允许重新答题，检查结果是否可显示
@@ -3708,6 +3758,7 @@ async function checkUserQuizStatus() {
                     
                     if (timePassed < resultsDelay) {
                         const remainingTime = Math.ceil(resultsDelay - timePassed);
+                        hideLoading();
                         Swal.fire({
                             title: '结果暂未公布',
                             html: `比赛结果将在 <strong>${remainingTime}分钟</strong> 后公布<br>请稍后再查看`,
@@ -3719,6 +3770,7 @@ async function checkUserQuizStatus() {
                     }
                 }
                 
+                hideLoading();
                 showResultView();
             } else {
                 // 允许重新答题
@@ -3738,8 +3790,10 @@ async function checkUserQuizStatus() {
                 if (!canRetake) {
                     // 超过重试次数限制
                     await loadUserResults();
+                    hideLoading();
                     showResultView();
                 } else {
+                    hideLoading();
                     const result = await Swal.fire({
                         title: '重新答题',
                         html: message,
@@ -3750,8 +3804,10 @@ async function checkUserQuizStatus() {
                     });
                     
                     if (result.isConfirmed) {
+                        // 开始新的一轮答题
                         initializeUserQuiz();
                     } else {
+                        // 查看上次结果
                         await loadUserResults();
                         showResultView();
                     }
@@ -3759,20 +3815,57 @@ async function checkUserQuizStatus() {
             }
         } else {
             // 未提交，继续上次答题
+            // 检查是否超过比赛时间
+            if (quizData.settings.endTime && new Date().getTime() > quizData.settings.endTime) {
+                // 比赛时间已结束，自动提交
+                hideLoading();
+                Swal.fire({
+                    title: '比赛时间已结束',
+                    text: '比赛时间已到，系统将自动提交您的答卷',
+                    icon: 'info',
+                    confirmButtonText: '确定'
+                }).then(async () => {
+                    // 加载当前进度然后提交
+                    loadUserProgress(answerData);
+                    await submitQuiz();
+                });
+                return;
+            }
+            
+            // 检查是否超过个人答题时间
+            const quizDuration = quizData.settings.duration * 60 * 1000; // 转为毫秒
+            const timeElapsed = new Date().getTime() - (answerData.startTime || new Date().getTime());
+            
+            if (timeElapsed > quizDuration) {
+                // 个人时间已用完，自动提交
+                hideLoading();
+                Swal.fire({
+                    title: '答题时间已用完',
+                    text: '您的答题时间已结束，系统将自动提交您的答卷',
+                    icon: 'info',
+                    confirmButtonText: '确定'
+                }).then(async () => {
+                    // 加载当前进度然后提交
+                    loadUserProgress(answerData);
+                    await submitQuiz();
+                });
+                return;
+            }
+            
+            hideLoading();
             loadUserProgress(answerData);
             showQuizView();
         }
     } catch (error) {
         console.error("获取答题状态失败:", error);
+        hideLoading();
         Swal.fire('错误', `获取答题状态失败: ${error.message}`, 'error');
         showWelcomeView();
-    } finally {
-        hideLoading();
     }
 }
 
         // 初始化监控系统
-function initMonitor() {
+        function initMonitor() {
     // 清除现有的监控间隔
     if (monitorInterval) {
         clearInterval(monitorInterval);
@@ -3795,6 +3888,76 @@ function initMonitor() {
     }, 30000);
     
     console.log("监控系统已初始化");
+}
+
+        // 更新管理员监控状态
+async function updateAdminMonitorStatus(userId, status) {
+    try {
+        const updates = {};
+        updates[`userAnswers/${userId}/status`] = status;
+        updates[`userAnswers/${userId}/lastUpdated`] = firebase.database.ServerValue.TIMESTAMP;
+        
+        // 如果状态是completed，也更新提交时间
+        if (status === 'completed') {
+            updates[`userAnswers/${userId}/endTime`] = new Date().getTime();
+        }
+        
+        await database.ref().update(updates);
+        console.log(`用户 ${userId} 状态更新为: ${status}`);
+    } catch (error) {
+        console.error("更新管理员状态错误:", error);
+    }
+}
+
+// 在监控列表中显示状态
+function updateMonitorList() {
+    database.ref('userAnswers').once('value').then(snapshot => {
+        const monitorList = document.getElementById('participantMonitorList');
+        monitorList.innerHTML = '';
+        
+        if (snapshot.exists()) {
+            const participants = [];
+            
+            snapshot.forEach(childSnapshot => {
+                const participant = childSnapshot.val();
+                if (participant.userInfo) {
+                    participants.push(participant);
+                }
+            });
+            
+            participants.sort((a, b) => (b.lastUpdated || 0) - (a.lastUpdated || 0));
+            
+            participants.forEach(participant => {
+                const progress = calculateProgress(participant);
+                const isActive = participant.userId === currentMonitoringUserId;
+                const isCompleted = participant.submitted === true;
+                
+                const item = document.createElement('button');
+                item.className = `list-group-item list-group-item-action d-flex justify-content-between align-items-center ${isActive ? 'active' : ''}`;
+                item.innerHTML = `
+                    <div>
+                        <strong>${participant.userInfo.name}</strong>
+                        <div class="text-muted small">
+                            ${participant.userInfo.class} - 
+                            ${participant.userInfo.group === 'highschool' ? '高中' : '初中'}
+                            ${isCompleted ? ' (已提交)' : ' (答题中)'}
+                        </div>
+                    </div>
+                    <span class="badge ${isCompleted ? 'bg-success' : 'bg-warning'} rounded-pill">
+                        ${isCompleted ? '已完成' : progress}%
+                    </span>
+                `;
+                
+                item.addEventListener('click', () => {
+                    currentMonitoringUserId = participant.userId;
+                    updateMonitorList();
+                    monitorParticipant(participant.userId);
+                });
+                
+                monitorList.appendChild(item);
+            });
+        }
+    });
 }
 
         // 初始化用户答题
@@ -3830,39 +3993,66 @@ function initMonitor() {
         }
         
         // 加载用户进度
-        function loadUserProgress(answerData) {
-            userAnswers = Array.isArray(answerData.answers) ? answerData.answers : [];
-            currentQuestionIndex = answerData.currentQuestionIndex || 0;
-            quizStartTime = answerData.startTime || new Date().getTime();
-            
-            const timeElapsed = Math.floor((new Date().getTime() - quizStartTime) / 1000);
-            timeRemaining = Math.max(0, quizData.settings.duration * 60 - timeElapsed);
-            
-            // 恢复标记的题目
-            markedQuestions = new Set(answerData.markedQuestions || []);
-            
-            startTimer();
-            displayQuestion(currentQuestionIndex);
-            updateQuestionNavDots();
-        }
+function loadUserProgress(answerData) {
+    userAnswers = Array.isArray(answerData.answers) ? answerData.answers : [];
+    currentQuestionIndex = answerData.currentQuestionIndex || 0;
+    quizStartTime = answerData.startTime || new Date().getTime();
+    
+    const timeElapsed = Math.floor((new Date().getTime() - quizStartTime) / 1000);
+    timeRemaining = Math.max(0, quizData.settings.duration * 60 - timeElapsed);
+    
+    // 恢复标记的题目
+    markedQuestions = new Set(answerData.markedQuestions || []);
+    
+    // 检查是否已经提交（安全检查）
+    if (answerData.submitted) {
+        console.warn("检测到已提交的答题记录，但仍在加载进度");
+        showResultView();
+        return;
+    }
+    
+    startTimer();
+    displayQuestion(currentQuestionIndex);
+    updateQuestionNavDots();
+}
         
         // 开始计时器
-        function startTimer() {
-            if (quizTimer) clearInterval(quizTimer);
+        // 开始计时器
+function startTimer() {
+    // 清除可能存在的旧计时器
+    if (quizTimer) {
+        clearInterval(quizTimer);
+        quizTimer = null;
+    }
+    
+    updateTimerDisplay();
+    quizTimer = setInterval(() => {
+        timeRemaining--;
+        updateTimerDisplay();
+        
+        if (timeRemaining <= 0) {
+            clearInterval(quizTimer);
+            quizTimer = null;
             
-            updateTimerDisplay();
-            quizTimer = setInterval(() => {
-                timeRemaining--;
-                updateTimerDisplay();
-                
-                if (timeRemaining <= 0) {
-                    clearInterval(quizTimer);
-                    Swal.fire('时间到', '答题时间已结束，系统将自动提交您的答案', 'info').then(() => {
-                        submitQuiz();
-                    });
-                }
-            }, 1000);
+            // 时间到，自动提交
+            Swal.fire({
+                title: '时间到！',
+                text: '答题时间已结束，系统将自动提交您的答案',
+                icon: 'info',
+                showCancelButton: false,
+                confirmButtonText: '确定',
+                allowOutsideClick: false
+            }).then(() => {
+                submitQuiz();
+            });
         }
+        
+        // 定期保存进度（每30秒）
+        if (timeRemaining % 30 === 0) {
+            saveUserProgress();
+        }
+    }, 1000);
+}
         
         // 更新计时器显示
         function updateTimerDisplay() {
@@ -4145,101 +4335,145 @@ function initMonitor() {
         }
         
         // 提交答卷
-        async function submitQuiz() {
-            const submitConfirmModal = bootstrap.Modal.getInstance(document.getElementById('submitConfirmModal'));
-            if (submitConfirmModal) submitConfirmModal.hide();
+        // 提交答卷 - 修复版本
+async function submitQuiz() {
+    const submitConfirmModal = bootstrap.Modal.getInstance(document.getElementById('submitConfirmModal'));
+    if (submitConfirmModal) submitConfirmModal.hide();
 
-            if (quizData.settings.status === 'ended') {
-                Swal.fire('错误', '比赛已结束，无法提交答案', 'error');
-                return;
-            }
+    // 确保停止所有计时器和监控
+    if (quizTimer) {
+        clearInterval(quizTimer);
+        quizTimer = null;
+    }
+    
+    if (fullscreenCountdown) {
+        clearInterval(fullscreenCountdown);
+        fullscreenCountdown = null;
+    }
+    
+    // 关闭防作弊监控
+    cheatDetectionEnabled = false;
 
-            if (quizData.settings.endTime && new Date().getTime() > quizData.settings.endTime) {
-                Swal.fire('错误', '比赛时间已结束，无法提交答案', 'error');
-                return;
-            }
-
-            clearInterval(quizTimer);
-
-            try {
-                const currentQ = quizData.questions[currentQuestionIndex];
-                if (currentQ && (currentQ.type === 'short_answer' || currentQ.type === 'essay')) {
-                    const answerInput = document.querySelector('.answer-textarea');
-                    if (answerInput) {
-                        userAnswers[currentQuestionIndex].answerText = answerInput.value.trim();
-                    }
-                }
-            } catch (e) {
-                console.warn('无法保存当前题答案:', e);
-            }
-
-            userAnswers.forEach((answer, index) => {
-                const question = quizData.questions[index];
-                if (!question) return;
-
-                if (question.type === 'single' || question.type === 'multiple') {
-                    const selected = Array.isArray(answer.selectedOptions) ? answer.selectedOptions.slice().sort() : [];
-                    const correct = Array.isArray(question.correctAnswers) ? question.correctAnswers.slice().sort() : [];
-
-                    answer.isCorrect = (
-                        selected.length === correct.length &&
-                        selected.every((v, i) => v === correct[i])
-                    );
-                } else if (question.type === 'short_answer' || question.type === 'essay') {
-                    if (question.correctAnswerText && answer.answerText) {
-                        const normalizedCorrect = question.correctAnswerText.toLowerCase()
-                            .replace(/[^\w\s]/g, '').replace(/\s+/g, ' ').trim();
-                        const normalizedUser = answer.answerText.toLowerCase()
-                            .replace(/[^\w\s]/g, '').replace(/\s+/g, ' ').trim();
-                        
-                        answer.isCorrect = normalizedUser.includes(normalizedCorrect) || 
-                                        normalizedCorrect.includes(normalizedUser) ||
-                                        calculateSimilarity(normalizedUser, normalizedCorrect) > 0.7;
-                        
-                        answer.score = answer.isCorrect ? question.points : 0;
-                    }
-                }
-            });
-
-            const resultData = {
-                answers: userAnswers,
-                startTime: quizStartTime,
-                endTime: new Date().getTime(),
-                submitted: true,
-                userId: currentUser.uid,
-                userInfo: {
-                    ...userInfo,
-                    name: currentUser.displayName || currentUser.email,
-                    photoURL: currentUser.photoURL || ''
-                },
-                score: calculateTotalScore(),
-                correctCount: userAnswers.filter(a => a.isCorrect).length,
-                wrongCount: userAnswers.filter(a => a.isCorrect === false).length,
-                unansweredCount: userAnswers.filter(a => {
-                    const question = quizData.questions.find(q => q.id === a.questionId);
-                    if (!question) return true;
-
-                    if (question.type === 'single' || question.type === 'multiple') {
-                        return a.selectedOptions.length === 0;
-                    } else {
-                        return !a.answerText || a.answerText.trim() === '';
-                    }
-                }).length,
-                markedQuestions: Array.from(markedQuestions),
-                retryCount: (answerData.retryCount || 0) + 1,
-                submissionTime: new Date().getTime()
-            };
-
-            try {
-                await database.ref('userAnswers/' + currentUser.uid).set(resultData);
-                showResultView();
-                displayResults();
-            } catch (error) {
-                console.error("提交答卷错误:", error);
-                Swal.fire('错误', '提交答卷失败', 'error');
+    try {
+        // 保存当前题目的答案
+        const currentQ = quizData.questions[currentQuestionIndex];
+        if (currentQ && (currentQ.type === 'short_answer' || currentQ.type === 'essay')) {
+            const answerInput = document.querySelector('.answer-textarea');
+            if (answerInput) {
+                userAnswers[currentQuestionIndex].answerText = answerInput.value.trim();
             }
         }
+    } catch (e) {
+        console.warn('无法保存当前题答案:', e);
+    }
 
+    // 计算分数
+    userAnswers.forEach((answer, index) => {
+        const question = quizData.questions[index];
+        if (!question) return;
+
+        if (question.type === 'single' || question.type === 'multiple') {
+            const selected = Array.isArray(answer.selectedOptions) ? answer.selectedOptions.slice().sort() : [];
+            const correct = Array.isArray(question.correctAnswers) ? question.correctAnswers.slice().sort() : [];
+
+            answer.isCorrect = (
+                selected.length === correct.length &&
+                selected.every((v, i) => v === correct[i])
+            );
+            answer.score = answer.isCorrect ? question.points : 0;
+        } else if (question.type === 'short_answer' || question.type === 'essay') {
+            if (question.correctAnswerText && answer.answerText) {
+                const normalizedCorrect = question.correctAnswerText.toLowerCase()
+                    .replace(/[^\w\s]/g, '').replace(/\s+/g, ' ').trim();
+                const normalizedUser = answer.answerText.toLowerCase()
+                    .replace(/[^\w\s]/g, '').replace(/\s+/g, ' ').trim();
+                
+                answer.isCorrect = normalizedUser.includes(normalizedCorrect) || 
+                                normalizedCorrect.includes(normalizedUser) ||
+                                calculateSimilarity(normalizedUser, normalizedCorrect) > 0.7;
+                
+                answer.score = answer.isCorrect ? question.points : 0;
+            }
+        }
+    });
+
+    const totalScore = calculateTotalScore();
+    const endTime = new Date().getTime();
+
+    const resultData = {
+        answers: userAnswers,
+        startTime: quizStartTime,
+        endTime: endTime,
+        submitted: true,
+        userId: currentUser.uid,
+        userInfo: {
+            ...userInfo,
+            name: currentUser.displayName || currentUser.email,
+            photoURL: currentUser.photoURL || ''
+        },
+        score: totalScore,
+        finalScore: totalScore,  // 确保有finalScore字段
+        totalScore: totalScore,  // 确保有totalScore字段
+        correctCount: userAnswers.filter(a => a.isCorrect === true).length,
+        wrongCount: userAnswers.filter(a => a.isCorrect === false).length,
+        unansweredCount: userAnswers.filter(a => {
+            const question = quizData.questions.find(q => q.id === a.questionId);
+            if (!question) return true;
+
+            if (question.type === 'single' || question.type === 'multiple') {
+                return !Array.isArray(a.selectedOptions) || a.selectedOptions.length === 0;
+            } else {
+                return !a.answerText || a.answerText.trim() === '';
+            }
+        }).length,
+        markedQuestions: Array.from(markedQuestions),
+        retryCount: (userAnswers.retryCount || 0) + 1,
+        submissionTime: endTime,
+        status: 'completed',  // 添加明确的状态字段
+        timeUsed: Math.floor((endTime - quizStartTime) / 1000),  // 总用时（秒）
+        lastUpdated: firebase.database.ServerValue.TIMESTAMP
+    };
+
+    try {
+        // 使用事务确保数据一致性
+        const userAnswerRef = database.ref('userAnswers/' + currentUser.uid);
+        
+        await userAnswerRef.transaction(currentData => {
+            if (currentData === null) {
+                return resultData;
+            }
+            
+            // 如果已经提交过，更新重试次数
+            if (currentData.submitted) {
+                resultData.retryCount = (currentData.retryCount || 0) + 1;
+            }
+            
+            return { ...currentData, ...resultData };
+        });
+
+        console.log("提交成功，数据已保存");
+        
+        // 显示成功提示
+        await Swal.fire({
+            title: '提交成功！',
+            text: `您的答卷已成功提交，得分：${totalScore}`,
+            icon: 'success',
+            confirmButtonText: '查看成绩'
+        });
+
+        // 清除本地存储的相关状态
+        localStorage.removeItem(`quiz_progress_${currentUser.uid}`);
+        
+        // 刷新页面以完全重置状态
+        setTimeout(() => {
+            window.location.reload();
+        }, 100);
+
+    } catch (error) {
+        console.error("提交答卷错误:", error);
+        Swal.fire('错误', '提交答卷失败，请重试', 'error');
+    }
+}
         function calculateSimilarity(str1, str2) {
             const set1 = new Set(str1.split(/\s+/));
             const set2 = new Set(str2.split(/\s+/));
@@ -7406,14 +7640,32 @@ function exportToPDF(results) {
             document.getElementById('resultCheckView').classList.add('d-none');
         }
         
-        function showResultView() {
-            document.getElementById('welcomeView').classList.add('d-none');
-            document.getElementById('quizView').classList.add('d-none');
-            document.getElementById('resultView').classList.remove('d-none');
-            document.getElementById('rankingView').classList.add('d-none');
-            document.getElementById('adminView').classList.add('d-none');
-            document.getElementById('resultCheckView').classList.add('d-none');
-        }
+        // 显示结果界面
+function showResultView() {
+    // 确保停止所有计时器
+    if (quizTimer) {
+        clearInterval(quizTimer);
+        quizTimer = null;
+    }
+    
+    // 停止防作弊监控
+    cheatDetectionEnabled = false;
+    
+    document.getElementById('welcomeView').classList.add('d-none');
+    document.getElementById('quizView').classList.add('d-none');
+    document.getElementById('resultView').classList.remove('d-none');
+    document.getElementById('rankingView').classList.add('d-none');
+    document.getElementById('adminView').classList.add('d-none');
+    document.getElementById('resultCheckView').classList.add('d-none');
+    
+    // 如果有防作弊面板，隐藏它
+    document.getElementById('cheatDetectionPanel').classList.add('d-none');
+    document.getElementById('antiCheatAlert').classList.add('d-none');
+    document.getElementById('fullscreenOverlay').classList.add('d-none');
+    
+    // 显示结果
+    displayResults();
+}
         
         function showRankingView() {
             document.getElementById('welcomeView').classList.add('d-none');
