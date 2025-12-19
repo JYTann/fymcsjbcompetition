@@ -2189,24 +2189,39 @@
                                             </div>
                                         </div>
                                         <div class="mb-3 form-check">
-                                            <input type="checkbox" class="form-check-input" id="showResultsImmediately">
-                                            <label class="form-check-label" for="showResultsImmediately">立即显示结果</label>
-                                        </div>
-                                        <div class="mb-3 form-check">
-                                            <input type="checkbox" class="form-check-input" id="allowRetake">
-                                            <label class="form-check-label" for="allowRetake">允许重新答题</label>
-                                        </div>
-                                        <div class="mb-3 form-check">
-                                            <input type="checkbox" class="form-check-input" id="enableAntiCheat">
-                                            <label class="form-check-label" for="enableAntiCheat">启用防作弊系统</label>
-                                        </div>
-                                        <button type="submit" class="btn btn-primary w-100">
-                                            <i class="fas fa-save me-1"></i>保存设置
-                                        </button>
-                                    </form>
-                                </div>
-                            </div>
+                            <input type="checkbox" class="form-check-input" id="showResultsImmediately">
+                            <label class="form-check-label" for="showResultsImmediately">立即显示结果</label>
                         </div>
+                        <div class="mb-3" id="resultsDelaySection" style="display: none;">
+                            <label for="resultsDelay" class="form-label">结果延迟显示时间（分钟）</label>
+                            <input type="number" class="form-control" id="resultsDelay" min="0" value="0">
+                        </div>
+                        
+                        <!-- 修改这里：重新答题设置 -->
+                        <div class="mb-3">
+                            <label for="retakeMode" class="form-label">重新答题模式</label>
+                            <select class="form-select" id="retakeMode">
+                                <option value="disallow">不允许重新答题</option>
+                                <option value="allow_limited">限制次数重新答题</option>
+                                <option value="allow_unlimited">无限次重新答题</option>
+                            </select>
+                        </div>
+                        <div class="mb-3" id="retakeLimitSection" style="display: none;">
+                            <label for="retakeLimit" class="form-label">最大重试次数</label>
+                            <input type="number" class="form-control" id="retakeLimit" min="1" value="3">
+                        </div>
+                        
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="enableAntiCheat">
+                            <label class="form-check-label" for="enableAntiCheat">启用防作弊系统</label>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="fas fa-save me-1"></i>保存设置
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
                         <div class="col-md-6">
                             <div class="card">
                                 <div class="card-header">
@@ -3009,6 +3024,22 @@
             document.getElementById('exportResultsBtn').addEventListener('click', showExportConfirm);
             document.getElementById('exportAllResultsBtn').addEventListener('click', exportAllResults);
             document.getElementById('confirmExportBtn').addEventListener('click', exportResults);
+          
+            // 新增：监听结果显示选项变化
+            document.getElementById('showResultsImmediately').addEventListener('change', function() {
+                const resultsDelaySection = document.getElementById('resultsDelaySection');
+                if (resultsDelaySection) {
+                    resultsDelaySection.style.display = this.checked ? 'none' : 'block';
+                }
+            });
+            
+            // 新增：监听重试模式变化
+            document.getElementById('retakeMode').addEventListener('change', function() {
+                const retakeLimitSection = document.getElementById('retakeLimitSection');
+                if (retakeLimitSection) {
+                    retakeLimitSection.style.display = this.value === 'allow_limited' ? 'block' : 'none';
+                }
+            });
             
             // 结果查询
             document.getElementById('resultCheckForm').addEventListener('submit', checkResult);
@@ -3639,42 +3670,106 @@
             });
         }
 
-        async function checkUserQuizStatus() {
-            try {
-                if (!currentUser || !currentUser.uid) {
-                    throw new Error('用户未登录');
-                }
+        // 检查用户答题状态
+async function checkUserQuizStatus() {
+    try {
+        if (!currentUser || !currentUser.uid) {
+            throw new Error('用户未登录');
+        }
 
-                showLoading('正在获取答题状态...');
+        showLoading('正在获取答题状态...');
 
-                const snapshot = await database.ref('userAnswers/' + currentUser.uid).once('value');
+        const snapshot = await database.ref('userAnswers/' + currentUser.uid).once('value');
+        
+        if (!snapshot.exists()) {
+            // 首次答题
+            initializeUserQuiz();
+            return;
+        }
+
+        const answerData = snapshot.val();
+        
+        if (answerData.submitted) {
+            // 已提交，检查是否允许重新答题
+            const retakeMode = quizData.settings.retakeMode || 
+                              (quizData.settings.allowRetake ? 'allow_unlimited' : 'disallow');
+            
+            if (retakeMode === 'disallow') {
+                // 不允许重新答题，检查结果是否可显示
+                await loadUserResults();
                 
-                if (!snapshot.exists()) {
-                    initializeUserQuiz();
-                    return;
-                }
-
-                const answerData = snapshot.val();
+                const showImmediately = quizData.settings.showResultsImmediately;
+                const resultsDelay = quizData.settings.resultsDelay || 0;
                 
-                if (!answerData || typeof answerData !== 'object') {
-                    throw new Error('无效的答题数据');
+                if (!showImmediately && resultsDelay > 0) {
+                    const submissionTime = answerData.endTime || 0;
+                    const currentTime = new Date().getTime();
+                    const timePassed = (currentTime - submissionTime) / (1000 * 60);
+                    
+                    if (timePassed < resultsDelay) {
+                        const remainingTime = Math.ceil(resultsDelay - timePassed);
+                        Swal.fire({
+                            title: '结果暂未公布',
+                            html: `比赛结果将在 <strong>${remainingTime}分钟</strong> 后公布<br>请稍后再查看`,
+                            icon: 'info',
+                            confirmButtonText: '确定'
+                        });
+                        showWelcomeView();
+                        return;
+                    }
                 }
-
-                if (answerData.submitted) {
+                
+                showResultView();
+            } else {
+                // 允许重新答题
+                const retryCount = answerData.retryCount || 0;
+                let canRetake = true;
+                let message = '您已经完成了一次答题。是否要重新答题？';
+                
+                if (retakeMode === 'allow_limited') {
+                    const maxRetries = quizData.settings.retakeLimit || 3;
+                    if (retryCount >= maxRetries) {
+                        canRetake = false;
+                    } else {
+                        message = `您已经完成了一次答题。<br>剩余重试次数: ${maxRetries - retryCount}<br>是否要重新答题？`;
+                    }
+                }
+                
+                if (!canRetake) {
+                    // 超过重试次数限制
                     await loadUserResults();
                     showResultView();
                 } else {
-                    loadUserProgress(answerData);
-                    showQuizView();
+                    const result = await Swal.fire({
+                        title: '重新答题',
+                        html: message,
+                        icon: 'question',
+                        showCancelButton: true,
+                        confirmButtonText: '重新答题',
+                        cancelButtonText: '查看上次结果'
+                    });
+                    
+                    if (result.isConfirmed) {
+                        initializeUserQuiz();
+                    } else {
+                        await loadUserResults();
+                        showResultView();
+                    }
                 }
-            } catch (error) {
-                console.error("获取答题状态失败:", error);
-                Swal.fire('错误', `获取答题状态失败: ${error.message}`, 'error');
-                showWelcomeView();
-            } finally {
-                hideLoading();
             }
+        } else {
+            // 未提交，继续上次答题
+            loadUserProgress(answerData);
+            showQuizView();
         }
+    } catch (error) {
+        console.error("获取答题状态失败:", error);
+        Swal.fire('错误', `获取答题状态失败: ${error.message}`, 'error');
+        showWelcomeView();
+    } finally {
+        hideLoading();
+    }
+}
 
         // 初始化监控系统
 function initMonitor() {
@@ -4130,7 +4225,9 @@ function initMonitor() {
                         return !a.answerText || a.answerText.trim() === '';
                     }
                 }).length,
-                markedQuestions: Array.from(markedQuestions)
+                markedQuestions: Array.from(markedQuestions),
+                retryCount: (answerData.retryCount || 0) + 1,
+                submissionTime: new Date().getTime()
             };
 
             try {
@@ -4531,23 +4628,48 @@ function initMonitor() {
 
         // 更新比赛设置UI
         function updateQuizSettingsUI() {
-            document.getElementById('quizTitle').value = quizData.settings.title || '';
-            document.getElementById('quizDescription').value = quizData.settings.description || '';
-            document.getElementById('quizDuration').value = quizData.settings.duration || 60;
-            
-            if (quizData.settings.startTime) {
-                document.getElementById('quizStartTime').value = new Date(quizData.settings.startTime).toISOString().slice(0, 16);
-            }
-            
-            if (quizData.settings.endTime) {
-                document.getElementById('quizEndTime').value = new Date(quizData.settings.endTime).toISOString().slice(0, 16);
-            }
-            
-            document.getElementById('showResultsImmediately').checked = quizData.settings.showResultsImmediately || false;
-            document.getElementById('allowRetake').checked = quizData.settings.allowRetake || false;
-            document.getElementById('enableAntiCheat').checked = quizData.settings.enableAntiCheat || false;
-            updateQuizStatusDisplay(quizData.settings.status || 'not_started');
+    document.getElementById('quizTitle').value = quizData.settings.title || '';
+    document.getElementById('quizDescription').value = quizData.settings.description || '';
+    document.getElementById('quizDuration').value = quizData.settings.duration || 60;
+    
+    if (quizData.settings.startTime) {
+        document.getElementById('quizStartTime').value = new Date(quizData.settings.startTime).toISOString().slice(0, 16);
+    }
+    
+    if (quizData.settings.endTime) {
+        document.getElementById('quizEndTime').value = new Date(quizData.settings.endTime).toISOString().slice(0, 16);
+    }
+    
+    // 结果显示设置
+    document.getElementById('showResultsImmediately').checked = quizData.settings.showResultsImmediately !== false; // 默认为true
+    
+    // 如果已经存在resultsDelaySection元素，则显示延迟时间设置
+    const resultsDelaySection = document.getElementById('resultsDelaySection');
+    if (resultsDelaySection) {
+        resultsDelaySection.style.display = quizData.settings.showResultsImmediately ? 'none' : 'block';
+        document.getElementById('resultsDelay').value = quizData.settings.resultsDelay || 0;
+    }
+    
+    // 重新答题设置 - 使用新的retakeMode或者兼容旧的allowRetake
+    if (document.getElementById('retakeMode')) {
+        // 如果有新的retakeMode字段
+        const retakeMode = quizData.settings.retakeMode || 
+                          (quizData.settings.allowRetake ? 'allow_unlimited' : 'disallow');
+        document.getElementById('retakeMode').value = retakeMode;
+        
+        const retakeLimitSection = document.getElementById('retakeLimitSection');
+        if (retakeLimitSection) {
+            retakeLimitSection.style.display = retakeMode === 'allow_limited' ? 'block' : 'none';
+            document.getElementById('retakeLimit').value = quizData.settings.retakeLimit || 3;
         }
+    } else {
+        // 兼容旧的allowRetake复选框
+        document.getElementById('allowRetake').checked = quizData.settings.allowRetake || false;
+    }
+    
+    document.getElementById('enableAntiCheat').checked = quizData.settings.enableAntiCheat || false;
+    updateQuizStatusDisplay(quizData.settings.status || 'not_started');
+}
         
         // 更新比赛状态显示
         function updateQuizStatusDisplay(status) {
@@ -6667,40 +6789,60 @@ function checkResult(e) {
         }
 
         // 保存比赛设置
-        function saveQuizSettings(e) {
-            e.preventDefault();
-            
-            const settings = {
-                title: document.getElementById('quizTitle').value.trim(),
-                description: document.getElementById('quizDescription').value.trim(),
-                duration: parseInt(document.getElementById('quizDuration').value),
-                startTime: document.getElementById('quizStartTime').value ? new Date(document.getElementById('quizStartTime').value).getTime() : null,
-                endTime: document.getElementById('quizEndTime').value ? new Date(document.getElementById('quizEndTime').value).getTime() : null,
-                showResultsImmediately: document.getElementById('showResultsImmediately').checked,
-                allowRetake: document.getElementById('allowRetake').checked,
-                enableAntiCheat: document.getElementById('enableAntiCheat').checked,
-                status: quizData.settings.status || 'not_started'
-            };
-            
-            if (settings.duration <= 0) {
-                Swal.fire('错误', '比赛时长必须大于0', 'error');
-                return;
-            }
-            
-            if (settings.startTime && settings.endTime && settings.startTime >= settings.endTime) {
-                Swal.fire('错误', '结束时间必须晚于开始时间', 'error');
-                return;
-            }
-            
-            quizData.settings = settings;
-            
-            database.ref('quiz/settings').set(settings).then(() => {
-                Swal.fire('成功', '比赛设置已保存', 'success');
-            }).catch(error => {
-                console.error("保存比赛设置错误:", error);
-                Swal.fire('错误', '保存比赛设置失败', 'error');
-            });
-        }
+        // 保存比赛设置
+function saveQuizSettings(e) {
+    e.preventDefault();
+    
+    // 获取新的重试模式设置
+    let retakeMode, retakeLimit;
+    if (document.getElementById('retakeMode')) {
+        retakeMode = document.getElementById('retakeMode').value;
+        retakeLimit = retakeMode === 'allow_limited' ? 
+            parseInt(document.getElementById('retakeLimit').value) : 0;
+    } else {
+        // 兼容旧版本
+        retakeMode = document.getElementById('allowRetake').checked ? 'allow_unlimited' : 'disallow';
+        retakeLimit = 0;
+    }
+    
+    const settings = {
+        title: document.getElementById('quizTitle').value.trim(),
+        description: document.getElementById('quizDescription').value.trim(),
+        duration: parseInt(document.getElementById('quizDuration').value),
+        startTime: document.getElementById('quizStartTime').value ? 
+            new Date(document.getElementById('quizStartTime').value).getTime() : null,
+        endTime: document.getElementById('quizEndTime').value ? 
+            new Date(document.getElementById('quizEndTime').value).getTime() : null,
+        showResultsImmediately: document.getElementById('showResultsImmediately').checked,
+        resultsDelay: document.getElementById('resultsDelay') ? 
+            parseInt(document.getElementById('resultsDelay').value) : 0,
+        retakeMode: retakeMode,
+        retakeLimit: retakeLimit,
+        enableAntiCheat: document.getElementById('enableAntiCheat').checked,
+        status: quizData.settings.status || 'not_started',
+        // 兼容旧版本
+        allowRetake: retakeMode !== 'disallow'
+    };
+    
+    if (settings.duration <= 0) {
+        Swal.fire('错误', '比赛时长必须大于0', 'error');
+        return;
+    }
+    
+    if (settings.startTime && settings.endTime && settings.startTime >= settings.endTime) {
+        Swal.fire('错误', '结束时间必须晚于开始时间', 'error');
+        return;
+    }
+    
+    quizData.settings = settings;
+    
+    database.ref('quiz/settings').set(settings).then(() => {
+        Swal.fire('成功', '比赛设置已保存', 'success');
+    }).catch(error => {
+        console.error("保存比赛设置错误:", error);
+        Swal.fire('错误', '保存比赛设置失败', 'error');
+    });
+}
         
         // 开始比赛
         function startQuiz() {
