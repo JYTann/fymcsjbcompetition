@@ -749,6 +749,24 @@
     }
 
     /* 防作弊系统样式 */
+.swal2-container {
+    z-index: 10000 !important;
+}
+
+.swal2-popup {
+    z-index: 10001 !important;
+}
+
+/* 防止全屏覆盖层干扰模态框 */
+.fullscreen-overlay {
+    z-index: 9999 !important;
+}
+
+/* 防作弊面板 */
+.cheat-detection-panel {
+    z-index: 9998 !important;
+}
+        
     .anti-cheat-alert {
         position: fixed;
         top: 0;
