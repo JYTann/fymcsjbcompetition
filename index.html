@@ -4299,12 +4299,17 @@ function startTimer() {
     }
             
             const question = quizData.questions[index];
-            const userAnswer = userAnswers[index] || {
+            const userAnswer = (userAnswers[index] && typeof userAnswers[index] === 'object') ? userAnswers[index] : {
                 selectedOptions: [],
                 answerText: '',
                 isCorrect: null,
                 isMarked: false
             };
+            
+            // 确保 selectedOptions 是数组
+            if (!Array.isArray(userAnswer.selectedOptions)) {
+                userAnswer.selectedOptions = [];
+            }
             
             // 更新用户信息显示
             document.getElementById('quizUserInfo').textContent = `${userInfo.class} - ${userInfo.group === 'highschool' ? '高中组' : '初中组'}`;
@@ -4373,13 +4378,15 @@ function startTimer() {
         }
         
         // 选择选项
-        function selectOption(questionIndex, optionIndex) {
+        // 选择选项
+function selectOption(questionIndex, optionIndex) {
     // ============ 添加安全检查 ============
     if (questionIndex < 0 || questionIndex >= quizData.questions.length) {
         console.error("无效的题目索引:", questionIndex);
         return;
     }
     
+    // 确保 userAnswers[questionIndex] 存在
     if (!userAnswers[questionIndex]) {
         userAnswers[questionIndex] = {
             questionId: quizData.questions[questionIndex].id,
@@ -4390,6 +4397,7 @@ function startTimer() {
         };
     }
     
+    // 确保 selectedOptions 是数组
     if (!Array.isArray(userAnswers[questionIndex].selectedOptions)) {
         userAnswers[questionIndex].selectedOptions = [];
     }
