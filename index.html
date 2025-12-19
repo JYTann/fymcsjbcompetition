@@ -1143,6 +1143,27 @@
         color: var(--text-color);
     }
 
+        /* 防止模态框背景变黑 */
+.modal-backdrop {
+    z-index: 1040 !important;
+    background-color: rgba(0, 0, 0, 0.5) !important;
+}
+
+/* 确保模态框在前端显示 */
+#warningDetailsModal {
+    z-index: 1050 !important;
+}
+
+/* 防止全屏覆盖层干扰 */
+.fullscreen-overlay {
+    z-index: 10000 !important;
+}
+
+/* 防作弊面板 */
+.cheat-detection-panel {
+    z-index: 9998 !important;
+}
+
     /* 比赛信息面板 */
     .competition-info-panel {
         background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
