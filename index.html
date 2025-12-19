@@ -3429,11 +3429,24 @@ function checkCompetitionTime() {
     
     cheatDetectionEnabled = true;
     
-    // 重置所有计数器
-    warningCount = 0;
+    // 重置本地计数器
     tabSwitchCount = 0;
     mouseLeaveCount = 0;
-    document.getElementById('warningCount').textContent = '0';
+    
+    // 从Firebase加载警告次数
+    if (currentUser) {
+        database.ref('cheatWarnings/' + currentUser.uid + '/current').once('value').then(snapshot => {
+            if (snapshot.exists()) {
+                warningCount = snapshot.val();
+            } else {
+                warningCount = 0;
+            }
+            document.getElementById('warningCount').textContent = warningCount;
+        });
+    } else {
+        warningCount = 0;
+        document.getElementById('warningCount').textContent = '0';
+    }
     
     // 重新显示防作弊面板
     const cheatPanel = document.getElementById('cheatDetectionPanel');
@@ -3450,7 +3463,7 @@ function checkCompetitionTime() {
     // 绑定所有事件监听器
     bindAntiCheatEvents();
     
-    console.log("防作弊系统已初始化完成");
+    console.log("防作弊系统已初始化完成，当前警告次数:", warningCount);
 }
 
         // 新增：清理防作弊系统函数
@@ -3468,13 +3481,19 @@ function cleanupAntiCheatSystem() {
     document.removeEventListener('mouseenter', handleMouseEnter);
     document.removeEventListener('contextmenu', disableContextMenu);
     
-    // 注意：键盘事件已经在 handleKeyboardShortcuts 中处理，不要重复移除
+    // 移除键盘事件监听器
+    document.removeEventListener('keydown', handleKeyDown);
     
     // 停止所有计时器
     if (fullscreenCountdown) {
         clearInterval(fullscreenCountdown);
         fullscreenCountdown = null;
     }
+    
+    // 隐藏防作弊面板
+    document.getElementById('cheatDetectionPanel').classList.add('d-none');
+    document.getElementById('antiCheatAlert').classList.add('d-none');
+    document.getElementById('fullscreenOverlay').classList.add('d-none');
     
     cheatDetectionEnabled = false;
 }
@@ -3631,25 +3650,30 @@ function bindAntiCheatEvents() {
             }, 5000);
         }
 
-        function recordWarning(reason) {
-            warningCount++;
-            document.getElementById('warningCount').textContent = warningCount;
-            
-            if (currentUser) {
-                const warningData = {
-                    userId: currentUser.uid,
-                    timestamp: new Date().getTime(),
-                    reason: reason,
-                    warningCount: warningCount
-                };
-                
-                database.ref('cheatWarnings/' + currentUser.uid).push(warningData);
-            }
-            
-            if (warningCount >= maxWarnings) {
-                submitQuizForCheating("达到最大警告次数");
-            }
-        }
+        // 修改 recordWarning 函数
+function recordWarning(reason) {
+    warningCount++;
+    document.getElementById('warningCount').textContent = warningCount;
+    
+    if (currentUser) {
+        const warningData = {
+            userId: currentUser.uid,
+            timestamp: new Date().getTime(),
+            reason: reason,
+            warningCount: warningCount,
+            tabSwitchCount: tabSwitchCount,
+            mouseLeaveCount: mouseLeaveCount
+        };
+        
+        // 保存到Firebase
+        database.ref('cheatWarnings/' + currentUser.uid + '/current').set(warningCount);
+        database.ref('cheatWarnings/' + currentUser.uid + '/history').push(warningData);
+    }
+    
+    if (warningCount >= maxWarnings) {
+        submitQuizForCheating("达到最大警告次数");
+    }
+}
 
         function submitQuizForCheating(reason) {
             if (quizTimer) clearInterval(quizTimer);
@@ -3892,7 +3916,17 @@ function bindAntiCheatEvents() {
         }
 
         const answerData = snapshot.val();
-        
+        // 在 loadUserProgress 函数调用之前添加警告次数恢复
+        if (quizData.settings.enableAntiCheat) {
+            console.log("重新初始化防作弊系统...");
+            setTimeout(() => {
+        initAntiCheatSystem();
+        // 尝试重新进入全屏模式
+                setTimeout(() => {
+                    requestFullscreen();
+                }, 500);
+            }, 100);
+        }
         if (answerData.submitted) {
             // 已提交，检查是否允许重新答题
             const retakeMode = quizData.settings.retakeMode || 
@@ -4089,6 +4123,15 @@ if (quizData.settings.enableAntiCheat) {
         Swal.fire('错误', `获取答题状态失败: ${error.message}`, 'error');
         showWelcomeView();
     }
+}
+
+        function resetCheatWarnings() {
+    if (currentUser) {
+        database.ref('cheatWarnings/' + currentUser.uid).remove().catch(error => {
+            console.error("重置警告次数错误:", error);
+        });
+    }
+    warningCount = 0;
 }
 
         // 初始化监控系统
@@ -4754,7 +4797,7 @@ async function submitQuiz() {
         clearInterval(fullscreenCountdown);
         fullscreenCountdown = null;
     }
-    
+    resetCheatWarnings();
     // 关闭防作弊监控
     cleanupAntiCheatSystem();
     
@@ -4919,6 +4962,52 @@ async function submitQuiz() {
         console.error("提交答卷错误:", error);
         Swal.fire('错误', '提交答卷失败，请重试', 'error');
     }
+}
+
+        // 添加警告记录查看功能
+function viewCheatWarnings(userId) {
+    showLoading('加载警告记录...');
+    
+    database.ref('cheatWarnings/' + userId + '/history').once('value').then(snapshot => {
+        hideLoading();
+        
+        if (snapshot.exists()) {
+            let warningsHTML = '<div class="table-responsive"><table class="table table-sm"><thead><tr><th>时间</th><th>原因</th><th>警告次数</th></tr></thead><tbody>';
+            
+            const warnings = [];
+            snapshot.forEach(childSnapshot => {
+                warnings.push(childSnapshot.val());
+            });
+            
+            // 按时间排序
+            warnings.sort((a, b) => b.timestamp - a.timestamp);
+            
+            warnings.forEach(warning => {
+                warningsHTML += `
+                    <tr>
+                        <td>${new Date(warning.timestamp).toLocaleString()}</td>
+                        <td>${warning.reason}</td>
+                        <td>${warning.warningCount}</td>
+                    </tr>
+                `;
+            });
+            
+            warningsHTML += '</tbody></table></div>';
+            
+            Swal.fire({
+                title: '作弊警告记录',
+                html: warningsHTML,
+                width: '800px',
+                confirmButtonText: '关闭'
+            });
+        } else {
+            Swal.fire('提示', '没有警告记录', 'info');
+        }
+    }).catch(error => {
+        hideLoading();
+        console.error("加载警告记录错误:", error);
+        Swal.fire('错误', '加载失败: ' + error.message, 'error');
+    });
 }
         
         function calculateSimilarity(str1, str2) {
