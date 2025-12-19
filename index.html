@@ -4146,6 +4146,31 @@ function updateMonitorList() {
         
         // 加载用户进度
 function loadUserProgress(answerData) {
+    // 确保 userAnswers 是有效数组
+    if (!userAnswers || !Array.isArray(userAnswers)) {
+        console.warn("userAnswers 未正确初始化，重新初始化");
+        userAnswers = quizData.questions.map(question => ({
+            questionId: question.id,
+            selectedOptions: [],
+            answerText: '',
+            isCorrect: null,
+            isMarked: false
+        }));
+    }
+    
+    // 合并现有答案和保存的答案
+    const savedAnswers = Array.isArray(answerData.answers) ? answerData.answers : [];
+    
+    savedAnswers.forEach((savedAnswer, index) => {
+        if (userAnswers[index]) {
+            userAnswers[index] = {
+                ...userAnswers[index],
+                ...savedAnswer
+            };
+        }
+    });
+    
+    currentQuestionIndex = answerData.currentQuestionIndex || 0;
     userAnswers = Array.isArray(answerData.answers) ? answerData.answers : [];
     currentQuestionIndex = answerData.currentQuestionIndex || 0;
     
@@ -8148,6 +8173,7 @@ function addDebugButtons() {
         });
 
         // 添加刷新恢复功能
+// 添加刷新恢复功能
 function handlePageRefresh() {
     // 检查是否是刷新后进入答题页面
     const isQuizViewVisible = !document.getElementById('quizView').classList.contains('d-none');
