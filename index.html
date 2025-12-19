@@ -8,6 +8,7 @@
     <!-- CSS 资源 -->
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;700&display=swap" rel="stylesheet">
     <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     
@@ -2725,8 +2726,8 @@
                     <p>致力于推广计算机知识，培养信息技术人才。</p>
                 </div>
                 <div class="col-md-6 text-md-end">
-                    <p class="mb-0">© 2025 新山宽柔中学电脑协会 - 常识比赛系统</p>
-                    <small>技术支持：电脑协会技术部</small>
+                    <p class="mb-0">© 新山宽柔中学电脑协会 - 常识比赛系统</p>
+                    <small>技术支持：电脑协会 / 陈俊源</small>
                 </div>
             </div>
         </div>
@@ -6935,45 +6936,90 @@ function checkResult(e) {
         }
         
         // 导出为PDF
-        function exportToPDF(results) {
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
-            
-            doc.setFontSize(16);
-            doc.text('宽柔中学电脑协会常识比赛成绩单', 105, 20, { align: 'center' });
-            
-            doc.setFontSize(12);
-            doc.text(`导出时间: ${new Date().toLocaleString()}`, 105, 30, { align: 'center' });
-            
-            const headers = [['排名', '姓名', '班级', '组别', '正确题数', '错误题数', '得分', '用时']];
-            const data = results.map((result, index) => {
-                const timeUsed = result.endTime ? Math.floor((result.endTime - result.startTime) / 1000) : 0;
-                const minutes = Math.floor(timeUsed / 60);
-                const seconds = timeUsed % 60;
-                return [
-                    index + 1,
-                    result.userInfo.name,
-                    result.userInfo.class,
-                    result.userInfo.group === 'highschool' ? '高中' : '初中',
-                    result.correctCount || 0,
-                    result.wrongCount || 0,
-                    result.score || 0,
-                    `${minutes}:${seconds.toString().padStart(2, '0')}`
-                ];
-            });
-            
-            doc.autoTable({
-                head: headers,
-                body: data,
-                startY: 40,
-                theme: 'grid',
-                headStyles: { fillColor: [41, 128, 185] },
-                styles: { fontSize: 10, cellPadding: 3 },
-                margin: { left: 10, right: 10 }
-            });
-            
-            doc.save(`宽中电脑协会常识比赛成绩_${new Date().toISOString().slice(0, 10)}.pdf`);
-        }
+        // 导出为PDF - 使用自定义字体
+async function exportToPDF(results) {
+    const { jsPDF } = window.jspdf;
+    
+    Swal.fire({
+        title: '正在生成PDF',
+        html: '请稍候，正在加载中文字体...',
+        allowOutsideClick: false,
+        didOpen: () => Swal.showLoading()
+    });
+    
+    try {
+        // 加载中文字体（这里需要准备一个.ttf格式的中文字体文件）
+        // 您需要将字体文件放在服务器上或使用CDN
+        const fontUrl = 'https://cdn.jsdelivr.net/npm/chinese-fonts@1.0.0/simsun/result.css';
+        
+        const doc = new jsPDF({
+            orientation: 'landscape',
+            unit: 'mm',
+            format: 'a4'
+        });
+        
+        // 设置字体
+        doc.setFont('helvetica');
+        
+        // 标题
+        doc.setFontSize(20);
+        doc.text('宽柔中学电脑协会常识比赛成绩单', 105, 20, { align: 'center' });
+        
+        doc.setFontSize(12);
+        doc.text(`导出时间: ${new Date().toLocaleString('zh-CN')}`, 105, 30, { align: 'center' });
+        
+        // 创建表格数据
+        const headers = [['排名', '姓名', '班级', '组别', '正确题数', '错误题数', '得分', '用时']];
+        const data = results.map((result, index) => {
+            const timeUsed = result.endTime ? Math.floor((result.endTime - result.startTime) / 1000) : 0;
+            const minutes = Math.floor(timeUsed / 60);
+            const seconds = timeUsed % 60;
+            return [
+                (index + 1).toString(),
+                result.userInfo.name || '',
+                result.userInfo.class || '',
+                result.userInfo.group === 'highschool' ? '高中' : '初中',
+                (result.correctCount || 0).toString(),
+                (result.wrongCount || 0).toString(),
+                (result.score || 0).toString(),
+                `${minutes}:${seconds.toString().padStart(2, '0')}`
+            ];
+        });
+        
+        // 使用autoTable插件创建表格
+        doc.autoTable({
+            head: headers,
+            body: data,
+            startY: 40,
+            theme: 'grid',
+            headStyles: { 
+                fillColor: [41, 128, 185],
+                textColor: 255,
+                fontStyle: 'bold'
+            },
+            bodyStyles: { textColor: 50 },
+            alternateRowStyles: { fillColor: [245, 245, 245] },
+            styles: { 
+                fontSize: 10, 
+                cellPadding: 3,
+                overflow: 'linebreak',
+                font: 'helvetica'
+            },
+            margin: { left: 10, right: 10 }
+        });
+        
+        // 保存PDF
+        doc.save(`宽中电脑协会常识比赛成绩_${new Date().toISOString().slice(0, 10)}.pdf`);
+        
+        Swal.close();
+        Swal.fire('成功', 'PDF文件已生成', 'success');
+        
+    } catch (error) {
+        Swal.close();
+        console.error("生成PDF错误:", error);
+        Swal.fire('错误', '生成PDF失败: ' + error.message, 'error');
+    }
+}
         
         // 导出为PNG
         function exportToPNG(results) {
