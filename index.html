@@ -3415,14 +3415,9 @@ function checkCompetitionTime() {
 
         // 防作弊系统
         // 修改 initAntiCheatSystem 函数
+// 修改 initAntiCheatSystem 函数
 function initAntiCheatSystem() {
     console.log("初始化防作弊系统...");
-    
-    // 先清理旧的监听器
-    if (cheatDetectionEnabled) {
-        console.log("防作弊系统已经启用，先清理旧的监听器");
-        cleanupAntiCheatSystem();
-    }
     
     if (!quizData.settings.enableAntiCheat) {
         console.log("防作弊系统被禁用");
@@ -3435,43 +3430,30 @@ function initAntiCheatSystem() {
     tabSwitchCount = 0;
     mouseLeaveCount = 0;
     
-    // ============ 修复：检查是否是新比赛开始 ============
-    // 检查比赛是否刚刚开始，如果是则重置警告次数
-    const currentTime = new Date().getTime();
-    const quizStartTime = quizData.settings.startTime;
-    
-    // 如果比赛开始时间在最近5分钟内，认为是新比赛开始
-    const isNewQuizStart = quizStartTime && (currentTime - quizStartTime) < 5 * 60 * 1000;
-    
+    // ============ 修复：从Firebase加载警告次数 ============
     if (currentUser) {
-        // 如果是新比赛开始，强制重置警告次数
-        if (isNewQuizStart) {
-            console.log("检测到新比赛开始，重置警告次数");
-            database.ref('cheatWarnings/' + currentUser.uid + '/current').set(0)
-                .then(() => {
-                    warningCount = 0;
-                    document.getElementById('warningCount').textContent = warningCount;
-                    // 继续初始化防作弊系统
-                    continueAntiCheatInit();
-                })
-                .catch(error => {
-                    console.error("重置警告次数错误:", error);
-                    warningCount = 0;
-                    document.getElementById('warningCount').textContent = '0';
-                    continueAntiCheatInit();
-                });
-        } else {
-            // 如果不是新比赛，加载现有警告次数
-            database.ref('cheatWarnings/' + currentUser.uid + '/current').once('value').then(snapshot => {
-                if (snapshot.exists()) {
-                    warningCount = snapshot.val();
-                } else {
-                    warningCount = 0;
-                }
-                document.getElementById('warningCount').textContent = warningCount;
-                continueAntiCheatInit();
-            });
-        }
+        // 从Firebase加载警告次数
+        database.ref('cheatWarnings/' + currentUser.uid + '/current').once('value').then(snapshot => {
+            if (snapshot.exists()) {
+                warningCount = snapshot.val();
+                console.log("从Firebase加载警告次数:", warningCount);
+            } else {
+                warningCount = 0;
+                // 初始化Firebase中的警告次数
+                database.ref('cheatWarnings/' + currentUser.uid + '/current').set(0);
+            }
+            
+            // 更新UI显示
+            document.getElementById('warningCount').textContent = warningCount;
+            
+            // 继续初始化防作弊系统
+            continueAntiCheatInit();
+        }).catch(error => {
+            console.error("加载警告次数错误:", error);
+            warningCount = 0;
+            document.getElementById('warningCount').textContent = '0';
+            continueAntiCheatInit();
+        });
     } else {
         warningCount = 0;
         document.getElementById('warningCount').textContent = '0';
@@ -3722,6 +3704,7 @@ function bindAntiCheatEvents() {
         }
 
         // 修改 recordWarning 函数
+// 修改 recordWarning 函数
 function recordWarning(reason) {
     warningCount++;
     document.getElementById('warningCount').textContent = warningCount;
@@ -3736,9 +3719,11 @@ function recordWarning(reason) {
             mouseLeaveCount: mouseLeaveCount
         };
         
-        // 保存到Firebase
+        // 保存到Firebase - 更新当前警告次数和历史记录
         database.ref('cheatWarnings/' + currentUser.uid + '/current').set(warningCount);
         database.ref('cheatWarnings/' + currentUser.uid + '/history').push(warningData);
+        
+        console.log("记录警告:", reason, "当前警告次数:", warningCount);
     }
     
     if (warningCount >= maxWarnings) {
@@ -3987,16 +3972,28 @@ function recordWarning(reason) {
         }
 
         const answerData = snapshot.val();
-        // 在 loadUserProgress 函数调用之前添加警告次数恢复
-        if (quizData.settings.enableAntiCheat) {
-            console.log("重新初始化防作弊系统...");
-            setTimeout(() => {
-        initAntiCheatSystem();
-        // 尝试重新进入全屏模式
+        if (answerData.submitted === false) {
+            hideLoading();
+            loadUserProgress(answerData);
+    
+    // ============ 修复：刷新后自动重新进入全屏 ============
+            if (quizData.settings.enableAntiCheat) {
+                console.log("重新初始化防作弊系统...");
                 setTimeout(() => {
-                    requestFullscreen();
-                }, 500);
-            }, 100);
+                    initAntiCheatSystem();
+            // 延迟请求全屏，确保防作弊系统已完全初始化
+                    setTimeout(() => {
+                        if (!document.fullscreenElement && 
+                            !document.webkitFullscreenElement && 
+                            !document.mozFullScreenElement && 
+                            !document.msFullscreenElement) {
+                            console.log("检测到未在全屏模式，自动请求全屏");
+                            requestFullscreen();
+                        }
+                    }, 1000);
+                }, 100);
+            }
+            showQuizView();
         }
         if (answerData.submitted) {
             // 已提交，检查是否允许重新答题
@@ -4904,6 +4901,16 @@ async function submitQuiz() {
     resetCheatWarnings();
     // 关闭防作弊监控
     cleanupAntiCheatSystem();
+
+        if (currentUser) {
+        database.ref('cheatWarnings/' + currentUser.uid).remove()
+            .then(() => {
+                console.log("用户提交答卷，已清除警告次数");
+            })
+            .catch(error => {
+                console.error("清除警告次数错误:", error);
+            });
+    }
     
     // 隐藏防作弊相关元素
     document.getElementById('cheatDetectionPanel').classList.add('d-none');
@@ -7742,7 +7749,8 @@ function saveQuizSettings(e) {
 }
         
         // 开始比赛
-        function startQuiz() {
+        // 开始比赛
+function startQuiz() {
     if (quizData.settings.status === 'in_progress') return;
     
     Swal.fire({
@@ -7762,23 +7770,25 @@ function saveQuizSettings(e) {
             
             quizData.settings = settings;
             
-            // ============ 新增：开始比赛时重置所有警告次数 ============
-            // 清除所有用户的警告次数
+            // ============ 修复：开始比赛时重置所有用户的警告次数 ============
             database.ref('cheatWarnings').remove()
                 .then(() => {
                     console.log("已重置所有用户的警告次数");
+                    
+                    // 保存比赛设置
+                    database.ref('quiz/settings').set(settings).then(() => {
+                        Swal.fire('成功', '比赛已开始，所有警告次数已重置', 'success');
+                        updateQuizStatusDisplay('in_progress');
+                    });
                 })
                 .catch(error => {
                     console.error("重置警告次数错误:", error);
+                    // 即使重置失败也继续开始比赛
+                    database.ref('quiz/settings').set(settings).then(() => {
+                        Swal.fire('成功', '比赛已开始', 'success');
+                        updateQuizStatusDisplay('in_progress');
+                    });
                 });
-            
-            database.ref('quiz/settings').set(settings).then(() => {
-                Swal.fire('成功', '比赛已开始，所有警告次数已重置', 'success');
-                updateQuizStatusDisplay('in_progress');
-            }).catch(error => {
-                console.error("开始比赛错误:", error);
-                Swal.fire('错误', '开始比赛失败', 'error');
-            });
         }
     });
 }
@@ -8513,7 +8523,37 @@ function addDebugButtons() {
             init();
         });
 
-        // 添加刷新恢复功能
+        // 在页面加载时检查全屏状态
+function checkFullscreenOnLoad() {
+    // 检查是否在答题界面且需要全屏
+    const isQuizViewVisible = !document.getElementById('quizView').classList.contains('d-none');
+    const isAntiCheatEnabled = quizData.settings.enableAntiCheat;
+    
+    if (isQuizViewVisible && isAntiCheatEnabled && currentUser) {
+        // 检查是否在全屏模式
+        const isFullscreen = document.fullscreenElement || 
+                           document.webkitFullscreenElement || 
+                           document.mozFullScreenElement || 
+                           document.msFullscreenElement;
+        
+        if (!isFullscreen) {
+            console.log("页面加载时检测到未在全屏模式，延迟请求全屏");
+            // 延迟请求，确保页面完全加载
+            setTimeout(() => {
+                requestFullscreen();
+            }, 1500);
+        }
+    }
+}
+
+// 在DOM加载完成后调用
+document.addEventListener('DOMContentLoaded', () => {
+    init();
+    
+    // 延迟检查全屏状态
+    setTimeout(checkFullscreenOnLoad, 2000);
+});
+        
 // 添加刷新恢复功能
 function handlePageRefresh() {
     // 检查是否是刷新后进入答题页面
