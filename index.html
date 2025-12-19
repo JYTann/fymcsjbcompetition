@@ -6935,78 +6935,103 @@ function checkResult(e) {
             XLSX.writeFile(wb, `宽中电脑协会常识比赛成绩_${new Date().toISOString().slice(0, 10)}.xlsx`);
         }
         
-        // 导出为PDF
-        // 导出为PDF - 使用自定义字体
-async function exportToPDF(results) {
+        // 导出为PDF - 支持中文的版本
+function exportToPDF(results) {
     const { jsPDF } = window.jspdf;
     
     Swal.fire({
         title: '正在生成PDF',
-        html: '请稍候，正在加载中文字体...',
+        html: '请稍候，正在生成PDF文件...',
         allowOutsideClick: false,
         didOpen: () => Swal.showLoading()
     });
     
-    try {
-        // 加载中文字体（这里需要准备一个.ttf格式的中文字体文件）
-        // 您需要将字体文件放在服务器上或使用CDN
-        const fontUrl = 'https://cdn.jsdelivr.net/npm/chinese-fonts@1.0.0/simsun/result.css';
+    // 创建HTML内容
+    const htmlContent = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <style>
+                body { font-family: 'Microsoft YaHei', 'SimHei', sans-serif; padding: 20px; }
+                h1 { color: #2c3e50; text-align: center; margin-bottom: 30px; }
+                table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+                th { background-color: #2c3e50; color: white; padding: 12px; text-align: left; }
+                td { padding: 10px; border-bottom: 1px solid #ddd; }
+                tr:nth-child(even) { background-color: #f2f2f2; }
+                .header { text-align: center; margin-bottom: 30px; }
+                .date { color: #666; margin-top: 10px; }
+            </style>
+        </head>
+        <body>
+            <div class="header">
+                <h1>宽柔中学电脑协会常识比赛成绩单</h1>
+                <p class="date">导出时间: ${new Date().toLocaleString('zh-CN')}</p>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>排名</th>
+                        <th>姓名</th>
+                        <th>班级</th>
+                        <th>组别</th>
+                        <th>正确题数</th>
+                        <th>错误题数</th>
+                        <th>得分</th>
+                        <th>用时</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${results.map((result, index) => {
+                        const timeUsed = result.endTime ? Math.floor((result.endTime - result.startTime) / 1000) : 0;
+                        const minutes = Math.floor(timeUsed / 60);
+                        const seconds = timeUsed % 60;
+                        return `
+                            <tr>
+                                <td>${index + 1}</td>
+                                <td>${result.userInfo.name || ''}</td>
+                                <td>${result.userInfo.class || ''}</td>
+                                <td>${result.userInfo.group === 'highschool' ? '高中' : '初中'}</td>
+                                <td>${result.correctCount || 0}</td>
+                                <td>${result.wrongCount || 0}</td>
+                                <td>${result.score || 0}</td>
+                                <td>${minutes}:${seconds.toString().padStart(2, '0')}</td>
+                            </tr>
+                        `;
+                    }).join('')}
+                </tbody>
+            </table>
+        </body>
+        </html>
+    `;
+    
+    // 使用html2canvas转换HTML为图片，然后添加到PDF
+    const element = document.createElement('div');
+    element.innerHTML = htmlContent;
+    element.style.position = 'absolute';
+    element.style.left = '-9999px';
+    document.body.appendChild(element);
+    
+    html2canvas(element, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#ffffff'
+    }).then(canvas => {
+        document.body.removeChild(element);
         
+        const imgData = canvas.toDataURL('image/png');
         const doc = new jsPDF({
             orientation: 'landscape',
             unit: 'mm',
             format: 'a4'
         });
         
-        // 设置字体
-        doc.setFont('helvetica');
+        const pageWidth = doc.internal.pageSize.getWidth();
+        const pageHeight = doc.internal.pageSize.getHeight();
         
-        // 标题
-        doc.setFontSize(20);
-        doc.text('宽柔中学电脑协会常识比赛成绩单', 105, 20, { align: 'center' });
-        
-        doc.setFontSize(12);
-        doc.text(`导出时间: ${new Date().toLocaleString('zh-CN')}`, 105, 30, { align: 'center' });
-        
-        // 创建表格数据
-        const headers = [['排名', '姓名', '班级', '组别', '正确题数', '错误题数', '得分', '用时']];
-        const data = results.map((result, index) => {
-            const timeUsed = result.endTime ? Math.floor((result.endTime - result.startTime) / 1000) : 0;
-            const minutes = Math.floor(timeUsed / 60);
-            const seconds = timeUsed % 60;
-            return [
-                (index + 1).toString(),
-                result.userInfo.name || '',
-                result.userInfo.class || '',
-                result.userInfo.group === 'highschool' ? '高中' : '初中',
-                (result.correctCount || 0).toString(),
-                (result.wrongCount || 0).toString(),
-                (result.score || 0).toString(),
-                `${minutes}:${seconds.toString().padStart(2, '0')}`
-            ];
-        });
-        
-        // 使用autoTable插件创建表格
-        doc.autoTable({
-            head: headers,
-            body: data,
-            startY: 40,
-            theme: 'grid',
-            headStyles: { 
-                fillColor: [41, 128, 185],
-                textColor: 255,
-                fontStyle: 'bold'
-            },
-            bodyStyles: { textColor: 50 },
-            alternateRowStyles: { fillColor: [245, 245, 245] },
-            styles: { 
-                fontSize: 10, 
-                cellPadding: 3,
-                overflow: 'linebreak',
-                font: 'helvetica'
-            },
-            margin: { left: 10, right: 10 }
-        });
+        // 添加图片到PDF
+        doc.addImage(imgData, 'PNG', 10, 10, pageWidth - 20, pageHeight - 20);
         
         // 保存PDF
         doc.save(`宽中电脑协会常识比赛成绩_${new Date().toISOString().slice(0, 10)}.pdf`);
@@ -7014,11 +7039,12 @@ async function exportToPDF(results) {
         Swal.close();
         Swal.fire('成功', 'PDF文件已生成', 'success');
         
-    } catch (error) {
+    }).catch(error => {
+        document.body.removeChild(element);
         Swal.close();
         console.error("生成PDF错误:", error);
         Swal.fire('错误', '生成PDF失败: ' + error.message, 'error');
-    }
+    });
 }
         
         // 导出为PNG
