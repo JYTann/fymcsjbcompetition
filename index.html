@@ -2856,6 +2856,23 @@ function checkCompetitionTime() {
 }
         // 初始化函数
         function init() {
+            console.log("初始化应用程序...");
+            // 确保关键变量已初始化
+            if (!userAnswers || !Array.isArray(userAnswers)) {
+                userAnswers = [];
+                console.log("重新初始化 userAnswers");
+            }
+            
+            if (!markedQuestions || !(markedQuestions instanceof Set)) {
+                markedQuestions = new Set();
+                console.log("重新初始化 markedQuestions");
+            }
+            
+            // 确保当前用户信息正确
+            if (currentUser) {
+                console.log("当前用户:", currentUser.email);
+            }
+            
             // 初始化富文本编辑器
             quill = new Quill('#editor', {
                 theme: 'snow',
@@ -4239,6 +4256,41 @@ function startTimer() {
                 console.error("无效的题目索引:", index);
                 return;
             }
+
+            // 安全检查：确保数据正确初始化
+    if (!quizData.questions || !Array.isArray(quizData.questions)) {
+        console.error("题目数据未加载");
+        Swal.fire('错误', '题目数据加载失败，请刷新页面重试', 'error');
+        return;
+    }
+    
+    if (index < 0 || index >= quizData.questions.length) {
+        console.error("无效的题目索引:", index);
+        return;
+    }
+    
+    // 确保 userAnswers 是有效数组
+    if (!userAnswers || !Array.isArray(userAnswers)) {
+        console.warn("userAnswers 未正确初始化，重新初始化");
+        userAnswers = quizData.questions.map(question => ({
+            questionId: question.id,
+            selectedOptions: [],
+            answerText: '',
+            isCorrect: null,
+            isMarked: false
+        }));
+    }
+    
+    // 确保当前题目的答案对象存在
+    if (!userAnswers[index]) {
+        userAnswers[index] = {
+            questionId: quizData.questions[index].id,
+            selectedOptions: [],
+            answerText: '',
+            isCorrect: null,
+            isMarked: false
+        };
+    }
             
             const question = quizData.questions[index];
             const userAnswer = userAnswers[index] || {
@@ -4316,23 +4368,45 @@ function startTimer() {
         
         // 选择选项
         function selectOption(questionIndex, optionIndex) {
-            const question = quizData.questions[questionIndex];
-            const userAnswer = userAnswers[questionIndex];
-            
-            if (question.type === 'single') {
-                userAnswer.selectedOptions = [optionIndex];
-            } else {
-                const optionPos = userAnswer.selectedOptions.indexOf(optionIndex);
-                if (optionPos === -1) {
-                    userAnswer.selectedOptions.push(optionIndex);
-                } else {
-                    userAnswer.selectedOptions.splice(optionPos, 1);
-                }
-            }
-            
-            displayQuestion(questionIndex);
-            saveUserProgress();
+    // ============ 添加安全检查 ============
+    if (questionIndex < 0 || questionIndex >= quizData.questions.length) {
+        console.error("无效的题目索引:", questionIndex);
+        return;
+    }
+    
+    if (!userAnswers[questionIndex]) {
+        userAnswers[questionIndex] = {
+            questionId: quizData.questions[questionIndex].id,
+            selectedOptions: [],
+            answerText: '',
+            isCorrect: null,
+            isMarked: false
+        };
+    }
+    
+    if (!Array.isArray(userAnswers[questionIndex].selectedOptions)) {
+        userAnswers[questionIndex].selectedOptions = [];
+    }
+    // ============ 安全检查结束 ============
+    
+    const question = quizData.questions[questionIndex];
+    const userAnswer = userAnswers[questionIndex];
+    
+    if (question.type === 'single') {
+        userAnswer.selectedOptions = [optionIndex];
+    } else {
+        // 安全使用 includes
+        const optionPos = userAnswer.selectedOptions.indexOf(optionIndex);
+        if (optionPos === -1) {
+            userAnswer.selectedOptions.push(optionIndex);
+        } else {
+            userAnswer.selectedOptions.splice(optionPos, 1);
         }
+    }
+    
+    displayQuestion(questionIndex);
+    saveUserProgress();
+}
         
         // 更新题目导航点
         function updateQuestionNavDots() {
