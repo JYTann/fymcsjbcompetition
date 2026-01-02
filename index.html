@@ -217,6 +217,52 @@
         100% { transform: translateX(100%); }
     }
 
+        /* 紧急访问样式 */
+.emergency-access {
+    background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+    color: white;
+    padding: 20px;
+    border-radius: var(--border-radius);
+    margin: 20px 0;
+    text-align: center;
+}
+
+.emergency-access h3 {
+    margin-bottom: 15px;
+}
+
+.access-code {
+    font-family: monospace;
+    font-size: 1.5rem;
+    background: rgba(255, 255, 255, 0.2);
+    padding: 10px 20px;
+    border-radius: 10px;
+    display: inline-block;
+    margin: 10px 0;
+}
+
+/* 模拟用户提示 */
+.simulated-user-badge {
+    background: linear-gradient(135deg, #ff9ff3, #f368e0);
+    color: white;
+    padding: 5px 10px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    margin-left: 10px;
+}
+
+/* 紧急访问按钮 */
+.btn-warning {
+    background: linear-gradient(135deg, #ff9f43, #ff9f43);
+    color: white;
+    border: none;
+}
+
+.btn-warning:hover {
+    background: linear-gradient(135deg, #ff9f43, #f368e0);
+    transform: translateY(-2px);
+}
+
     /* 题目卡片 */
     .question-card {
         background: white;
@@ -2841,6 +2887,50 @@
             </div>
         </div>
     </footer>
+
+    <div class="modal fade" id="emergencyAccessModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-unlock-alt me-2"></i>紧急访问系统</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-info">
+                    <h6><i class="fas fa-info-circle me-2"></i>学校网络限制检测</h6>
+                    <p>检测到您的学校网络限制了Google OAuth服务。</p>
+                    <p>您可以使用以下方式访问系统：</p>
+                </div>
+                
+                <div class="mb-3">
+                    <h6>选项1：匿名访问（推荐）</h6>
+                    <button class="btn btn-primary w-100 mb-2" onclick="bypassSchoolRestriction()">
+                        <i class="fas fa-user-secret me-2"></i>匿名登录
+                    </button>
+                    <small class="text-muted">无需Google账号，直接进入系统</small>
+                </div>
+                
+                <div class="mb-3">
+                    <h6>选项2：紧急访问代码</h6>
+                    <div class="input-group mb-2">
+                        <input type="text" class="form-control" id="emergencyCodeInput" placeholder="输入访问代码">
+                        <button class="btn btn-success" onclick="checkEmergencyCode()">
+                            验证
+                        </button>
+                    </div>
+                    <small class="text-muted">访问代码：<code>FOONYEW2024</code></small>
+                </div>
+                
+                <hr>
+                
+                <div class="alert alert-warning">
+                    <h6><i class="fas fa-exclamation-triangle me-2"></i>注意</h6>
+                    <p class="mb-0">使用紧急访问时，部分功能可能受限，建议在有正常网络的环境下使用完整功能。</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
     <!-- 快捷键提示 -->
     <div class="shortcut-hint d-none" id="shortcutHint">
         <div class="shortcut-item">
@@ -3924,43 +4014,89 @@ function recordWarning(reason) {
         }
         
         // 检查用户信息
-        function checkUserInfo() {
-            database.ref('users/' + currentUser.uid).once('value').then(snapshot => {
-                if (snapshot.exists()) {
-                    userInfo = snapshot.val();
-                    if (currentUser.email === 'tanjunyuanfoonyew@gmail.com') {
-                        userInfo.isAdmin = true;
-                        database.ref('users/' + currentUser.uid).update({ isAdmin: true });
-                    }
-                    
-                    if (userInfo.isAdmin) {
-                        showAdminView();
-                    } else {
-                        checkQuizStatus();
-                    }
+        // 修改现有的 checkUserInfo 函数
+function checkUserInfo() {
+    // 如果是模拟用户，跳过Firebase检查
+    if (currentUser && currentUser.uid && currentUser.uid.startsWith('simulated_user_')) {
+        console.log("模拟用户模式");
+        
+        // 从本地存储加载用户信息
+        const savedInfo = localStorage.getItem('user_info_' + currentUser.uid);
+        if (savedInfo) {
+            userInfo = JSON.parse(savedInfo);
+        } else {
+            // 首次使用模拟用户
+            userInfo = {
+                name: currentUser.displayName || "参赛者",
+                email: currentUser.email || "simulated@local.com",
+                photoURL: '',
+                isAdmin: false,
+                uid: currentUser.uid
+            };
+        }
+        
+        // 如果是管理员邮箱，自动设置为管理员
+        if (userInfo.email === 'tanjunyuanfoonyew@gmail.com') {
+            userInfo.isAdmin = true;
+        }
+        
+        if (userInfo.isAdmin) {
+            showAdminView();
+        } else {
+            checkQuizStatus();
+        }
+        return;
+    }
+    
+    // 正常Firebase检查流程（保持原有代码不变）
+    database.ref('users/' + currentUser.uid).once('value').then(snapshot => {
+        if (snapshot.exists()) {
+            userInfo = snapshot.val();
+            if (currentUser.email === 'tanjunyuanfoonyew@gmail.com') {
+                userInfo.isAdmin = true;
+                database.ref('users/' + currentUser.uid).update({ isAdmin: true });
+            }
+            
+            if (userInfo.isAdmin) {
+                showAdminView();
+            } else {
+                checkQuizStatus();
+            }
+        } else {
+            const isAdmin = currentUser.email === 'tanjunyuanfoonyew@gmail.com';
+            userInfo = {
+                name: currentUser.displayName || currentUser.email,
+                email: currentUser.email,
+                photoURL: currentUser.photoURL || '',
+                isAdmin: isAdmin,
+                uid: currentUser.uid
+            };
+            
+            database.ref('users/' + currentUser.uid).set(userInfo).then(() => {
+                if (isAdmin) {
+                    showAdminView();
                 } else {
-                    const isAdmin = currentUser.email === 'tanjunyuanfoonyew@gmail.com';
-                    userInfo = {
-                        name: currentUser.displayName || currentUser.email,
-                        email: currentUser.email,
-                        photoURL: currentUser.photoURL || '',
-                        isAdmin: isAdmin,
-                        uid: currentUser.uid
-                    };
-                    
-                    database.ref('users/' + currentUser.uid).set(userInfo).then(() => {
-                        if (isAdmin) {
-                            showAdminView();
-                        } else {
-                            showUserInfoForm();
-                        }
-                    });
+                    showUserInfoForm();
                 }
-            }).catch(error => {
-                console.error("获取用户信息错误:", error);
-                Swal.fire('错误', '获取用户信息失败', 'error');
             });
         }
+    }).catch(error => {
+        console.error("获取用户信息错误:", error);
+        
+        // 如果Firebase连接失败，尝试本地模式
+        if (error.code === 'permission-denied') {
+            Swal.fire({
+                title: '网络连接问题',
+                html: '无法连接到服务器，正在切换到本地模式...',
+                icon: 'warning'
+            }).then(() => {
+                simulateUserLogin();
+            });
+        } else {
+            Swal.fire('错误', '获取用户信息失败', 'error');
+        }
+    });
+}
         
         // 显示用户信息表单
         function showUserInfoForm() {
@@ -7488,6 +7624,216 @@ function generateWarningHTML(userInfo, warningsData) {
     bindViewAnswersButtons();
 }
 
+// 方案1：使用匿名登录（无需Google OAuth）
+function bypassSchoolRestriction() {
+    console.log("尝试匿名登录绕过学校限制...");
+    
+    // 使用匿名登录
+    auth.signInAnonymously()
+        .then((userCredential) => {
+            // 匿名登录成功
+            const user = userCredential.user;
+            console.log("匿名登录成功:", user.uid);
+            
+            // 自动设置为管理员或普通用户
+            const isAdmin = confirm("是否以管理员身份登录？\n\n确定 = 管理员\n取消 = 普通用户");
+            
+            if (isAdmin) {
+                // 设置为管理员
+                currentUser = {
+                    uid: user.uid,
+                    displayName: "管理员",
+                    email: "admin@bypass.com",
+                    isAnonymous: true
+                };
+                
+                userInfo = {
+                    name: "管理员",
+                    email: "admin@bypass.com",
+                    isAdmin: true,
+                    uid: user.uid
+                };
+                
+                // 保存到数据库
+                database.ref('users/' + user.uid).set(userInfo);
+                
+                Swal.fire({
+                    title: '管理员登录成功',
+                    text: '您已通过匿名登录以管理员身份进入系统',
+                    icon: 'success'
+                }).then(() => {
+                    showAdminView();
+                });
+            } else {
+                // 设置为普通用户
+                currentUser = {
+                    uid: user.uid,
+                    displayName: "参赛者",
+                    email: "participant@bypass.com",
+                    isAnonymous: true
+                };
+                
+                Swal.fire({
+                    title: '参赛者登录成功',
+                    text: '您已通过匿名登录进入系统，请填写参赛信息',
+                    icon: 'success'
+                }).then(() => {
+                    showUserInfoForm();
+                });
+            }
+        })
+        .catch((error) => {
+            console.error("匿名登录失败:", error);
+            showEmergencyAccess();
+        });
+}
+
+// 方案2：紧急访问代码（备用方案）
+function showEmergencyAccess() {
+    Swal.fire({
+        title: '学校网络限制检测',
+        html: `
+            <p>检测到学校网络限制，无法使用Google登录。</p>
+            <p>请使用以下紧急访问代码：</p>
+            <div class="alert alert-info">
+                <strong>紧急访问代码：</strong> FOONYEW2024
+            </div>
+            <input type="text" id="emergencyCode" class="form-control mt-2" placeholder="请输入访问代码">
+        `,
+        showCancelButton: false,
+        confirmButtonText: '进入系统',
+        preConfirm: () => {
+            const code = document.getElementById('emergencyCode').value;
+            if (code === 'FOONYEW2024') {
+                return { code: code };
+            } else {
+                Swal.showValidationMessage('访问代码不正确');
+                return false;
+            }
+        }
+    }).then((result) => {
+        if (result.isConfirmed) {
+            // 使用本地存储模拟登录
+            localStorage.setItem('emergency_access', 'granted');
+            localStorage.setItem('user_type', 'participant');
+            
+            simulateUserLogin();
+        }
+    });
+}
+
+// 方案3：模拟用户登录（完全离线模式）
+function simulateUserLogin() {
+    // 创建模拟用户
+    currentUser = {
+        uid: 'simulated_user_' + Date.now(),
+        displayName: '参赛者',
+        email: 'simulated@local.com'
+    };
+    
+    userInfo = {
+        name: '参赛者',
+        email: 'simulated@local.com',
+        isAdmin: false,
+        uid: currentUser.uid,
+        class: '',
+        group: '',
+        studentId: ''
+    };
+    
+    // 显示用户信息表单
+    showUserInfoForm();
+    
+    // 更新UI
+    updateUserUI();
+    
+    // 从本地存储加载数据
+    loadLocalData();
+}
+        
+function checkEmergencyCode() {
+    const code = document.getElementById('emergencyCodeInput').value;
+    if (code === 'FOONYEW2024') {
+        // 关闭模态框
+        const modal = bootstrap.Modal.getInstance(document.getElementById('emergencyAccessModal'));
+        modal.hide();
+        
+        // 设置本地存储
+        localStorage.setItem('emergency_access', 'granted');
+        localStorage.setItem('user_type', 'participant');
+        
+        // 模拟登录
+        simulateUserLogin();
+    } else {
+        Swal.fire('错误', '访问代码不正确', 'error');
+    }
+}
+// 修改初始化函数，添加绕过检测
+function initWithBypass() {
+    // 先检查是否有本地存储的访问权限
+    if (localStorage.getItem('emergency_access') === 'granted') {
+        simulateUserLogin();
+        return;
+    }
+    
+    // 正常初始化
+    init();
+    
+    // 添加绕过按钮到登录界面
+    setTimeout(() => {
+        addBypassButton();
+    }, 1000);
+}
+
+// 添加绕过按钮
+function addBypassButton() {
+    const welcomeSection = document.querySelector('.welcome-section');
+    if (welcomeSection) {
+        const bypassButton = document.createElement('button');
+        bypassButton.className = 'btn btn-warning btn-lg px-4 py-2 mt-3';
+        bypassButton.innerHTML = '<i class="fas fa-unlock-alt me-2"></i> 学校网络受限？点此访问';
+        bypassButton.onclick = bypassSchoolRestriction;
+        
+        welcomeSection.appendChild(bypassButton);
+    }
+    
+    // 也添加到导航栏
+    const loginButton = document.getElementById('loginButton');
+    if (loginButton) {
+        const navBypass = document.createElement('button');
+        navBypass.className = 'btn btn-outline-warning ms-2';
+        navBypass.innerHTML = '<i class="fas fa-bolt me-1"></i>快速访问';
+        navBypass.onclick = bypassSchoolRestriction;
+        
+        loginButton.parentElement.appendChild(navBypass);
+    }
+}
+
+// 修改现有的认证状态监听
+auth.onAuthStateChanged(user => {
+    if (user) {
+        // 正常登录成功
+        currentUser = user;
+        updateUserUI();
+        checkUserInfo();
+    } else {
+        // 检查是否有紧急访问
+        if (localStorage.getItem('emergency_access') === 'granted') {
+            simulateUserLogin();
+        } else {
+            currentUser = null;
+            userInfo = null;
+            showWelcomeView();
+            updateUserUI();
+        }
+    }
+});
+
+// 修改页面加载时的初始化
+document.addEventListener('DOMContentLoaded', () => {
+    initWithBypass();
+});
+        
 // ============ 新增：绑定查看详情按钮事件 ============
 function bindViewAnswersButtons() {
     // 移除之前的事件监听器
@@ -7506,6 +7852,20 @@ function handleViewAnswers(event) {
     const userId = event.currentTarget.getAttribute('data-user-id');
     if (userId) {
         viewParticipantAnswers(userId);
+    }
+}
+
+        function addEmergencyNavButton() {
+    const navBar = document.querySelector('.navbar-nav');
+    if (navBar) {
+        const emergencyItem = document.createElement('li');
+        emergencyItem.className = 'nav-item';
+        emergencyItem.innerHTML = `
+            <button class="btn btn-outline-warning" data-bs-toggle="modal" data-bs-target="#emergencyAccessModal">
+                <i class="fas fa-bolt me-1"></i>紧急访问
+            </button>
+        `;
+        navBar.appendChild(emergencyItem);
     }
 }
 
