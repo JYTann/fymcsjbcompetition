@@ -1494,6 +1494,11 @@
                             <i class="fas fa-search me-1"></i>查询结果
                         </button>
                     </li>
+                        <li class="nav-item" id="accessCodeNavItem">
+        <button class="btn btn-outline-info" id="accessCodeBtn" data-bs-toggle="modal" data-bs-target="#accessCodeModal">
+            <i class="fas fa-key me-1"></i>访问代码
+        </button>
+    </li>
                     <li class="nav-item" id="loginNavItem">
                         <button class="btn btn-outline-light" id="loginButton">
                             <i class="fab fa-google me-1"></i>登录
@@ -2878,6 +2883,53 @@
         </div>
     </div>
     <!-- ============ 结束：添加获奖者模态框 ============ -->
+
+    <!-- 访问代码管理模态框 -->
+<div class="modal fade" id="accessCodeModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-key me-2"></i>访问代码管理</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    您的访问代码可用于在不同设备上恢复您的账号和数据。
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label">您的访问代码</label>
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="userAccessCode" readonly>
+                        <button class="btn btn-outline-secondary" type="button" onclick="copyAccessCode()">
+                            <i class="fas fa-copy"></i>
+                        </button>
+                    </div>
+                    <small class="text-muted">请妥善保管此代码</small>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label">使用访问代码恢复</label>
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="restoreCodeInput" placeholder="输入访问代码">
+                        <button class="btn btn-primary" type="button" onclick="restoreWithCode()">
+                            恢复
+                        </button>
+                    </div>
+                </div>
+                
+                <hr>
+                
+                <div class="text-center">
+                    <button class="btn btn-warning" onclick="generateNewAccessCode()">
+                        <i class="fas fa-redo me-2"></i>生成新访问代码
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
     <!-- 页脚 -->
     <footer class="footer mt-auto">
         <div class="container">
@@ -3047,8 +3099,9 @@ function checkCompetitionTime() {
         function init() {
             console.log("初始化应用程序...");
                 // 检查是否有保存的模拟用户
-    const savedUid = localStorage.getItem('simulated_uid');
-    const savedUserInfo = localStorage.getItem('user_info');
+            const savedUid = localStorage.getItem('simulated_uid');
+            const savedUserInfo = localStorage.getItem('user_info');
+            const userRestored = checkAndRestoreUserState();
     
     if (savedUid && savedUserInfo) {
         console.log("检测到保存的模拟用户，尝试恢复");
@@ -3065,11 +3118,13 @@ function checkCompetitionTime() {
             console.error("恢复用户失败:", error);
         }
     }
+   
             if (!navigator.onLine) {
         console.warn("设备离线，启用本地模式");
         showOfflineMode();
         return;
     }
+            
             // 确保关键变量已初始化
             if (!userAnswers || !Array.isArray(userAnswers)) {
                 userAnswers = [];
@@ -3284,6 +3339,20 @@ function checkCompetitionTime() {
             init();
             setTimeout(checkPageStateOnLoad, 1000); // 延迟1秒等待用户信息加载
         });
+
+            // 绑定事件监听器时添加访问代码按钮
+    if (document.getElementById('accessCodeBtn')) {
+        document.getElementById('accessCodeBtn').addEventListener('click', showAccessCodeModal);
+    }
+    
+    // 更新页面状态检查
+    setTimeout(() => {
+        checkPageStateOnLoad();
+        if (userRestored && currentUser) {
+            console.log("用户已恢复，更新UI");
+            updateUserUI();
+        }
+    }, 1000);
 
         // 绑定所有事件监听器
         function bindEventListeners() {
@@ -4092,21 +4161,215 @@ function recordWarning(reason) {
         }
         
         // 更新用户UI
-        function updateUserUI() {
-            if (currentUser) {
-                document.getElementById('loginNavItem').classList.add('d-none');
-                document.getElementById('userNavItem').classList.remove('d-none');
-                document.getElementById('userName').textContent = currentUser.displayName || currentUser.email;
-                const userPhoto = document.getElementById('userPhoto');
-                userPhoto.src = currentUser.photoURL || 'https://via.placeholder.com/30';
-                userPhoto.alt = currentUser.displayName || '用户头像';
-            } else {
-                document.getElementById('loginNavItem').classList.remove('d-none');
-                document.getElementById('userNavItem').classList.add('d-none');
+        // 更新用户UI
+function updateUserUI() {
+    const loginNavItem = document.getElementById('loginNavItem');
+    const userNavItem = document.getElementById('userNavItem');
+    const userName = document.getElementById('userName');
+    const userPhoto = document.getElementById('userPhoto');
+    
+    if (!loginNavItem || !userNavItem || !userName || !userPhoto) {
+        console.warn("用户UI元素未找到");
+        return;
+    }
+    
+    if (currentUser) {
+        loginNavItem.classList.add('d-none');
+        userNavItem.classList.remove('d-none');
+        
+        // 显示用户名和头像
+        userName.textContent = currentUser.displayName || "匿名用户";
+        
+        // 设置头像 - 如果是匿名用户，使用生成的随机头像
+        if (currentUser.isAnonymous) {
+            userPhoto.src = currentUser.photoURL || generateRandomAvatar(currentUser.displayName || "匿名用户");
+            userPhoto.alt = currentUser.displayName + " (匿名)";
+            
+            // 添加匿名标识
+            if (!userName.querySelector('.anonymous-badge')) {
+                const badge = document.createElement('span');
+                badge.className = 'badge bg-warning ms-2 anonymous-badge';
+                badge.textContent = '匿名';
+                userName.appendChild(badge);
+            }
+        } else {
+            userPhoto.src = currentUser.photoURL || 'https://via.placeholder.com/30';
+            userPhoto.alt = currentUser.displayName || '用户头像';
+            
+            // 移除匿名标识
+            const badge = userName.querySelector('.anonymous-badge');
+            if (badge) badge.remove();
+        }
+    } else {
+        loginNavItem.classList.remove('d-none');
+        userNavItem.classList.add('d-none');
+    }
+}
+
+// 生成随机头像
+function generateRandomAvatar(name) {
+    const colors = ['#3498db', '#2ecc71', '#e74c3c', '#f39c12', '#9b59b6', '#1abc9c'];
+    const color = colors[Math.floor(Math.random() * colors.length)];
+    const initials = name ? name.charAt(0).toUpperCase() : 'U';
+    
+    return `https://ui-avatars.com/api/?name=${encodeURIComponent(initials)}&background=${color.substr(1)}&color=fff&bold=true`;
+}
+
+        // 在页面加载时检查并恢复用户状态
+function checkAndRestoreUserState() {
+    console.log("检查用户状态恢复...");
+    
+    // 检查本地存储中是否有用户ID
+    const savedUserId = localStorage.getItem('simulated_user_id');
+    
+    if (savedUserId) {
+        console.log("找到保存的用户ID:", savedUserId);
+        
+        // 尝试从本地存储恢复用户数据
+        const userData = localStorage.getItem(`simulated_user_${savedUserId}`);
+        
+        if (userData) {
+            try {
+                const parsedData = JSON.parse(userData);
+                
+                // 检查是否过期（24小时）
+                const lastActive = parsedData.lastActive || 0;
+                const hoursSinceLastActive = (Date.now() - lastActive) / (1000 * 60 * 60);
+                
+                if (hoursSinceLastActive < 24) {
+                    // 恢复用户
+                    currentUser = {
+                        uid: parsedData.uid,
+                        displayName: parsedData.displayName,
+                        email: parsedData.email,
+                        photoURL: parsedData.photoURL,
+                        isAnonymous: true
+                    };
+                    
+                    userInfo = parsedData;
+                    console.log("用户状态恢复成功:", userInfo.displayName);
+                    
+                    updateUserUI();
+                    
+                    // 如果是答题页面，恢复答题状态
+                    if (document.getElementById('quizView') && !document.getElementById('quizView').classList.contains('d-none')) {
+                        console.log("在答题页面，恢复答题状态");
+                        setTimeout(() => {
+                            checkUserQuizStatus();
+                        }, 500);
+                    }
+                    
+                    return true;
+                } else {
+                    console.log("用户数据已过期，清除");
+                    clearExpiredUserData();
+                }
+            } catch (error) {
+                console.error("解析用户数据失败:", error);
             }
         }
+    }
+    
+    return false;
+}
+
+// 清除过期的用户数据
+function clearExpiredUserData() {
+    const now = Date.now();
+    const maxAge = 24 * 60 * 60 * 1000; // 24小时
+    
+    for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key.startsWith('simulated_user_')) {
+            try {
+                const data = JSON.parse(localStorage.getItem(key));
+                if (data && data.lastActive && (now - data.lastActive) > maxAge) {
+                    localStorage.removeItem(key);
+                    console.log("清除过期数据:", key);
+                }
+            } catch (e) {
+                // 忽略解析错误
+            }
+        }
+    }
+    
+    localStorage.removeItem('simulated_user_id');
+}
+
+        // 访问代码管理功能
+function showAccessCodeModal() {
+    const modal = new bootstrap.Modal(document.getElementById('accessCodeModal'));
+    
+    if (currentUser && userInfo) {
+        if (!userInfo.accessCode) {
+            userInfo.accessCode = generateAccessCode();
+            localStorage.setItem(`simulated_user_${currentUser.uid}`, JSON.stringify(userInfo));
+        }
         
-        // 检查用户信息
+        document.getElementById('userAccessCode').value = userInfo.accessCode;
+    }
+    
+    modal.show();
+}
+
+function copyAccessCode() {
+    const codeInput = document.getElementById('userAccessCode');
+    codeInput.select();
+    document.execCommand('copy');
+    
+    Swal.fire({
+        icon: 'success',
+        title: '已复制',
+        text: '访问代码已复制到剪贴板',
+        timer: 1500,
+        showConfirmButton: false
+    });
+}
+
+function restoreWithCode() {
+    const code = document.getElementById('restoreCodeInput').value.trim();
+    
+    if (!code) {
+        Swal.fire('错误', '请输入访问代码', 'error');
+        return;
+    }
+    
+    if (restoreUserByAccessCode(code)) {
+        Swal.fire({
+            icon: 'success',
+            title: '恢复成功',
+            text: '用户数据已恢复',
+            timer: 1500,
+            showConfirmButton: false
+        }).then(() => {
+            const modal = bootstrap.Modal.getInstance(document.getElementById('accessCodeModal'));
+            if (modal) modal.hide();
+        });
+    } else {
+        Swal.fire('错误', '无效的访问代码', 'error');
+    }
+}
+
+function generateNewAccessCode() {
+    Swal.fire({
+        title: '确认生成新代码？',
+        text: '旧访问代码将立即失效',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: '生成',
+        cancelButtonText: '取消'
+    }).then((result) => {
+        if (result.isConfirmed && currentUser && userInfo) {
+            userInfo.accessCode = generateAccessCode();
+            localStorage.setItem(`simulated_user_${currentUser.uid}`, JSON.stringify(userInfo));
+            
+            document.getElementById('userAccessCode').value = userInfo.accessCode;
+            
+            Swal.fire('成功', '已生成新的访问代码', 'success');
+        }
+    });
+}
+        
         // 修改现有的 checkUserInfo 函数
 function checkUserInfo() {
     // 如果是模拟用户，跳过Firebase检查
@@ -7946,46 +8209,72 @@ function saveLocalData() {
 }
 
 // 方案3：模拟用户登录（完全离线模式）
-// 修改 simulateUserLogin 函数
+// 改进的模拟用户登录函数
 function simulateUserLogin() {
-    console.log("启动模拟用户登录...");
+    console.log("启动改进的模拟用户登录系统...");
     
     try {
-        // 创建模拟用户
-        const userId = 'simulated_user_' + Date.now();
+        // 检查是否已有模拟用户ID
+        let userId = localStorage.getItem('simulated_user_id');
+        let userData = null;
+        
+        if (userId) {
+            // 尝试恢复现有用户
+            userData = JSON.parse(localStorage.getItem(`simulated_user_${userId}`));
+            console.log("找到现有模拟用户:", userData?.name || "未知");
+        }
+        
+        if (!userId || !userData) {
+            // 创建新的模拟用户
+            userId = 'simulated_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+            console.log("创建新的模拟用户ID:", userId);
+            
+            // 生成随机用户名和头像
+            const randomNames = ["科技先锋", "知识探索者", "智慧之星", "未来精英", "创新达人"];
+            const randomColors = ["#3498db", "#2ecc71", "#e74c3c", "#f39c12", "#9b59b6"];
+            const randomAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(randomNames[Math.floor(Math.random() * randomNames.length)])}&background=${randomColors[Math.floor(Math.random() * randomColors.length)].substr(1)}&color=fff&bold=true&size=128`;
+            
+            userData = {
+                uid: userId,
+                displayName: randomNames[Math.floor(Math.random() * randomNames.length)] + Math.floor(Math.random() * 1000),
+                email: `anonymous_${Date.now()}@simulated.com`,
+                isAnonymous: true,
+                photoURL: randomAvatar,
+                isAdmin: false,
+                class: '',
+                group: '',
+                studentId: '',
+                created: Date.now(),
+                lastActive: Date.now(),
+                accessCode: generateAccessCode() // 生成唯一的访问代码
+            };
+            
+            // 保存到本地存储
+            localStorage.setItem('simulated_user_id', userId);
+            localStorage.setItem(`simulated_user_${userId}`, JSON.stringify(userData));
+            
+            console.log("新用户创建成功:", userData.displayName);
+        }
+        
+        // 更新当前用户
         currentUser = {
             uid: userId,
-            displayName: '参赛者',
-            email: 'simulated@local.com',
+            displayName: userData.displayName,
+            email: userData.email,
+            photoURL: userData.photoURL,
             isAnonymous: true
         };
         
-        // 尝试从本地存储恢复用户信息
-        const savedUserInfo = localStorage.getItem('user_info');
-        if (savedUserInfo) {
-            userInfo = JSON.parse(savedUserInfo);
-            console.log("从本地存储恢复用户信息");
-        } else {
-            // 创建新的用户信息
-            userInfo = {
-                name: '参赛者',
-                email: 'simulated@local.com',
-                isAdmin: false,
-                uid: userId,
-                class: '',
-                group: '',
-                studentId: ''
-            };
-            console.log("创建新的模拟用户信息");
-        }
+        userInfo = userData;
         
-        // 保存用户信息到本地存储
-        localStorage.setItem('user_info', JSON.stringify(userInfo));
+        // 更新最后活动时间
+        userInfo.lastActive = Date.now();
+        localStorage.setItem(`simulated_user_${userId}`, JSON.stringify(userInfo));
         
         // 更新UI
         updateUserUI();
         
-        // 显示用户信息表单（如果没有班级信息）
+        // 显示用户信息（如果没有班级信息）
         if (!userInfo.class || userInfo.class.trim() === '') {
             console.log("显示用户信息表单");
             setTimeout(() => {
@@ -8005,7 +8294,7 @@ function simulateUserLogin() {
                 // 设置定时保存
                 setInterval(() => {
                     saveLocalData();
-                }, 30000); // 每30秒保存一次
+                }, 30000);
                 
             } catch (error) {
                 console.error("加载本地数据时出错:", error);
@@ -8016,6 +8305,59 @@ function simulateUserLogin() {
         console.error("模拟用户登录失败:", error);
         Swal.fire('错误', '模拟登录失败: ' + error.message, 'error');
     }
+}
+
+// 生成访问代码的函数
+function generateAccessCode() {
+    const characters = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // 去掉了容易混淆的字符
+    let code = '';
+    for (let i = 0; i < 6; i++) {
+        code += characters.charAt(Math.floor(Math.random() * characters.length));
+    }
+    return code;
+}
+
+// 通过访问代码恢复用户
+function restoreUserByAccessCode(code) {
+    console.log("尝试通过访问代码恢复用户:", code);
+    
+    // 搜索所有本地存储的用户
+    const users = [];
+    for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key.startsWith('simulated_user_')) {
+            try {
+                const userData = JSON.parse(localStorage.getItem(key));
+                if (userData && userData.accessCode === code) {
+                    users.push(userData);
+                }
+            } catch (e) {
+                console.warn("解析用户数据失败:", key);
+            }
+        }
+    }
+    
+    if (users.length > 0) {
+        // 找到用户，恢复登录
+        const userData = users[0];
+        currentUser = {
+            uid: userData.uid,
+            displayName: userData.displayName,
+            email: userData.email,
+            photoURL: userData.photoURL,
+            isAnonymous: true
+        };
+        
+        userInfo = userData;
+        localStorage.setItem('simulated_user_id', userData.uid);
+        
+        updateUserUI();
+        checkQuizStatus();
+        
+        return true;
+    }
+    
+    return false;
 }
 // 修改 checkEmergencyCode 函数
 function checkEmergencyCode() {
