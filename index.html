@@ -3046,6 +3046,25 @@ function checkCompetitionTime() {
         // 初始化函数
         function init() {
             console.log("初始化应用程序...");
+                // 检查是否有保存的模拟用户
+    const savedUid = localStorage.getItem('simulated_uid');
+    const savedUserInfo = localStorage.getItem('user_info');
+    
+    if (savedUid && savedUserInfo) {
+        console.log("检测到保存的模拟用户，尝试恢复");
+        try {
+            currentUser = {
+                uid: savedUid,
+                displayName: '参赛者',
+                email: 'simulated@local.com',
+                isAnonymous: true
+            };
+            userInfo = JSON.parse(savedUserInfo);
+            updateUserUI();
+        } catch (error) {
+            console.error("恢复用户失败:", error);
+        }
+    }
             if (!navigator.onLine) {
         console.warn("设备离线，启用本地模式");
         showOfflineMode();
@@ -4179,37 +4198,88 @@ function checkUserInfo() {
         }
         
         // 保存用户信息
-        function saveUserInfo() {
-            const userClass = document.getElementById('userClass').value;
-            const userGroup = document.getElementById('userGroup').value;
-            const studentId = document.getElementById('userStudentId').value;
-            
-            if (!userClass || !userGroup || !studentId) {
-                Swal.fire('错误', '请填写所有必填字段', 'error');
-                return;
+        // 修改 saveUserInfo 函数（找到第4199行附近）
+function saveUserInfo() {
+    // ============ 修复：添加用户检查 ============
+    if (!currentUser || !currentUser.uid) {
+        console.error("无法保存用户信息：用户未登录", currentUser);
+        
+        // 尝试获取模拟用户的UID
+        if (localStorage.getItem('emergency_access') === 'granted') {
+            const simulatedUid = localStorage.getItem('simulated_uid');
+            if (simulatedUid) {
+                // 使用模拟UID
+                currentUser = { uid: simulatedUid };
+            } else {
+                // 创建新的模拟用户
+                const newUid = 'simulated_user_' + Date.now();
+                currentUser = { uid: newUid };
+                localStorage.setItem('simulated_uid', newUid);
+                console.log("创建新的模拟用户：", newUid);
             }
-            
-            userInfo = {
-                ...userInfo,
-                class: userClass,
-                group: userGroup,
-                studentId: studentId
-            };
-            
-            database.ref('users/' + currentUser.uid).update({
-                class: userClass,
-                group: userGroup,
-                studentId: studentId
-            }).then(() => {
-                bootstrap.Modal.getInstance(document.getElementById('userInfoModal')).hide();
-                Swal.fire('成功', '用户信息已保存', 'success');
-                checkQuizStatus();
-            }).catch(error => {
-                console.error("保存用户信息错误:", error);
-                Swal.fire('错误', '保存用户信息失败', 'error');
-            });
+        } else {
+            Swal.fire('错误', '用户未登录，请重新登录', 'error');
+            return;
         }
-
+    }
+    // ============ 修复结束 ============
+    
+    const userClass = document.getElementById('userClass').value;
+    const userGroup = document.getElementById('userGroup').value;
+    const studentId = document.getElementById('userStudentId').value;
+    
+    if (!userClass || !userGroup || !studentId) {
+        Swal.fire('错误', '请填写所有必填字段', 'error');
+        return;
+    }
+    
+    // 更新用户信息
+    userInfo = {
+        ...userInfo,
+        class: userClass,
+        group: userGroup,
+        studentId: studentId,
+        name: userInfo.name || "参赛者",
+        email: userInfo.email || "simulated@local.com"
+    };
+    
+    // 保存到本地存储（模拟用户模式）
+    if (currentUser.uid.startsWith('simulated_user_')) {
+        console.log("保存模拟用户信息到本地存储");
+        
+        // 保存到本地存储
+        localStorage.setItem('user_info_' + currentUser.uid, JSON.stringify(userInfo));
+        
+        // 同时保存到通用的用户信息键
+        localStorage.setItem('user_info', JSON.stringify(userInfo));
+        
+        // 保存用户信息到全局变量
+        window.userInfo = userInfo;
+        
+        bootstrap.Modal.getInstance(document.getElementById('userInfoModal')).hide();
+        Swal.fire('成功', '用户信息已保存', 'success');
+        
+        // 延迟执行，确保模态框完全关闭
+        setTimeout(() => {
+            checkQuizStatus();
+        }, 500);
+        
+    } else {
+        // 正常Firebase保存流程
+        database.ref('users/' + currentUser.uid).update({
+            class: userClass,
+            group: userGroup,
+            studentId: studentId
+        }).then(() => {
+            bootstrap.Modal.getInstance(document.getElementById('userInfoModal')).hide();
+            Swal.fire('成功', '用户信息已保存', 'success');
+            checkQuizStatus();
+        }).catch(error => {
+            console.error("保存用户信息错误:", error);
+            Swal.fire('错误', '保存用户信息失败', 'error');
+        });
+    }
+}
         // 检查比赛状态
         function checkQuizStatus() {
     database.ref('quiz/settings/status').once('value').then(snapshot => {
