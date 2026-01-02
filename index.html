@@ -2968,16 +2968,17 @@
                     <small class="text-muted">无需Google账号，直接进入系统</small>
                 </div>
                 
-                <div class="mb-3">
-                    <h6>选项2：紧急访问代码</h6>
-                    <div class="input-group mb-2">
-                        <input type="text" class="form-control" id="emergencyCodeInput" placeholder="输入访问代码">
-                        <button class="btn btn-success" onclick="checkEmergencyCode()">
-                            验证
-                        </button>
-                    </div>
-                    <small class="text-muted">访问代码：<code>FOONYEW2024</code></small>
-                </div>
+                <!-- 选项2：紧急访问代码 -->
+<div class="mb-3">
+    <h6>选项2：紧急访问代码</h6>
+    <div class="input-group mb-2">
+        <input type="text" class="form-control" id="emergencyCodeInput" placeholder="输入访问代码">
+        <button class="btn btn-success" onclick="checkEmergencyCode()">
+            验证
+        </button>
+    </div>
+    <small class="text-muted">访问代码：<code id="displayEmergencyCode">正在生成...</code></small>
+</div>
                 
                 <hr>
                 
@@ -3102,6 +3103,11 @@ function checkCompetitionTime() {
             const savedUid = localStorage.getItem('simulated_uid');
             const savedUserInfo = localStorage.getItem('user_info');
             const userRestored = checkAndRestoreUserState();
+            const storedCode = localStorage.getItem('emergency_access_code');
+const expires = localStorage.getItem('emergency_code_expires');
+if (!storedCode || Date.now() > parseInt(expires || 0)) {
+    generateAndStoreEmergencyCode();
+}
     
     if (savedUid && savedUserInfo) {
         console.log("检测到保存的模拟用户，尝试恢复");
@@ -4301,6 +4307,7 @@ function clearExpiredUserData() {
 function showAccessCodeModal() {
     const modal = new bootstrap.Modal(document.getElementById('accessCodeModal'));
     
+    // 删除"请先登录"的判断，匿名用户也可以查看访问代码
     if (currentUser && userInfo) {
         // 生成或获取访问代码
         if (!userInfo.accessCode) {
@@ -4315,7 +4322,8 @@ function showAccessCodeModal() {
         
         document.getElementById('userAccessCode').value = userInfo.accessCode;
     } else {
-        document.getElementById('userAccessCode').value = "请先登录";
+        // 为未登录用户生成临时访问代码
+        document.getElementById('userAccessCode').value = generateAccessCode();
     }
     
     modal.show();
@@ -8106,78 +8114,194 @@ function generateWarningHTML(userInfo, warningsData) {
 }
 
 // 方案1：使用匿名登录（无需Google OAuth）
+// 修改 bypassSchoolRestriction() 函数
 function bypassSchoolRestriction() {
-    console.log("尝试匿名登录绕过学校限制...");
+    console.log("使用快速访问系统...");
     
-    // 使用匿名登录
-    auth.signInAnonymously()
-        .then((userCredential) => {
-            // 匿名登录成功
-            const user = userCredential.user;
-            console.log("匿名登录成功:", user.uid);
-            
-            // 自动设置为管理员或普通用户
-            const isAdmin = confirm("是否以管理员身份登录？\n\n确定 = 管理员\n取消 = 普通用户");
-            
-            if (isAdmin) {
-                // 设置为管理员
-                currentUser = {
-                    uid: user.uid,
-                    displayName: "管理员",
-                    email: "admin@bypass.com",
-                    isAnonymous: true
-                };
-                
-                userInfo = {
-                    name: "管理员",
-                    email: "admin@bypass.com",
-                    isAdmin: true,
-                    uid: user.uid
-                };
-                
-                // 保存到数据库
-                database.ref('users/' + user.uid).set(userInfo);
-                
-                Swal.fire({
-                    title: '管理员登录成功',
-                    text: '您已通过匿名登录以管理员身份进入系统',
-                    icon: 'success'
-                }).then(() => {
-                    showAdminView();
-                });
-            } else {
-                // 设置为普通用户
-                currentUser = {
-                    uid: user.uid,
-                    displayName: "参赛者",
-                    email: "participant@bypass.com",
-                    isAnonymous: true
-                };
-                
-                Swal.fire({
-                    title: '参赛者登录成功',
-                    text: '您已通过匿名登录进入系统，请填写参赛信息',
-                    icon: 'success'
-                }).then(() => {
-                    showUserInfoForm();
-                });
-            }
-        })
-        .catch((error) => {
-            console.error("匿名登录失败:", error);
-            showEmergencyAccess();
+    // 生成或获取快速访问代码
+    const quickAccessCode = generateAccessCode();
+    
+    // 存储到本地
+    localStorage.setItem('quick_access_code', quickAccessCode);
+    localStorage.setItem('quick_access_time', Date.now().toString());
+    
+    Swal.fire({
+        title: '快速访问',
+        html: `
+            <p>正在为您创建快速访问通道...</p>
+            <div class="alert alert-info mt-3">
+                <strong>快速访问代码：</strong> ${quickAccessCode}<br>
+                <small>此代码有效期为本次会话</small>
+            </div>
+            <p>正在自动登录...</p>
+        `,
+        icon: 'info',
+        showCancelButton: false,
+        showConfirmButton: false,
+        allowOutsideClick: false
+    });
+    
+    // 延迟执行模拟登录
+    setTimeout(() => {
+        Swal.close();
+        simulateUserLogin();
+    }, 2000);
+}
+        // 验证访问代码的函数
+function validateAccessCode(code, type = 'emergency') {
+    const now = Date.now();
+    
+    if (type === 'emergency') {
+        const storedCode = localStorage.getItem('emergency_access_code');
+        const expires = localStorage.getItem('emergency_code_expires');
+        
+        // 检查本地存储
+        if (storedCode && code === storedCode && now < parseInt(expires)) {
+            return true;
+        }
+        
+        // 检查数据库
+        return new Promise((resolve) => {
+            database.ref('emergencyCodes/current').once('value').then(snapshot => {
+                if (snapshot.exists()) {
+                    const codeData = snapshot.val();
+                    resolve(code === codeData.code && now < codeData.expires);
+                } else {
+                    resolve(false);
+                }
+            }).catch(() => resolve(false));
         });
+    }
+    
+    if (type === 'quick') {
+        const storedCode = localStorage.getItem('quick_access_code');
+        const accessTime = localStorage.getItem('quick_access_time');
+        
+        // 快速访问代码有效期为6小时
+        if (storedCode && code === storedCode && accessTime) {
+            const timeDiff = now - parseInt(accessTime);
+            return timeDiff < 6 * 60 * 60 * 1000; // 6小时
+        }
+    }
+    
+    return false;
 }
 
-// 方案2：紧急访问代码（备用方案）
+        // ============ 新增：紧急访问代码管理 ============
+function generateAndStoreEmergencyCode() {
+    // 生成6位随机访问代码
+    const emergencyCode = generateAccessCode();
+    
+    // 存储到本地存储
+    localStorage.setItem('emergency_access_code', emergencyCode);
+    
+    // 设置过期时间（24小时）
+    localStorage.setItem('emergency_code_expires', Date.now() + 24 * 60 * 60 * 1000);
+    
+    // 在模态框中显示
+    const displayElement = document.getElementById('displayEmergencyCode');
+    if (displayElement) {
+        displayElement.textContent = emergencyCode;
+    }
+    
+    // 同时保存到数据库（可选）
+    database.ref('emergencyCodes/current').set({
+        code: emergencyCode,
+        expires: Date.now() + 24 * 60 * 60 * 1000,
+        generated: new Date().toISOString()
+    }).catch(err => {
+        console.log("无法保存到数据库，使用本地版本");
+    });
+    
+    return emergencyCode;
+}
+
+        // 在管理员面板中添加访问代码管理
+function addAccessCodeManagementToAdmin() {
+    const settingsTab = document.getElementById('settings');
+    
+    const accessCodeHTML = `
+        <div class="card mt-4">
+            <div class="card-header">
+                <i class="fas fa-key me-2"></i>当前有效访问代码
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <h6>紧急访问代码</h6>
+                    <p><strong>代码：</strong> <code id="adminEmergencyCode">未生成</code></p>
+                    <p><strong>有效期：</strong> <span id="emergencyCodeExpiry">-</span></p>
+                    <button class="btn btn-sm btn-primary mt-2" onclick="regenerateEmergencyCode()">
+                        重新生成
+                    </button>
+                </div>
+                <hr>
+                <div class="text-center">
+                    <button class="btn btn-warning" onclick="showAllAccessCodes()">
+                        查看所有访问记录
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    if (settingsTab) {
+        settingsTab.insertAdjacentHTML('beforeend', accessCodeHTML);
+        loadCurrentAccessCodeInfo();
+    }
+}
+
+// 加载当前访问代码信息
+function loadCurrentAccessCodeInfo() {
+    // 从本地加载
+    const localCode = localStorage.getItem('emergency_access_code');
+    const localExpiry = localStorage.getItem('emergency_code_expires');
+    
+    if (localCode && localExpiry) {
+        document.getElementById('adminEmergencyCode').textContent = localCode;
+        const expiryDate = new Date(parseInt(localExpiry));
+        document.getElementById('emergencyCodeExpiry').textContent = expiryDate.toLocaleString();
+    }
+    
+    // 从数据库加载
+    database.ref('emergencyCodes/current').once('value').then(snapshot => {
+        if (snapshot.exists()) {
+            const codeData = snapshot.val();
+            document.getElementById('adminEmergencyCode').textContent = codeData.code;
+            const expiryDate = new Date(codeData.expires);
+            document.getElementById('emergencyCodeExpiry').textContent = expiryDate.toLocaleString();
+        }
+    });
+}
+
+// 重新生成紧急访问代码（管理员）
+function regenerateEmergencyCode() {
+    Swal.fire({
+        title: '重新生成紧急访问代码',
+        text: '旧代码将立即失效，确定要生成新代码吗？',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: '生成新代码',
+        cancelButtonText: '取消'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            const newCode = generateAndStoreEmergencyCode();
+            Swal.fire('成功', `新紧急访问代码：${newCode}`, 'success');
+            loadCurrentAccessCodeInfo();
+        }
+    });
+}
+// 替换现有的 showEmergencyAccess 函数
 function showEmergencyAccess() {
+    const emergencyCode = localStorage.getItem('emergency_access_code') || generateAccessCode();
+    
     Swal.fire({
         title: '学校网络限制检测',
         html: `
             <p>检测到学校网络限制，无法使用Google登录。</p>
             <p>请使用以下紧急访问代码：</p>
             <div class="alert alert-info">
-                <strong>紧急访问代码：</strong> FOONYEW2024
+                <strong>紧急访问代码：</strong> ${emergencyCode}
+                <br><small>有效期：24小时</small>
             </div>
             <input type="text" id="emergencyCode" class="form-control mt-2" placeholder="请输入访问代码">
         `,
@@ -8185,7 +8309,7 @@ function showEmergencyAccess() {
         confirmButtonText: '进入系统',
         preConfirm: () => {
             const code = document.getElementById('emergencyCode').value;
-            if (code === 'FOONYEW2024') {
+            if (code === emergencyCode) {
                 return { code: code };
             } else {
                 Swal.showValidationMessage('访问代码不正确');
@@ -8194,10 +8318,8 @@ function showEmergencyAccess() {
         }
     }).then((result) => {
         if (result.isConfirmed) {
-            // 使用本地存储模拟登录
             localStorage.setItem('emergency_access', 'granted');
-            localStorage.setItem('user_type', 'participant');
-            
+            localStorage.setItem('access_time', Date.now().toString());
             simulateUserLogin();
         }
     });
@@ -8458,48 +8580,91 @@ function generateEmergencyCode() {
 // 紧急访问代码验证
 function checkEmergencyCode() {
     try {
-        const code = document.getElementById('emergencyCodeInput').value;
+        const userInput = document.getElementById('emergencyCodeInput').value.trim();
+        const storedCode = localStorage.getItem('emergency_access_code');
+        const expires = localStorage.getItem('emergency_code_expires');
         
-        // 这里可以连接到数据库检查有效的访问代码
-        // 示例：检查数据库中是否存在该访问代码
-        database.ref('emergencyCodes/' + code).once('value').then(snapshot => {
-            if (snapshot.exists()) {
-                const codeData = snapshot.val();
-                if (codeData.active && codeData.expires > Date.now()) {
-                    // 关闭模态框
-                    const modal = bootstrap.Modal.getInstance(document.getElementById('emergencyAccessModal'));
-                    if (modal) modal.hide();
-                    
-                    // 设置访问权限
-                    localStorage.setItem('emergency_access', 'granted');
-                    localStorage.setItem('access_time', Date.now().toString());
-                    
-                    Swal.fire({
-                        title: '紧急访问已授权',
-                        text: '正在进入系统...',
-                        icon: 'success',
-                        timer: 1500,
-                        showConfirmButton: false
-                    }).then(() => {
-                        simulateUserLogin();
-                    });
+        if (!userInput) {
+            Swal.fire('错误', '请输入访问代码', 'error');
+            return;
+        }
+        
+        // 检查代码是否有效且未过期
+        if (storedCode && userInput === storedCode && Date.now() < parseInt(expires)) {
+            // 验证成功
+            const modal = bootstrap.Modal.getInstance(document.getElementById('emergencyAccessModal'));
+            if (modal) modal.hide();
+            
+            // 设置访问权限
+            localStorage.setItem('emergency_access', 'granted');
+            localStorage.setItem('access_time', Date.now().toString());
+            
+            Swal.fire({
+                title: '紧急访问已授权',
+                text: '正在进入系统...',
+                icon: 'success',
+                timer: 1500,
+                showConfirmButton: false
+            }).then(() => {
+                simulateUserLogin();
+            });
+        } else {
+            // 如果代码无效或过期，从数据库检查
+            database.ref('emergencyCodes/current').once('value').then(snapshot => {
+                if (snapshot.exists()) {
+                    const codeData = snapshot.val();
+                    if (codeData.code === userInput && Date.now() < codeData.expires) {
+                        // 数据库中的代码有效
+                        const modal = bootstrap.Modal.getInstance(document.getElementById('emergencyAccessModal'));
+                        if (modal) modal.hide();
+                        
+                        localStorage.setItem('emergency_access', 'granted');
+                        localStorage.setItem('access_time', Date.now().toString());
+                        
+                        Swal.fire({
+                            title: '紧急访问已授权',
+                            text: '正在进入系统...',
+                            icon: 'success',
+                            timer: 1500,
+                            showConfirmButton: false
+                        }).then(() => {
+                            simulateUserLogin();
+                        });
+                    } else {
+                        Swal.fire('错误', '访问代码不正确或已过期', 'error');
+                    }
                 } else {
-                    Swal.fire('错误', '访问代码已过期或无效', 'error');
+                    Swal.fire('错误', '访问代码不正确', 'error');
                 }
-            } else {
+            }).catch(error => {
                 Swal.fire('错误', '访问代码不正确', 'error');
-            }
-        }).catch(error => {
-            console.error("检查紧急代码失败:", error);
-            Swal.fire('错误', '验证失败: ' + error.message, 'error');
-        });
+            });
+        }
         
     } catch (error) {
         console.error("检查紧急代码失败:", error);
         Swal.fire('错误', '验证失败: ' + error.message, 'error');
     }
 }
-// 修改初始化函数，添加绕过检测
+
+// 在页面加载时生成新的紧急访问代码
+document.addEventListener('DOMContentLoaded', function() {
+    // 检查是否有未过期的紧急代码
+    const storedCode = localStorage.getItem('emergency_access_code');
+    const expires = localStorage.getItem('emergency_code_expires');
+    
+    // 如果代码不存在或已过期，生成新的
+    if (!storedCode || Date.now() > parseInt(expires || 0)) {
+        generateAndStoreEmergencyCode();
+    } else {
+        // 显示现有的代码
+        const displayElement = document.getElementById('displayEmergencyCode');
+        if (displayElement) {
+            displayElement.textContent = storedCode;
+        }
+    }
+});
+
 // 修改 initWithBypass 函数
 function initWithBypass() {
     console.log("启动带绕过功能的初始化...");
