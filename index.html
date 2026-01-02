@@ -7793,15 +7793,6 @@ function initWithBypass() {
 
 // 添加绕过按钮
 function addBypassButton() {
-    const welcomeSection = document.querySelector('.welcome-section');
-    if (welcomeSection) {
-        const bypassButton = document.createElement('button');
-        bypassButton.className = 'btn btn-warning btn-lg px-4 py-2 mt-3';
-        bypassButton.innerHTML = '<i class="fas fa-unlock-alt me-2"></i> 学校网络受限？点此访问';
-        bypassButton.onclick = bypassSchoolRestriction;
-        
-        welcomeSection.appendChild(bypassButton);
-    }
     
     // 也添加到导航栏
     const loginButton = document.getElementById('loginButton');
