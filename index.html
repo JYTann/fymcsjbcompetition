@@ -3821,12 +3821,15 @@ loadAnnouncements();
     
     // 更新页面状态检查
     setTimeout(() => {
-        checkPageStateOnLoad();
-        if (userRestored && currentUser) {
-            console.log("用户已恢复，更新UI");
-            updateUserUI();
-        }
-    }, 1000);
+    checkPageStateOnLoad();
+    // 检查是否有本地存储的用户ID
+    const savedUserId = localStorage.getItem('simulated_user_id');
+    const userRestored = savedUserId && currentUser ? true : false;
+    if (userRestored && currentUser) {
+        console.log("用户已恢复，更新UI");
+        updateUserUI();
+    }
+}, 1000);
 
         // 绑定所有事件监听器
         function bindEventListeners() {
@@ -9241,10 +9244,6 @@ auth.onAuthStateChanged(user => {
     }
 });
 
-// 修改页面加载时的初始化
-document.addEventListener('DOMContentLoaded', () => {
-    initWithBypass();
-});
         
 // ============ 新增：绑定查看详情按钮事件 ============
 function bindViewAnswersButtons() {
@@ -10850,10 +10849,47 @@ document.getElementById('editAnnouncementBtn').classList.remove('d-none');
             });
         }
 
-        // 初始化应用
-        document.addEventListener('DOMContentLoaded', () => {
-            init();
-        });
+// 只保留一个 DOMContentLoaded 事件监听器
+document.addEventListener('DOMContentLoaded', () => {
+    // 检查是否有保存的模拟用户
+    const savedUid = localStorage.getItem('simulated_uid');
+    const savedUserInfo = localStorage.getItem('user_info');
+    
+    if (savedUid && savedUserInfo) {
+        console.log("检测到保存的模拟用户，尝试恢复");
+        try {
+            currentUser = {
+                uid: savedUid,
+                displayName: '参赛者',
+                email: 'simulated@local.com',
+                isAnonymous: true
+            };
+            userInfo = JSON.parse(savedUserInfo);
+            updateUserUI();
+        } catch (error) {
+            console.error("恢复用户失败:", error);
+        }
+    }
+    
+    // 只调用一次 init
+    init();
+    
+    // 延迟检查页面状态
+    setTimeout(() => {
+        checkPageStateOnLoad();
+        checkFullscreenOnLoad();
+        handlePageRefresh();
+    }, 1000);
+    
+    // 生成紧急访问代码
+    setTimeout(() => {
+        const storedCode = localStorage.getItem('emergency_access_code');
+        const expires = localStorage.getItem('emergency_code_expires');
+        if (!storedCode || Date.now() > parseInt(expires || 0)) {
+            generateAndStoreEmergencyCode();
+        }
+    }, 500);
+});
 
         // 在页面加载时检查全屏状态
 function checkFullscreenOnLoad() {
@@ -10887,20 +10923,17 @@ document.addEventListener('DOMContentLoaded', () => {
 });
         
 // 添加刷新恢复功能
+// 添加 handlePageRefresh 函数（如果不存在）
 function handlePageRefresh() {
-    // 检查是否是刷新后进入答题页面
     const isQuizViewVisible = !document.getElementById('quizView').classList.contains('d-none');
     
     if (isQuizViewVisible && currentUser) {
         console.log("检测到刷新后在答题页面，检查状态...");
         
-        // 延迟检查，确保数据加载完成
         setTimeout(() => {
-            // 检查 userAnswers 是否有效
             if (!userAnswers || !Array.isArray(userAnswers) || userAnswers.length === 0) {
                 console.warn("刷新后 userAnswers 无效，尝试从 Firebase 恢复");
                 
-                // 尝试从 Firebase 恢复数据
                 database.ref('userAnswers/' + currentUser.uid).once('value').then(snapshot => {
                     if (snapshot.exists()) {
                         const data = snapshot.val();
@@ -10917,13 +10950,25 @@ function handlePageRefresh() {
     }
 }
 
-// 在 DOMContentLoaded 事件中添加
-document.addEventListener('DOMContentLoaded', () => {
-    init();
+// 添加 checkFullscreenOnLoad 函数（如果不存在）
+function checkFullscreenOnLoad() {
+    const isQuizViewVisible = !document.getElementById('quizView').classList.contains('d-none');
+    const isAntiCheatEnabled = quizData.settings.enableAntiCheat;
     
-    // 添加刷新处理
-    setTimeout(handlePageRefresh, 1500);
-});
+    if (isQuizViewVisible && isAntiCheatEnabled && currentUser) {
+        const isFullscreen = document.fullscreenElement || 
+                           document.webkitFullscreenElement || 
+                           document.mozFullScreenElement || 
+                           document.msFullscreenElement;
+        
+        if (!isFullscreen) {
+            console.log("页面加载时检测到未在全屏模式，延迟请求全屏");
+            setTimeout(() => {
+                requestFullscreen();
+            }, 1500);
+        }
+    }
+}
 
         // ==================== 新增：比赛信息管理功能 ====================
 
