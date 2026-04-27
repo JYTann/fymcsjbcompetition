@@ -1828,6 +1828,13 @@
             <i class="fas fa-key me-1"></i>访问代码
         </button>
     </li>
+                    <!-- ============ 新增：管理员比赛信息管理按钮 ============ -->
+<li class="nav-item d-none" id="competitionInfoNavItem">
+    <button class="btn btn-outline-info me-2" id="manageCompetitionInfoBtn" title="管理比赛信息和规则">
+        <i class="fas fa-cog me-1"></i>比赛信息
+    </button>
+</li>
+<!-- ============ 新增结束 ============ -->
                     <li class="nav-item" id="loginNavItem">
                         <button class="btn btn-outline-light" id="loginButton">
                             <i class="fab fa-google me-1"></i>登录
@@ -1918,21 +1925,19 @@
             </div>
 
             <div class="row">
-                <div class="col-md-6">
-                    <div class="card">
-                        <div class="card-header">
-                            <i class="fas fa-clipboard-list me-2"></i>比赛规则
-                        </div>
-                        <div class="card-body">
-                            <ul class="list-group list-group-flush">
-                                <li class="list-group-item"><i class="fas fa-clock me-2 text-primary"></i>比赛时间为60分钟</li>
-                                <li class="list-group-item"><i class="fas fa-question-circle me-2 text-primary"></i>题目分为单选题、多选题、问答题和申论题</li>
-                                <li class="list-group-item"><i class="fas fa-check-circle me-2 text-success"></i>答对得分，答错不扣分</li>
-                                <li class="list-group-item"><i class="fas fa-calculator me-2 text-primary"></i>比赛结束后系统自动计算成绩</li>
-                                <li class="list-group-item"><i class="fas fa-ban me-2 text-danger"></i>禁止使用任何外部辅助工具</li>
-                            </ul>
-                        </div>
-                    </div>
+    <div class="card" id="rulesCard">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <span><i class="fas fa-clipboard-list me-2"></i><span id="rulesTitle">比赛规则</span></span>
+            <button class="btn btn-sm btn-outline-light d-none" id="editRulesBtn" title="编辑规则">
+                <i class="fas fa-edit"></i>
+            </button>
+        </div>
+        <div class="card-body" id="rulesContent">
+            <ul class="list-group list-group-flush" id="rulesList">
+                <!-- 规则列表将通过JavaScript动态填充 -->
+            </ul>
+        </div>
+    </div>
                 </div>
                 <div class="col-md-6">
                     <div class="card">
@@ -1966,21 +1971,24 @@
             </div>
 
             <!-- 公告栏 -->
-            <div class="announcement-board mt-4">
-                <div class="announcement-header">
-                    <div class="announcement-icon">
-                        <i class="fas fa-bullhorn"></i>
-                    </div>
-                    <h4 class="mb-0">重要公告</h4>
-                </div>
-                <div class="announcement-content">
-                    <p>1. 比赛期间请确保网络连接稳定，避免答题过程中断。</p>
-                    <p>2. 请使用Chrome或Edge浏览器以获得最佳体验。</p>
-                    <p>3. 比赛开始后计时器将自动启动，无法暂停。</p>
-                    <p>4. 如有任何技术问题，请联系现场工作人员。</p>
-                </div>
+           <!-- ============ 修改：公告栏改为动态加载 + 管理员可编辑 ============ -->
+<div class="announcement-board mt-4" id="announcementBoard">
+    <div class="announcement-header d-flex justify-content-between align-items-center">
+        <div class="d-flex align-items-center">
+            <div class="announcement-icon">
+                <i class="fas fa-bullhorn"></i>
             </div>
+            <h4 class="mb-0" id="announcementTitle">重要公告</h4>
         </div>
+        <button class="btn btn-sm btn-outline-warning d-none" id="editAnnouncementBtn" title="编辑公告">
+            <i class="fas fa-edit"></i>
+        </button>
+    </div>
+    <div class="announcement-content" id="announcementContent">
+        <!-- 公告内容将通过JavaScript动态填充 -->
+    </div>
+</div>
+<!-- ============ 修改结束 ============ -->
         
         <!-- 结果查询界面 -->
         <div id="resultCheckView" class="d-none">
@@ -3319,6 +3327,132 @@
         </div>
     </div>
 </div>
+        <!-- ============ 新增：比赛信息和规则编辑模态框 ============ -->
+<div class="modal fade" id="competitionInfoModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-edit me-2"></i>编辑比赛信息和规则</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <!-- 比赛信息编辑区域 -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <i class="fas fa-info-circle me-2"></i>比赛基本信息
+                    </div>
+                    <div class="card-body">
+                        <form id="competitionInfoForm">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="competitionDate" class="form-label">比赛日期</label>
+                                    <input type="text" class="form-control" id="competitionDate" placeholder="例如：2025年8月4日" value="2025年8月4日">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="competitionVenue" class="form-label">比赛地点</label>
+                                    <input type="text" class="form-control" id="competitionVenue" placeholder="例如：郭钦鉴楼10楼电脑室L1003, L1004" value="郭钦鉴楼10楼电脑室L1003, L1004">
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="competitionAwards" class="form-label">奖项设置</label>
+                                    <input type="text" class="form-control" id="competitionAwards" placeholder="例如：初中组和高中组各设冠亚季军" value="初中组和高中组各设冠亚季军">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="competitionParticipants" class="form-label">参赛对象</label>
+                                    <input type="text" class="form-control" id="competitionParticipants" placeholder="例如：宽柔中学在校学生" value="宽柔中学在校学生">
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="competitionOrganizer" class="form-label">主办单位</label>
+                                    <input type="text" class="form-control" id="competitionOrganizer" placeholder="例如：宽柔中学电脑协会" value="宽柔中学电脑协会">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="competitionContact" class="form-label">联系方式/技术支持</label>
+                                    <input type="text" class="form-control" id="competitionContact" placeholder="例如：陈俊源 / 电脑协会" value="陈俊源 / 电脑协会">
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- 比赛规则编辑区域 -->
+                <div class="card mb-4">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <span><i class="fas fa-clipboard-list me-2"></i>比赛规则</span>
+                        <button class="btn btn-sm btn-primary" id="addRuleBtn">
+                            <i class="fas fa-plus me-1"></i>添加规则
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label for="rulesSectionTitle" class="form-label">规则标题</label>
+                            <input type="text" class="form-control" id="rulesSectionTitle" placeholder="例如：比赛规则" value="比赛规则">
+                        </div>
+                        <div id="rulesEditorContainer">
+                            <!-- 规则编辑器将通过JavaScript动态填充 -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 公告编辑区域 -->
+                <div class="card mb-4">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <span><i class="fas fa-bullhorn me-2"></i>重要公告</span>
+                        <button class="btn btn-sm btn-primary" id="addAnnouncementBtn">
+                            <i class="fas fa-plus me-1"></i>添加公告
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label for="announcementSectionTitle" class="form-label">公告标题</label>
+                            <input type="text" class="form-control" id="announcementSectionTitle" placeholder="例如：重要公告" value="重要公告">
+                        </div>
+                        <div id="announcementEditorContainer">
+                            <!-- 公告编辑器将通过JavaScript动态填充 -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 快速模板 -->
+                <div class="card">
+                    <div class="card-header">
+                        <i class="fas fa-magic me-2"></i>快速模板
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-4 mb-2">
+                                <button class="btn btn-outline-primary w-100" onclick="loadTemplate('standard')">
+                                    <i class="fas fa-file-alt me-1"></i>标准规则模板
+                                </button>
+                            </div>
+                            <div class="col-md-4 mb-2">
+                                <button class="btn btn-outline-success w-100" onclick="loadTemplate('exam')">
+                                    <i class="fas fa-graduation-cap me-1"></i>考试规则模板
+                                </button>
+                            </div>
+                            <div class="col-md-4 mb-2">
+                                <button class="btn btn-outline-warning w-100" onclick="loadTemplate('tech')">
+                                    <i class="fas fa-laptop me-1"></i>技术比赛模板
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>取消
+                </button>
+                <button type="button" class="btn btn-primary" id="saveCompetitionInfoBtn">
+                    <i class="fas fa-save me-1"></i>保存所有更改
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- ============ 新增结束 ============ -->
     <!-- 快捷键提示 -->
     <div class="shortcut-hint d-none" id="shortcutHint">
         <div class="shortcut-item">
@@ -3628,6 +3762,11 @@ if (!storedCode || Date.now() > parseInt(expires || 0)) {
 
             // 从Firebase加载数据
             loadQuizData();
+            // ============ 新增：加载比赛信息和规则 ============
+loadCompetitionInfo();
+loadCompetitionRules();
+loadAnnouncements();
+// ============ 新增结束 ============
             
             // 更新全局统计
             updateGlobalStats();
@@ -3784,6 +3923,13 @@ if (!storedCode || Date.now() > parseInt(expires || 0)) {
             document.getElementById('refreshMonitorBtn').addEventListener('click', refreshMonitor);
             
             // 智能组卷
+            // ============ 新增：比赛信息管理事件绑定 ============
+// 管理员比赛信息管理按钮
+document.getElementById('manageCompetitionInfoBtn')?.addEventListener('click', showCompetitionInfoModal);
+document.getElementById('saveCompetitionInfoBtn')?.addEventListener('click', saveCompetitionInfo);
+document.getElementById('addRuleBtn')?.addEventListener('click', addRuleEditor);
+document.getElementById('addAnnouncementBtn')?.addEventListener('click', addAnnouncementEditor);
+// ============ 新增结束 ============
             document.getElementById('paperForm').addEventListener('submit', generatePaper);
             document.getElementById('regeneratePaperBtn').addEventListener('click', regeneratePaper);
             document.getElementById('savePaperBtn').addEventListener('click', saveGeneratedPaper);
@@ -4517,6 +4663,23 @@ function updateUserUI() {
         
         // 设置头像 - 如果是匿名用户，使用生成的随机头像
         if (currentUser.isAnonymous) {
+            // ============ 新增：显示/隐藏比赛信息管理按钮 ============
+const competitionInfoNav = document.getElementById('competitionInfoNavItem');
+const editRulesBtn = document.getElementById('editRulesBtn');
+const editAnnouncementBtn = document.getElementById('editAnnouncementBtn');
+
+if (competitionInfoNav && editRulesBtn && editAnnouncementBtn) {
+    if (userInfo && userInfo.isAdmin) {
+        competitionInfoNav.classList.remove('d-none');
+        editRulesBtn.classList.remove('d-none');
+        editAnnouncementBtn.classList.remove('d-none');
+    } else {
+        competitionInfoNav.classList.add('d-none');
+        editRulesBtn.classList.add('d-none');
+        editAnnouncementBtn.classList.add('d-none');
+    }
+}
+// ============ 新增结束 ============
             userPhoto.src = currentUser.photoURL || generateRandomAvatar(currentUser.displayName || "匿名用户");
             userPhoto.alt = currentUser.displayName + " (匿名)";
             
@@ -10271,17 +10434,25 @@ function exportToPDF(results) {
 
         // 显示结果查询界面
         function showResultCheckView() {
-            document.getElementById('welcomeView').classList.add('d-none');
-            document.getElementById('quizView').classList.add('d-none');
-            document.getElementById('resultView').classList.add('d-none');
-            document.getElementById('rankingView').classList.add('d-none');
-            document.getElementById('adminView').classList.add('d-none');
-            document.getElementById('resultCheckView').classList.remove('d-none');
-            
-            document.getElementById('resultCheckContainer').classList.add('d-none');
-            document.getElementById('resultCheckSuccess').style.display = 'none';
-            document.getElementById('resultCheckInfo').style.display = 'none';
-        }
+    document.getElementById('welcomeView').classList.add('d-none');
+    document.getElementById('quizView').classList.add('d-none');
+    document.getElementById('resultView').classList.add('d-none');
+    document.getElementById('rankingView').classList.add('d-none');
+    document.getElementById('adminView').classList.add('d-none');
+    document.getElementById('resultCheckView').classList.remove('d-none');
+    
+    document.getElementById('resultCheckContainer').classList.add('d-none');
+    document.getElementById('resultCheckSuccess').style.display = 'none';
+    document.getElementById('resultCheckInfo').style.display = 'none';
+    
+    // ============ 新增：非管理员隐藏管理按钮 ============
+    if (!userInfo || !userInfo.isAdmin) {
+        document.getElementById('competitionInfoNavItem')?.classList.add('d-none');
+        document.getElementById('editRulesBtn')?.classList.add('d-none');
+        document.getElementById('editAnnouncementBtn')?.classList.add('d-none');
+    }
+    // ============ 新增结束 ============
+}
 
         // 查询结果
         function checkResult(e) {
@@ -10444,10 +10615,15 @@ function exportToPDF(results) {
             document.getElementById('rankingView').classList.add('d-none');
             document.getElementById('adminView').classList.add('d-none');
             document.getElementById('resultCheckView').classList.add('d-none');
+                if (!userInfo || !userInfo.isAdmin) {
+        document.getElementById('competitionInfoNavItem')?.classList.add('d-none');
+        document.getElementById('editRulesBtn')?.classList.add('d-none');
+        document.getElementById('editAnnouncementBtn')?.classList.add('d-none');
+    }
         }
         
-        function showQuizView() {
-            const timeCheck = checkCompetitionTime();
+function showQuizView() {
+    const timeCheck = checkCompetitionTime();
     if (!timeCheck.allowed) {
         Swal.fire({
             title: '无法进入答题',
@@ -10455,27 +10631,32 @@ function exportToPDF(results) {
             icon: 'warning',
             confirmButtonText: '确定'
         }).then(() => {
-            showWelcomeView(); // 返回欢迎页
+            showWelcomeView();
         });
         return;
     }
-            document.getElementById('welcomeView').classList.add('d-none');
-            document.getElementById('quizView').classList.remove('d-none');
-            document.getElementById('resultView').classList.add('d-none');
-            document.getElementById('rankingView').classList.add('d-none');
-            document.getElementById('adminView').classList.add('d-none');
-            document.getElementById('resultCheckView').classList.add('d-none');
-        }
+    document.getElementById('welcomeView').classList.add('d-none');
+    document.getElementById('quizView').classList.remove('d-none');
+    document.getElementById('resultView').classList.add('d-none');
+    document.getElementById('rankingView').classList.add('d-none');
+    document.getElementById('adminView').classList.add('d-none');
+    document.getElementById('resultCheckView').classList.add('d-none');
+    
+    // ============ 新增：非管理员隐藏管理按钮 ============
+    if (!userInfo || !userInfo.isAdmin) {
+        document.getElementById('competitionInfoNavItem')?.classList.add('d-none');
+        document.getElementById('editRulesBtn')?.classList.add('d-none');
+        document.getElementById('editAnnouncementBtn')?.classList.add('d-none');
+    }
+    // ============ 新增结束 ============
+}
         
-        // 显示结果界面
-function showResultView() {
-    // 确保停止所有计时器
+  function showResultView() {
     if (quizTimer) {
         clearInterval(quizTimer);
         quizTimer = null;
     }
     
-    // 停止防作弊监控
     cheatDetectionEnabled = false;
     
     document.getElementById('welcomeView').classList.add('d-none');
@@ -10485,12 +10666,18 @@ function showResultView() {
     document.getElementById('adminView').classList.add('d-none');
     document.getElementById('resultCheckView').classList.add('d-none');
     
-    // 如果有防作弊面板，隐藏它
     document.getElementById('cheatDetectionPanel').classList.add('d-none');
     document.getElementById('antiCheatAlert').classList.add('d-none');
     document.getElementById('fullscreenOverlay').classList.add('d-none');
     
-    // 显示结果
+    // ============ 新增：非管理员隐藏管理按钮 ============
+    if (!userInfo || !userInfo.isAdmin) {
+        document.getElementById('competitionInfoNavItem')?.classList.add('d-none');
+        document.getElementById('editRulesBtn')?.classList.add('d-none');
+        document.getElementById('editAnnouncementBtn')?.classList.add('d-none');
+    }
+    // ============ 新增结束 ============
+    
     displayResults();
 }
 
@@ -10584,14 +10771,22 @@ function addDebugButtons() {
     document.getElementById('settings').insertAdjacentHTML('beforeend', debugHTML);
 }
         
-        function showRankingView() {
-            document.getElementById('welcomeView').classList.add('d-none');
-            document.getElementById('quizView').classList.add('d-none');
-            document.getElementById('resultView').classList.add('d-none');
-            document.getElementById('rankingView').classList.remove('d-none');
-            document.getElementById('adminView').classList.add('d-none');
-            document.getElementById('resultCheckView').classList.add('d-none');
-        }
+     function showRankingView() {
+    document.getElementById('welcomeView').classList.add('d-none');
+    document.getElementById('quizView').classList.add('d-none');
+    document.getElementById('resultView').classList.add('d-none');
+    document.getElementById('rankingView').classList.remove('d-none');
+    document.getElementById('adminView').classList.add('d-none');
+    document.getElementById('resultCheckView').classList.add('d-none');
+    
+    // ============ 新增：非管理员隐藏管理按钮 ============
+    if (!userInfo || !userInfo.isAdmin) {
+        document.getElementById('competitionInfoNavItem')?.classList.add('d-none');
+        document.getElementById('editRulesBtn')?.classList.add('d-none');
+        document.getElementById('editAnnouncementBtn')?.classList.add('d-none');
+    }
+    // ============ 新增结束 ============
+}
 
         
         function showAdminView() {
@@ -10641,6 +10836,11 @@ function addDebugButtons() {
                 document.getElementById('resultView').classList.add('d-none');
                 document.getElementById('rankingView').classList.add('d-none');
                 document.getElementById('adminView').classList.remove('d-none');
+                // ============ 新增：显示比赛信息管理按钮 ============
+document.getElementById('competitionInfoNavItem').classList.remove('d-none');
+document.getElementById('editRulesBtn').classList.remove('d-none');
+document.getElementById('editAnnouncementBtn').classList.remove('d-none');
+// ============ 新增结束 ============
                 document.getElementById('resultCheckView').classList.add('d-none');
                 
             }).catch(error => {
@@ -10724,6 +10924,553 @@ document.addEventListener('DOMContentLoaded', () => {
     // 添加刷新处理
     setTimeout(handlePageRefresh, 1500);
 });
+
+        // ==================== 新增：比赛信息管理功能 ====================
+
+// 加载比赛信息
+function loadCompetitionInfo() {
+    // 先从Firebase加载，如果没有则使用默认值
+    database.ref('competitionInfo').once('value').then(snapshot => {
+        if (snapshot.exists()) {
+            const info = snapshot.val();
+            updateCompetitionInfoDisplay(info);
+        } else {
+            // 使用默认信息
+            const defaultInfo = {
+                date: '2025年8月4日',
+                venue: '郭钦鉴楼10楼电脑室L1003, L1004',
+                awards: '初中组和高中组各设冠亚季军',
+                participants: '宽柔中学在校学生',
+                organizer: '宽柔中学电脑协会',
+                contact: '陈俊源 / 电脑协会'
+            };
+            database.ref('competitionInfo').set(defaultInfo);
+            updateCompetitionInfoDisplay(defaultInfo);
+        }
+    }).catch(error => {
+        console.error('加载比赛信息错误:', error);
+        // 离线模式使用默认值
+        const defaultInfo = {
+            date: '2025年8月4日',
+            venue: '郭钦鉴楼10楼电脑室L1003, L1004',
+            awards: '初中组和高中组各设冠亚季军',
+            participants: '宽柔中学在校学生',
+            organizer: '宽柔中学电脑协会',
+            contact: '陈俊源 / 电脑协会'
+        };
+        updateCompetitionInfoDisplay(defaultInfo);
+    });
+}
+
+// 更新比赛信息显示
+function updateCompetitionInfoDisplay(info) {
+    // 更新欢迎页面的比赛信息面板
+    const infoPanel = document.querySelector('.competition-info-panel');
+    if (infoPanel && info) {
+        const infoItems = infoPanel.querySelectorAll('.info-item');
+        if (infoItems.length >= 4) {
+            // 比赛时间
+            const dateParagraph = infoItems[0].querySelector('p');
+            if (dateParagraph) dateParagraph.textContent = info.date || '待定';
+            
+            // 比赛地点
+            const venueParagraph = infoItems[1].querySelector('p');
+            if (venueParagraph) venueParagraph.textContent = info.venue || '待定';
+            
+            // 奖项设置
+            const awardsParagraph = infoItems[2].querySelector('p');
+            if (awardsParagraph) awardsParagraph.textContent = info.awards || '待定';
+            
+            // 参赛对象
+            const participantsParagraph = infoItems[3].querySelector('p');
+            if (participantsParagraph) participantsParagraph.textContent = info.participants || '待定';
+        }
+    }
+}
+
+// 加载比赛规则
+function loadCompetitionRules() {
+    database.ref('competitionRules').once('value').then(snapshot => {
+        if (snapshot.exists()) {
+            const data = snapshot.val();
+            displayRules(data.title, data.rules || []);
+        } else {
+            // 默认规则
+            const defaultRules = {
+                title: '比赛规则',
+                rules: [
+                    { icon: 'fa-clock', text: '比赛时间为60分钟', color: 'text-primary' },
+                    { icon: 'fa-question-circle', text: '题目分为单选题、多选题、问答题和申论题', color: 'text-primary' },
+                    { icon: 'fa-check-circle', text: '答对得分，答错不扣分', color: 'text-success' },
+                    { icon: 'fa-calculator', text: '比赛结束后系统自动计算成绩', color: 'text-primary' },
+                    { icon: 'fa-ban', text: '禁止使用任何外部辅助工具', color: 'text-danger' }
+                ]
+            };
+            database.ref('competitionRules').set(defaultRules);
+            displayRules(defaultRules.title, defaultRules.rules);
+        }
+    }).catch(error => {
+        console.error('加载比赛规则错误:', error);
+        displayRules('比赛规则', [
+            { icon: 'fa-clock', text: '比赛时间为60分钟', color: 'text-primary' },
+            { icon: 'fa-question-circle', text: '题目分为单选题、多选题、问答题和申论题', color: 'text-primary' },
+            { icon: 'fa-check-circle', text: '答对得分，答错不扣分', color: 'text-success' },
+            { icon: 'fa-calculator', text: '比赛结束后系统自动计算成绩', color: 'text-primary' },
+            { icon: 'fa-ban', text: '禁止使用任何外部辅助工具', color: 'text-danger' }
+        ]);
+    });
+}
+
+// 显示规则列表
+function displayRules(title, rules) {
+    // 更新标题
+    const rulesTitle = document.getElementById('rulesTitle');
+    if (rulesTitle) rulesTitle.textContent = title || '比赛规则';
+    
+    // 更新规则列表
+    const rulesList = document.getElementById('rulesList');
+    if (rulesList && Array.isArray(rules)) {
+        rulesList.innerHTML = '';
+        rules.forEach(rule => {
+            const li = document.createElement('li');
+            li.className = 'list-group-item';
+            li.innerHTML = `<i class="fas ${rule.icon || 'fa-circle'} me-2 ${rule.color || 'text-primary'}"></i>${rule.text}`;
+            rulesList.appendChild(li);
+        });
+    }
+}
+
+// 加载公告
+function loadAnnouncements() {
+    database.ref('announcements').once('value').then(snapshot => {
+        if (snapshot.exists()) {
+            const data = snapshot.val();
+            displayAnnouncements(data.title, data.items || []);
+        } else {
+            // 默认公告
+            const defaultAnnouncements = {
+                title: '重要公告',
+                items: [
+                    '比赛期间请确保网络连接稳定，避免答题过程中断。',
+                    '请使用Chrome或Edge浏览器以获得最佳体验。',
+                    '比赛开始后计时器将自动启动，无法暂停。',
+                    '如有任何技术问题，请联系现场工作人员。'
+                ]
+            };
+            database.ref('announcements').set(defaultAnnouncements);
+            displayAnnouncements(defaultAnnouncements.title, defaultAnnouncements.items);
+        }
+    }).catch(error => {
+        console.error('加载公告错误:', error);
+        displayAnnouncements('重要公告', [
+            '比赛期间请确保网络连接稳定，避免答题过程中断。',
+            '请使用Chrome或Edge浏览器以获得最佳体验。',
+            '比赛开始后计时器将自动启动，无法暂停。',
+            '如有任何技术问题，请联系现场工作人员。'
+        ]);
+    });
+}
+
+// 显示公告
+function displayAnnouncements(title, items) {
+    // 更新标题
+    const announcementTitle = document.getElementById('announcementTitle');
+    if (announcementTitle) announcementTitle.textContent = title || '重要公告';
+    
+    // 更新内容
+    const content = document.getElementById('announcementContent');
+    if (content && Array.isArray(items)) {
+        content.innerHTML = '';
+        items.forEach((item, index) => {
+            content.innerHTML += `<p>${index + 1}. ${item}</p>`;
+        });
+    }
+}
+
+// 显示比赛信息编辑模态框
+function showCompetitionInfoModal() {
+    // 检查权限
+    if (!userInfo || !userInfo.isAdmin) {
+        Swal.fire('错误', '您没有管理员权限', 'error');
+        return;
+    }
+    
+    // 加载当前信息
+    database.ref('competitionInfo').once('value').then(snapshot => {
+        if (snapshot.exists()) {
+            const info = snapshot.val();
+            document.getElementById('competitionDate').value = info.date || '';
+            document.getElementById('competitionVenue').value = info.venue || '';
+            document.getElementById('competitionAwards').value = info.awards || '';
+            document.getElementById('competitionParticipants').value = info.participants || '';
+            document.getElementById('competitionOrganizer').value = info.organizer || '';
+            document.getElementById('competitionContact').value = info.contact || '';
+        }
+    });
+    
+    // 加载规则
+    database.ref('competitionRules').once('value').then(snapshot => {
+        if (snapshot.exists()) {
+            const data = snapshot.val();
+            document.getElementById('rulesSectionTitle').value = data.title || '比赛规则';
+            loadRulesEditors(data.rules || []);
+        } else {
+            loadRulesEditors([]);
+        }
+    });
+    
+    // 加载公告
+    database.ref('announcements').once('value').then(snapshot => {
+        if (snapshot.exists()) {
+            const data = snapshot.val();
+            document.getElementById('announcementSectionTitle').value = data.title || '重要公告';
+            loadAnnouncementEditors(data.items || []);
+        } else {
+            loadAnnouncementEditors([]);
+        }
+    });
+    
+    const modal = new bootstrap.Modal(document.getElementById('competitionInfoModal'));
+    modal.show();
+}
+
+// 加载规则编辑器
+function loadRulesEditors(rules) {
+    const container = document.getElementById('rulesEditorContainer');
+    container.innerHTML = '';
+    
+    if (rules.length === 0) {
+        // 添加一个空的编辑器
+        addRuleEditor();
+    } else {
+        rules.forEach(rule => {
+            addRuleEditor(rule);
+        });
+    }
+}
+
+// 添加规则编辑器
+function addRuleEditor(ruleData = null) {
+    const container = document.getElementById('rulesEditorContainer');
+    const index = container.children.length;
+    
+    const editorHTML = `
+        <div class="rule-editor-item border rounded p-3 mb-3 bg-light" data-index="${index}">
+            <div class="row align-items-end">
+                <div class="col-md-3 mb-2">
+                    <label class="form-label">图标类名</label>
+                    <input type="text" class="form-control rule-icon" placeholder="fa-clock" value="${ruleData?.icon || 'fa-circle'}">
+                    <small class="text-muted">Font Awesome 图标类名</small>
+                </div>
+                <div class="col-md-3 mb-2">
+                    <label class="form-label">颜色类名</label>
+                    <select class="form-select rule-color">
+                        <option value="text-primary" ${ruleData?.color === 'text-primary' ? 'selected' : ''}>蓝色</option>
+                        <option value="text-success" ${ruleData?.color === 'text-success' ? 'selected' : ''}>绿色</option>
+                        <option value="text-danger" ${ruleData?.color === 'text-danger' ? 'selected' : ''}>红色</option>
+                        <option value="text-warning" ${ruleData?.color === 'text-warning' ? 'selected' : ''}>橙色</option>
+                        <option value="text-info" ${ruleData?.color === 'text-info' ? 'selected' : ''}>青色</option>
+                        <option value="text-dark" ${ruleData?.color === 'text-dark' ? 'selected' : ''}>深色</option>
+                    </select>
+                </div>
+                <div class="col-md-4 mb-2">
+                    <label class="form-label">规则内容</label>
+                    <input type="text" class="form-control rule-text" placeholder="输入规则内容" value="${ruleData?.text || ''}">
+                </div>
+                <div class="col-md-2 mb-2">
+                    <button class="btn btn-danger btn-sm w-100 remove-rule-btn" ${container.children.length <= 1 && !ruleData ? 'disabled' : ''}>
+                        <i class="fas fa-trash me-1"></i>删除
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    container.insertAdjacentHTML('beforeend', editorHTML);
+    
+    // 绑定删除按钮
+    const newEditor = container.lastElementChild;
+    const removeBtn = newEditor.querySelector('.remove-rule-btn');
+    if (removeBtn) {
+        removeBtn.addEventListener('click', function() {
+            newEditor.remove();
+            updateRuleEditorIndexes();
+            toggleRemoveButtons();
+        });
+    }
+    
+    toggleRemoveButtons();
+}
+
+// 更新规则编辑器索引
+function updateRuleEditorIndexes() {
+    const editors = document.getElementById('rulesEditorContainer').querySelectorAll('.rule-editor-item');
+    editors.forEach((editor, index) => {
+        editor.setAttribute('data-index', index);
+    });
+}
+
+// 切换删除按钮状态
+function toggleRemoveButtons() {
+    const editors = document.getElementById('rulesEditorContainer').querySelectorAll('.rule-editor-item');
+    const removeBtns = document.querySelectorAll('.remove-rule-btn');
+    
+    removeBtns.forEach(btn => {
+        btn.disabled = editors.length <= 1;
+    });
+}
+
+// 加载公告编辑器
+function loadAnnouncementEditors(items) {
+    const container = document.getElementById('announcementEditorContainer');
+    container.innerHTML = '';
+    
+    if (items.length === 0) {
+        addAnnouncementEditor();
+    } else {
+        items.forEach(item => {
+            addAnnouncementEditor(item);
+        });
+    }
+}
+
+// 添加公告编辑器
+function addAnnouncementEditor(itemText = '') {
+    const container = document.getElementById('announcementEditorContainer');
+    const index = container.children.length;
+    
+    const editorHTML = `
+        <div class="announcement-editor-item input-group mb-2" data-index="${index}">
+            <span class="input-group-text">${index + 1}</span>
+            <input type="text" class="form-control announcement-text" placeholder="输入公告内容" value="${itemText}">
+            <button class="btn btn-outline-danger remove-announcement-btn" type="button" ${container.children.length <= 1 && !itemText ? 'disabled' : ''}>
+                <i class="fas fa-trash"></i>
+            </button>
+        </div>
+    `;
+    
+    container.insertAdjacentHTML('beforeend', editorHTML);
+    
+    // 绑定删除按钮
+    const newEditor = container.lastElementChild;
+    const removeBtn = newEditor.querySelector('.remove-announcement-btn');
+    if (removeBtn) {
+        removeBtn.addEventListener('click', function() {
+            newEditor.remove();
+            updateAnnouncementEditorIndexes();
+            toggleAnnouncementRemoveButtons();
+        });
+    }
+    
+    toggleAnnouncementRemoveButtons();
+}
+
+// 更新公告编辑器索引
+function updateAnnouncementEditorIndexes() {
+    const editors = document.getElementById('announcementEditorContainer').querySelectorAll('.announcement-editor-item');
+    editors.forEach((editor, index) => {
+        editor.setAttribute('data-index', index);
+        const label = editor.querySelector('.input-group-text');
+        if (label) label.textContent = index + 1;
+    });
+}
+
+// 切换公告删除按钮状态
+function toggleAnnouncementRemoveButtons() {
+    const editors = document.getElementById('announcementEditorContainer').querySelectorAll('.announcement-editor-item');
+    const removeBtns = document.querySelectorAll('.remove-announcement-btn');
+    
+    removeBtns.forEach(btn => {
+        btn.disabled = editors.length <= 1;
+    });
+}
+
+// 保存比赛信息（统一保存所有内容）
+function saveCompetitionInfo() {
+    showLoading('正在保存比赛信息...');
+    
+    // 收集比赛基本信息
+    const competitionInfo = {
+        date: document.getElementById('competitionDate').value.trim(),
+        venue: document.getElementById('competitionVenue').value.trim(),
+        awards: document.getElementById('competitionAwards').value.trim(),
+        participants: document.getElementById('competitionParticipants').value.trim(),
+        organizer: document.getElementById('competitionOrganizer').value.trim(),
+        contact: document.getElementById('competitionContact').value.trim(),
+        lastUpdated: firebase.database.ServerValue.TIMESTAMP
+    };
+    
+    // 收集规则
+    const ruleEditors = document.getElementById('rulesEditorContainer').querySelectorAll('.rule-editor-item');
+    const rules = [];
+    ruleEditors.forEach(editor => {
+        const icon = editor.querySelector('.rule-icon')?.value.trim() || 'fa-circle';
+        const color = editor.querySelector('.rule-color')?.value || 'text-primary';
+        const text = editor.querySelector('.rule-text')?.value.trim() || '';
+        
+        if (text) {
+            rules.push({ icon, color, text });
+        }
+    });
+    
+    const rulesData = {
+        title: document.getElementById('rulesSectionTitle').value.trim() || '比赛规则',
+        rules: rules,
+        lastUpdated: firebase.database.ServerValue.TIMESTAMP
+    };
+    
+    // 收集公告
+    const announcementEditors = document.getElementById('announcementEditorContainer').querySelectorAll('.announcement-editor-item');
+    const items = [];
+    announcementEditors.forEach(editor => {
+        const text = editor.querySelector('.announcement-text')?.value.trim() || '';
+        if (text) {
+            items.push(text);
+        }
+    });
+    
+    const announcementsData = {
+        title: document.getElementById('announcementSectionTitle').value.trim() || '重要公告',
+        items: items,
+        lastUpdated: firebase.database.ServerValue.TIMESTAMP
+    };
+    
+    // 保存到Firebase
+    Promise.all([
+        database.ref('competitionInfo').set(competitionInfo),
+        database.ref('competitionRules').set(rulesData),
+        database.ref('announcements').set(announcementsData)
+    ]).then(() => {
+        hideLoading();
+        
+        // 更新显示
+        updateCompetitionInfoDisplay(competitionInfo);
+        displayRules(rulesData.title, rulesData.rules);
+        displayAnnouncements(announcementsData.title, announcementsData.items);
+        
+        // 关闭模态框
+        bootstrap.Modal.getInstance(document.getElementById('competitionInfoModal')).hide();
+        
+        Swal.fire({
+            icon: 'success',
+            title: '保存成功',
+            text: `比赛信息已更新：
+                  基本信息：${rules.length} 条规则，${items.length} 条公告`,
+            timer: 3000,
+            showConfirmButton: true
+        });
+    }).catch(error => {
+        hideLoading();
+        console.error('保存比赛信息错误:', error);
+        
+        // 本地存储作为备份
+        localStorage.setItem('competitionInfo', JSON.stringify(competitionInfo));
+        localStorage.setItem('competitionRules', JSON.stringify(rulesData));
+        localStorage.setItem('announcements', JSON.stringify(announcementsData));
+        
+        updateCompetitionInfoDisplay(competitionInfo);
+        displayRules(rulesData.title, rulesData.rules);
+        displayAnnouncements(announcementsData.title, announcementsData.items);
+        
+        bootstrap.Modal.getInstance(document.getElementById('competitionInfoModal')).hide();
+        
+        Swal.fire({
+            icon: 'warning',
+            title: '部分保存',
+            text: '已保存到本地缓存，网络恢复后将自动同步',
+            timer: 3000,
+            showConfirmButton: true
+        });
+    });
+}
+
+// 快速模板加载
+function loadTemplate(templateType) {
+    Swal.fire({
+        title: '确认加载模板？',
+        text: '加载模板将覆盖当前编辑中的规则和公告内容',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: '加载模板',
+        cancelButtonText: '取消'
+    }).then(result => {
+        if (result.isConfirmed) {
+            let rules = [];
+            let announcements = [];
+            let rulesTitle = '比赛规则';
+            let announcementsTitle = '重要公告';
+            
+            switch(templateType) {
+                case 'standard':
+                    rulesTitle = '比赛规则';
+                    rules = [
+                        { icon: 'fa-clock', text: '比赛时间为60分钟', color: 'text-primary' },
+                        { icon: 'fa-question-circle', text: '题目分为单选题、多选题、问答题和申论题', color: 'text-primary' },
+                        { icon: 'fa-check-circle', text: '答对得分，答错不扣分', color: 'text-success' },
+                        { icon: 'fa-calculator', text: '比赛结束后系统自动计算成绩', color: 'text-primary' },
+                        { icon: 'fa-ban', text: '禁止使用任何外部辅助工具', color: 'text-danger' }
+                    ];
+                    announcementsTitle = '重要公告';
+                    announcements = [
+                        '比赛期间请确保网络连接稳定，避免答题过程中断。',
+                        '请使用Chrome或Edge浏览器以获得最佳体验。',
+                        '比赛开始后计时器将自动启动，无法暂停。',
+                        '如有任何技术问题，请联系现场工作人员。'
+                    ];
+                    break;
+                    
+                case 'exam':
+                    rulesTitle = '考试规则';
+                    rules = [
+                        { icon: 'fa-user-check', text: '参赛者须携带学生证入场', color: 'text-primary' },
+                        { icon: 'fa-clock', text: '迟到15分钟以上者不得入场', color: 'text-warning' },
+                        { icon: 'fa-mobile-alt', text: '考试期间禁止使用手机等电子设备', color: 'text-danger' },
+                        { icon: 'fa-eye-slash', text: '禁止抄袭、交头接耳等作弊行为', color: 'text-danger' },
+                        { icon: 'fa-sign-out-alt', text: '提前交卷需举手示意监考老师', color: 'text-info' },
+                        { icon: 'fa-check-double', text: '所有答案以系统记录为准', color: 'text-success' }
+                    ];
+                    announcementsTitle = '考试须知';
+                    announcements = [
+                        '请提前15分钟到达考场，做好准备工作。',
+                        '考试期间请保持安静，不得打扰其他考生。',
+                        '如遇系统故障，请立即举手示意监考老师。',
+                        '考试结束后请勿立即离开，等待监考老师指示。'
+                    ];
+                    break;
+                    
+                case 'tech':
+                    rulesTitle = '技术比赛规则';
+                    rules = [
+                        { icon: 'fa-laptop', text: '使用学校提供的电脑进行比赛', color: 'text-primary' },
+                        { icon: 'fa-wifi', text: '确保网络连接稳定', color: 'text-success' },
+                        { icon: 'fa-code', text: '编程题需在规定时间内完成', color: 'text-info' },
+                        { icon: 'fa-shield-alt', text: '禁止使用AI辅助工具', color: 'text-danger' },
+                        { icon: 'fa-save', text: '请定期保存代码，防止意外丢失', color: 'text-warning' },
+                        { icon: 'fa-trophy', text: '评分标准包括代码质量和运行效率', color: 'text-dark' }
+                    ];
+                    announcementsTitle = '技术比赛公告';
+                    announcements = [
+                        '比赛环境：Windows 11 + Visual Studio Code',
+                        '支持语言：Python, Java, C++',
+                        '比赛前请测试开发环境是否正常',
+                        '如有环境问题，请在比赛开始前告知工作人员。'
+                    ];
+                    break;
+            }
+            
+            // 更新编辑器内容
+            document.getElementById('rulesSectionTitle').value = rulesTitle;
+            loadRulesEditors(rules);
+            
+            document.getElementById('announcementSectionTitle').value = announcementsTitle;
+            loadAnnouncementEditors(announcements);
+            
+            Swal.fire('成功', '模板已加载', 'success');
+        }
+    });
+}
+
+// ==================== 新增功能结束 ====================
     </script>
 </body>
 </html>
