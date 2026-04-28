@@ -4604,10 +4604,11 @@ if (!storedCode || Date.now() > parseInt(expires || 0)) {
                     updateUserUI();
                 }
             });
-
+initDarkModeToggle(); 
             // 从Firebase加载数据
             loadQuizData();
             // ============ 新增：加载比赛信息和规则 ============
+            
 loadCompetitionInfo();
 loadCompetitionRules();
 loadAnnouncements();
@@ -4854,48 +4855,141 @@ window.addEventListener('offline', () => {
 });
 
         // 键盘快捷键处理
-        function handleKeyboardShortcuts(e) {
-            // 只有在答题界面才启用快捷键
-            if (!document.getElementById('quizView').classList.contains('d-none')) {
-                switch(e.key) {
-                    case 'ArrowLeft':
-                        if (!e.ctrlKey) {
-                            e.preventDefault();
-                            showPreviousQuestion();
-                        }
-                        break;
-                    case 'ArrowRight':
-                        if (!e.ctrlKey) {
-                            e.preventDefault();
-                            showNextQuestion();
-                        }
-                        break;
-                    case 'm':
-                    case 'M':
-                        if (e.ctrlKey) {
-                            e.preventDefault();
-                            toggleMarkQuestion();
-                        }
-                        break;
-                    case 'Enter':
-                        if (e.ctrlKey) {
-                            e.preventDefault();
-                            confirmSubmitQuiz();
-                        }
-                        break;
-                    case '1':
-                    case '2':
-                    case '3':
-                    case '4':
-                        if (e.altKey) {
-                            e.preventDefault();
-                            const index = parseInt(e.key) - 1;
-                            selectOption(currentQuestionIndex, index);
-                        }
-                        break;
+        // ==================== 修改功能：增强键盘快捷键 ====================
+function handleKeyboardShortcuts(e) {
+    // 只有在答题界面才启用快捷键
+    if (document.getElementById('quizView').classList.contains('d-none')) return;
+    
+    // 防止在输入框中触发快捷键
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable) {
+        if (e.key === 'Escape') {
+            e.target.blur(); // ESC 退出输入框
+        }
+        return;
+    }
+    
+    switch(e.key) {
+        case 'ArrowLeft':
+            e.preventDefault();
+            showPreviousQuestion();
+            break;
+            
+        case 'ArrowRight':
+            e.preventDefault();
+            showNextQuestion();
+            break;
+            
+        case 'ArrowUp':
+            e.preventDefault();
+            if (currentQuestionIndex >= 5) {
+                currentQuestionIndex -= 5;
+            } else {
+                currentQuestionIndex = 0;
+            }
+            displayQuestion(currentQuestionIndex);
+            break;
+            
+        case 'ArrowDown':
+            e.preventDefault();
+            if (currentQuestionIndex + 5 < quizData.questions.length) {
+                currentQuestionIndex += 5;
+            } else {
+                currentQuestionIndex = quizData.questions.length - 1;
+            }
+            displayQuestion(currentQuestionIndex);
+            break;
+            
+        case 'Home':
+            e.preventDefault();
+            currentQuestionIndex = 0;
+            displayQuestion(currentQuestionIndex);
+            break;
+            
+        case 'End':
+            e.preventDefault();
+            currentQuestionIndex = quizData.questions.length - 1;
+            displayQuestion(currentQuestionIndex);
+            break;
+            
+        case 'm':
+        case 'M':
+            if (e.ctrlKey) {
+                e.preventDefault();
+                toggleMarkQuestion();
+                showQuickToast(markedQuestions.has(currentQuestionIndex) ? '已标记本题' : '已取消标记', 'info');
+            }
+            break;
+            
+        case 's':
+        case 'S':
+            if (e.ctrlKey) {
+                e.preventDefault();
+                manualSave();
+            }
+            break;
+            
+        case 'Enter':
+            if (e.ctrlKey) {
+                e.preventDefault();
+                confirmSubmitQuiz();
+            }
+            break;
+            
+        case 'Escape':
+            e.preventDefault();
+            showQuestionReview();
+            break;
+            
+        case '1':
+        case '2':
+        case '3':
+        case '4':
+        case '5':
+        case '6':
+        case '7':
+        case '8':
+        case '9':
+            if (e.altKey) {
+                e.preventDefault();
+                const optionIndex = parseInt(e.key) - 1;
+                const question = quizData.questions[currentQuestionIndex];
+                if (question && question.options && optionIndex < question.options.length) {
+                    selectOption(currentQuestionIndex, optionIndex);
                 }
             }
-        }
+            break;
+            
+        case 'F1':
+            e.preventDefault();
+            showKeyboardShortcutsHelp();
+            break;
+    }
+}
+
+// 显示快捷键帮助
+function showKeyboardShortcutsHelp() {
+    Swal.fire({
+        title: '⌨️ 键盘快捷键',
+        html: `
+            <div class="text-start">
+                <table class="table table-sm">
+                    <tr><td><kbd>← →</kbd></td><td>上一题/下一题</td></tr>
+                    <tr><td><kbd>↑ ↓</kbd></td><td>跳过5题</td></tr>
+                    <tr><td><kbd>Home</kbd> / <kbd>End</kbd></td><td>跳转到第一题/最后一题</td></tr>
+                    <tr><td><kbd>Alt + 1-9</kbd></td><td>快速选择对应选项</td></tr>
+                    <tr><td><kbd>Ctrl + M</kbd></td><td>标记/取消标记题目</td></tr>
+                    <tr><td><kbd>Ctrl + S</kbd></td><td>手动保存草稿</td></tr>
+                    <tr><td><kbd>Ctrl + Enter</kbd></td><td>提交答卷</td></tr>
+                    <tr><td><kbd>Esc</kbd></td><td>查看题目列表</td></tr>
+                    <tr><td><kbd>F1</kbd></td><td>显示此帮助</td></tr>
+                </table>
+            </div>
+        `,
+        icon: 'info',
+        confirmButtonText: '知道了'
+    });
+}
+// ==================== 修改功能结束 ====================
 
         // 智能组卷功能
         function generatePaper(e) {
@@ -6433,6 +6527,7 @@ function initializeUserQuiz() {
     startTimer();
     displayQuestion(currentQuestionIndex);
     updateQuestionNavDots();
+    startAutoSave();
 }
         // 添加重置警告次数的函数
 function resetCheatWarnings() {
@@ -6590,6 +6685,7 @@ function startTimer() {
             } else {
                 timerElement.classList.remove('text-danger');
             }
+            updateFloatingTimer(); 
         }
         
         // 显示题目
@@ -6940,6 +7036,80 @@ function updateQuestionNavDots() {
                 console.error("保存进度错误:", error);
             });
         }
+
+        // ==================== 新增功能：自动保存草稿 ====================
+let autoSaveInterval = null;
+let lastSaveTime = null;
+
+// 启动自动保存
+function startAutoSave() {
+    // 每30秒自动保存一次
+    autoSaveInterval = setInterval(() => {
+        if (currentUser && !document.getElementById('quizView').classList.contains('d-none')) {
+            saveUserProgress();
+            lastSaveTime = new Date();
+            updateAutoSaveIndicator();
+        }
+    }, 30000);
+    
+    // 页面关闭前保存
+    window.addEventListener('beforeunload', function(e) {
+        if (currentUser && !document.getElementById('quizView').classList.contains('d-none')) {
+            saveUserProgress();
+        }
+    });
+}
+
+// 停止自动保存
+function stopAutoSave() {
+    if (autoSaveInterval) {
+        clearInterval(autoSaveInterval);
+        autoSaveInterval = null;
+    }
+}
+
+// 更新自动保存指示器
+function updateAutoSaveIndicator() {
+    let indicator = document.getElementById('autoSaveIndicator');
+    if (!indicator) {
+        indicator = document.createElement('div');
+        indicator.id = 'autoSaveIndicator';
+        indicator.style.cssText = `
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(52, 211, 153, 0.9);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+            opacity: 0;
+        `;
+        document.body.appendChild(indicator);
+    }
+    
+    const timeStr = lastSaveTime ? lastSaveTime.toLocaleTimeString() : '';
+    indicator.innerHTML = `<i class="fas fa-save me-1"></i>已自动保存 ${timeStr}`;
+    indicator.style.opacity = '1';
+    
+    setTimeout(() => {
+        indicator.style.opacity = '0';
+    }, 3000);
+}
+
+// 手动保存按钮
+function manualSave() {
+    if (currentUser) {
+        saveUserProgress();
+        lastSaveTime = new Date();
+        updateAutoSaveIndicator();
+        showQuickToast('草稿已保存', 'success');
+    }
+}
+// ==================== 新增功能结束 ====================
         
         // 确认提交
         function confirmSubmitQuiz() {
@@ -6966,11 +7136,15 @@ function updateQuestionNavDots() {
         
 // 提交答卷 - 修复版本
 async function submitQuiz() {
+    hideKeyboardHintBar();
+    hideFontSizeControls();
+    hideFloatingTimer();
     // 确保停止所有计时器和监控
     if (quizTimer) {
         clearInterval(quizTimer);
         quizTimer = null;
     }
+    stopAutoSave();
     
     if (fullscreenCountdown) {
         clearInterval(fullscreenCountdown);
@@ -11289,6 +11463,7 @@ function exportToPDF(results) {
 
         // 显示结果查询界面
         function showResultCheckView() {
+            hideKeyboardHintBar();
     document.getElementById('welcomeView').classList.add('d-none');
     document.getElementById('quizView').classList.add('d-none');
     document.getElementById('resultView').classList.add('d-none');
@@ -11463,21 +11638,28 @@ function exportToPDF(results) {
         }
 
         // 视图切换函数
-        function showWelcomeView() {
-            document.getElementById('welcomeView').classList.remove('d-none');
-            document.getElementById('quizView').classList.add('d-none');
-            document.getElementById('resultView').classList.add('d-none');
-            document.getElementById('rankingView').classList.add('d-none');
-            document.getElementById('adminView').classList.add('d-none');
-            document.getElementById('resultCheckView').classList.add('d-none');
-                if (!userInfo || !userInfo.isAdmin) {
+function showWelcomeView() {
+    // 隐藏所有答题UI
+    hideKeyboardHintBar();
+    hideFontSizeControls();
+    hideFloatingTimer();
+    
+    document.getElementById('welcomeView').classList.remove('d-none');
+    document.getElementById('quizView').classList.add('d-none');
+    document.getElementById('resultView').classList.add('d-none');
+    document.getElementById('rankingView').classList.add('d-none');
+    document.getElementById('adminView').classList.add('d-none');
+    document.getElementById('resultCheckView').classList.add('d-none');
+    
+    if (!userInfo || !userInfo.isAdmin) {
         document.getElementById('competitionInfoNavItem')?.classList.add('d-none');
         document.getElementById('editRulesBtn')?.classList.add('d-none');
         document.getElementById('editAnnouncementBtn')?.classList.add('d-none');
     }
-        }
+}
         
 function showQuizView() {
+    // 先验证比赛时间
     const timeCheck = checkCompetitionTime();
     if (!timeCheck.allowed) {
         Swal.fire({
@@ -11491,6 +11673,7 @@ function showQuizView() {
         return;
     }
     
+    // 隐藏所有视图，显示答题视图
     document.getElementById('welcomeView').classList.add('d-none');
     document.getElementById('quizView').classList.remove('d-none');
     document.getElementById('resultView').classList.add('d-none');
@@ -11498,11 +11681,10 @@ function showQuizView() {
     document.getElementById('adminView').classList.add('d-none');
     document.getElementById('resultCheckView').classList.add('d-none');
     
-    // ============ 新增：自动请求全屏 ============
+    // 自动请求全屏模式
     if (quizData.settings.enableAntiCheat && quizData.settings.status === 'in_progress') {
         setTimeout(() => {
             requestFullscreen();
-            // 备用请求
             setTimeout(() => {
                 if (!document.fullscreenElement && !document.webkitFullscreenElement) {
                     requestFullscreen();
@@ -11510,16 +11692,28 @@ function showQuizView() {
             }, 1000);
         }, 500);
     }
-    // ============ 新增结束 ============
     
+    // 非管理员隐藏管理按钮
     if (!userInfo || !userInfo.isAdmin) {
         document.getElementById('competitionInfoNavItem')?.classList.add('d-none');
         document.getElementById('editRulesBtn')?.classList.add('d-none');
         document.getElementById('editAnnouncementBtn')?.classList.add('d-none');
     }
+    
+    // ============ 创建答题辅助UI ============
+    showKeyboardHintBar();       // 底部快捷键提示栏
+    addFontSizeControls();       // 字体大小调整按钮（右下角）
+    loadFontSizeSetting();       // 加载保存的字体大小设置
+    createFloatingTimer();       // 悬浮倒计时球（左上角）
+    // ============ UI创建完毕 ============
 }
         
-  function showResultView() {
+function showResultView() {
+    // 隐藏所有答题UI
+    hideKeyboardHintBar();
+    hideFontSizeControls();
+    hideFloatingTimer();
+    
     if (quizTimer) {
         clearInterval(quizTimer);
         quizTimer = null;
@@ -11538,16 +11732,15 @@ function showQuizView() {
     document.getElementById('antiCheatAlert').classList.add('d-none');
     document.getElementById('fullscreenOverlay').classList.add('d-none');
     
-    // ============ 新增：非管理员隐藏管理按钮 ============
     if (!userInfo || !userInfo.isAdmin) {
         document.getElementById('competitionInfoNavItem')?.classList.add('d-none');
         document.getElementById('editRulesBtn')?.classList.add('d-none');
         document.getElementById('editAnnouncementBtn')?.classList.add('d-none');
     }
-    // ============ 新增结束 ============
     
     displayResults();
 }
+
 
         // 时间调试函数
 function logTimeDebug(userId) {
@@ -11639,7 +11832,12 @@ function addDebugButtons() {
     document.getElementById('settings').insertAdjacentHTML('beforeend', debugHTML);
 }
         
-     function showRankingView() {
+function showRankingView() {
+    // 隐藏所有答题UI
+    hideKeyboardHintBar();
+    hideFontSizeControls();
+    hideFloatingTimer();
+    
     document.getElementById('welcomeView').classList.add('d-none');
     document.getElementById('quizView').classList.add('d-none');
     document.getElementById('resultView').classList.add('d-none');
@@ -11647,17 +11845,18 @@ function addDebugButtons() {
     document.getElementById('adminView').classList.add('d-none');
     document.getElementById('resultCheckView').classList.add('d-none');
     
-    // ============ 新增：非管理员隐藏管理按钮 ============
     if (!userInfo || !userInfo.isAdmin) {
         document.getElementById('competitionInfoNavItem')?.classList.add('d-none');
         document.getElementById('editRulesBtn')?.classList.add('d-none');
         document.getElementById('editAnnouncementBtn')?.classList.add('d-none');
     }
-    // ============ 新增结束 ============
 }
 
         
         function showAdminView() {
+            hideKeyboardHintBar();
+    hideFontSizeControls();
+    hideFloatingTimer();
             if (!currentUser || !userInfo || !userInfo.isAdmin) {
                 Swal.fire('错误', '您没有管理员权限', 'error');
                 return;
@@ -12393,7 +12592,471 @@ function loadTemplate(templateType) {
     });
 }
 
+        // ==================== 新增功能：Toast通知系统 ====================
+function showQuickToast(message, type = 'info', duration = 3000) {
+    const icons = {
+        success: 'fa-check-circle',
+        error: 'fa-exclamation-circle',
+        warning: 'fa-exclamation-triangle',
+        info: 'fa-info-circle'
+    };
+    
+    const colors = {
+        success: 'linear-gradient(135deg, #10b981, #34d399)',
+        error: 'linear-gradient(135deg, #ef4444, #f43f5e)',
+        warning: 'linear-gradient(135deg, #f59e0b, #fbbf24)',
+        info: 'linear-gradient(135deg, #6366f1, #8b5cf6)'
+    };
+    
+    const toast = document.createElement('div');
+    toast.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: ${colors[type] || colors.info};
+        color: white;
+        padding: 12px 24px;
+        border-radius: 12px;
+        font-weight: 500;
+        z-index: 10001;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        transform: translateX(120%);
+        transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        max-width: 400px;
+        backdrop-filter: blur(10px);
+    `;
+    
+    toast.innerHTML = `
+        <i class="fas ${icons[type]}"></i>
+        <span>${message}</span>
+    `;
+    
+    document.body.appendChild(toast);
+    
+    // 显示动画
+    requestAnimationFrame(() => {
+        toast.style.transform = 'translateX(0)';
+    });
+    
+    // 自动隐藏
+    setTimeout(() => {
+        toast.style.transform = 'translateX(120%)';
+        setTimeout(() => {
+            document.body.removeChild(toast);
+        }, 400);
+    }, duration);
+}
 // ==================== 新增功能结束 ====================
+// ==================== 新增功能：显示快捷键栏 ====================
+function showKeyboardHintBar() {
+    let hintBar = document.getElementById('keyboardHintBar');
+    if (!hintBar) {
+        hintBar = document.createElement('div');
+        hintBar.id = 'keyboardHintBar';
+        hintBar.style.cssText = `
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(255,255,255,0.9);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-top: 1px solid rgba(0,0,0,0.08);
+            padding: 10px 20px;
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            font-size: 0.8rem;
+            z-index: 999;
+            box-shadow: 0 -2px 20px rgba(0,0,0,0.08);
+            transition: all 0.3s ease;
+        `;
+        document.body.appendChild(hintBar);
+    }
+    
+    hintBar.innerHTML = `
+        <span class="shortcut-badge">
+            <kbd>←</kbd><kbd>→</kbd> 切换题目
+        </span>
+        <span class="shortcut-badge">
+            <kbd>Alt</kbd>+<kbd>1-9</kbd> 选选项
+        </span>
+        <span class="shortcut-badge">
+            <kbd>Ctrl</kbd>+<kbd>M</kbd> 标记
+        </span>
+        <span class="shortcut-badge">
+            <kbd>Ctrl</kbd>+<kbd>S</kbd> 保存
+        </span>
+        <span class="shortcut-badge">
+            <kbd>Ctrl</kbd>+<kbd>Enter</kbd> 提交
+        </span>
+        <span class="shortcut-badge">
+            <kbd>Esc</kbd> 题目列表
+        </span>
+        <span class="shortcut-badge">
+            <kbd>F1</kbd> 帮助
+        </span>
+    `;
+    
+    // 添加样式（只添加一次）
+    if (!document.getElementById('shortcutBadgeStyle')) {
+        const style = document.createElement('style');
+        style.id = 'shortcutBadgeStyle';
+        style.textContent = `
+            .shortcut-badge {
+                display: inline-flex;
+                align-items: center;
+                gap: 4px;
+                padding: 6px 12px;
+                background: rgba(99,102,241,0.08);
+                border-radius: 20px;
+                color: #6366f1;
+                white-space: nowrap;
+                font-weight: 500;
+                transition: all 0.2s ease;
+            }
+            .shortcut-badge:hover {
+                background: rgba(99,102,241,0.15);
+                transform: translateY(-1px);
+            }
+            .shortcut-badge kbd {
+                background: #6366f1;
+                color: white;
+                padding: 2px 6px;
+                border-radius: 4px;
+                font-size: 0.7rem;
+                font-family: 'SF Mono', 'Fira Code', 'Monaco', monospace;
+                box-shadow: 0 2px 4px rgba(99,102,241,0.3);
+            }
+            @media (max-width: 768px) {
+                .shortcut-badge {
+                    padding: 4px 8px;
+                    font-size: 0.7rem;
+                }
+                .shortcut-badge kbd {
+                    padding: 1px 4px;
+                    font-size: 0.6rem;
+                }
+                #keyboardHintBar {
+                    gap: 6px;
+                    padding: 8px 10px;
+                }
+            }
+        `;
+        document.head.appendChild(style);
+    }
+    
+    hintBar.style.display = 'flex';
+}
+
+function hideKeyboardHintBar() {
+    const hintBar = document.getElementById('keyboardHintBar');
+    if (hintBar) {
+        hintBar.style.display = 'none';
+    }
+}
+
+        // ==================== 新增功能：字体大小调整 ====================
+let currentFontSize = 16; // 默认字体大小
+
+function increaseFontSize() {
+    if (currentFontSize < 24) {
+        currentFontSize += 2;
+        updateQuestionFontSize();
+    }
+}
+
+function decreaseFontSize() {
+    if (currentFontSize > 12) {
+        currentFontSize -= 2;
+        updateQuestionFontSize();
+    }
+}
+
+function resetFontSize() {
+    currentFontSize = 16;
+    updateQuestionFontSize();
+}
+
+function updateQuestionFontSize() {
+    const questionCards = document.querySelectorAll('.question-card, .question-content, .option-item');
+    questionCards.forEach(el => {
+        el.style.fontSize = currentFontSize + 'px';
+    });
+    
+    // 保存设置
+    localStorage.setItem('quizFontSize', currentFontSize);
+}
+
+function loadFontSizeSetting() {
+    const savedSize = localStorage.getItem('quizFontSize');
+    if (savedSize) {
+        currentFontSize = parseInt(savedSize);
+        updateQuestionFontSize();
+    }
+}
+
+// 添加字体调整按钮到答题界面
+function addFontSizeControls() {
+    let fontControls = document.getElementById('fontSizeControls');
+    if (!fontControls) {
+        fontControls = document.createElement('div');
+        fontControls.id = 'fontSizeControls';
+        fontControls.style.cssText = `
+            position: fixed;
+            bottom: 80px;
+            right: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            z-index: 1000;
+        `;
+        fontControls.innerHTML = `
+            <button class="btn btn-sm btn-light shadow-sm" onclick="increaseFontSize()" title="放大字体">
+                <i class="fas fa-search-plus"></i>
+            </button>
+            <button class="btn btn-sm btn-light shadow-sm" onclick="resetFontSize()" title="默认大小">
+                <i class="fas fa-font"></i>
+            </button>
+            <button class="btn btn-sm btn-light shadow-sm" onclick="decreaseFontSize()" title="缩小字体">
+                <i class="fas fa-search-minus"></i>
+            </button>
+        `;
+        document.body.appendChild(fontControls);
+    }
+    fontControls.style.display = 'flex';
+}
+
+function hideFontSizeControls() {
+    const fontControls = document.getElementById('fontSizeControls');
+    if (fontControls) {
+        fontControls.style.display = 'none';
+    }
+}
+// ==================== 新增功能：悬浮倒计时球 ====================
+function createFloatingTimer() {
+    let floatingTimer = document.getElementById('floatingTimer');
+    if (!floatingTimer) {
+        floatingTimer = document.createElement('div');
+        floatingTimer.id = 'floatingTimer';
+        floatingTimer.style.cssText = `
+            position: fixed;
+            top: 100px;
+            left: 20px;
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            background: var(--gradient-ocean);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 999;
+            box-shadow: 0 8px 30px rgba(99,102,241,0.4);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            animation: floatBall 3s ease-in-out infinite;
+        `;
+        floatingTimer.innerHTML = `
+            <span class="floating-minutes" style="font-size: 1.2rem; font-weight: 700; line-height: 1;">00</span>
+            <span style="font-size: 0.6rem; opacity: 0.8;">分钟</span>
+        `;
+        floatingTimer.title = '点击切换显示';
+        floatingTimer.onclick = function() {
+            const seconds = timeRemaining;
+            const minutes = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            const showFull = this.getAttribute('data-show') === 'full';
+            
+            if (showFull) {
+                this.querySelector('.floating-minutes').textContent = minutes;
+                this.querySelector('span:last-child').textContent = '分钟';
+                this.setAttribute('data-show', 'simple');
+            } else {
+                this.querySelector('.floating-minutes').textContent = `${minutes}:${secs.toString().padStart(2, '0')}`;
+                this.querySelector('span:last-child').textContent = '剩余';
+                this.setAttribute('data-show', 'full');
+            }
+        };
+        document.body.appendChild(floatingTimer);
+        
+        // 添加动画样式
+        if (!document.getElementById('floatBallStyle')) {
+            const style = document.createElement('style');
+            style.id = 'floatBallStyle';
+            style.textContent = `
+                @keyframes floatBall {
+                    0%, 100% { transform: translateY(0); }
+                    50% { transform: translateY(-10px); }
+                }
+            `;
+            document.head.appendChild(style);
+        }
+    }
+    floatingTimer.style.display = 'flex';
+    floatingTimer.setAttribute('data-show', 'simple');
+}
+
+function updateFloatingTimer() {
+    const floatingTimer = document.getElementById('floatingTimer');
+    if (floatingTimer) {
+        const minutes = Math.floor(timeRemaining / 60);
+        if (floatingTimer.getAttribute('data-show') === 'full') {
+            const secs = timeRemaining % 60;
+            floatingTimer.querySelector('.floating-minutes').textContent = `${minutes}:${secs.toString().padStart(2, '0')}`;
+        } else {
+            floatingTimer.querySelector('.floating-minutes').textContent = minutes;
+        }
+        
+        // 时间不足5分钟时变红
+        if (timeRemaining < 300) {
+            floatingTimer.style.background = 'var(--gradient-candy)';
+            floatingTimer.style.boxShadow = '0 8px 30px rgba(244,63,94,0.5)';
+            floatingTimer.style.animation = 'floatBall 0.8s ease-in-out infinite, timerPulse 0.8s ease-in-out infinite';
+        }
+    }
+}
+
+function hideFloatingTimer() {
+    const floatingTimer = document.getElementById('floatingTimer');
+    if (floatingTimer) {
+        floatingTimer.style.display = 'none';
+    }
+}
+
+        // ==================== 新增功能：暗色模式切换 ====================
+function toggleDarkMode() {
+    const body = document.body;
+    const isDark = body.getAttribute('data-theme') === 'dark';
+    
+    if (isDark) {
+        body.removeAttribute('data-theme');
+        localStorage.setItem('theme', 'light');
+        showQuickToast('已切换为亮色模式', 'info');
+    } else {
+        body.setAttribute('data-theme', 'dark');
+        localStorage.setItem('theme', 'dark');
+        showQuickToast('已切换为暗色模式', 'info');
+    }
+}
+
+function loadThemeSetting() {
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme === 'dark') {
+        document.body.setAttribute('data-theme', 'dark');
+    }
+}
+
+// 添加暗色模式CSS变量
+function addDarkModeStyles() {
+    if (document.getElementById('darkModeStyles')) return;
+    
+    const style = document.createElement('style');
+    style.id = 'darkModeStyles';
+    style.textContent = `
+        [data-theme="dark"] {
+            --primary-color: #f1f5f9;
+            --secondary-color: #e2e8f0;
+        }
+        
+        [data-theme="dark"] body {
+            background: linear-gradient(180deg, #0f172a 0%, #1e293b 50%, #334155 100%) !important;
+            color: #f1f5f9;
+        }
+        
+        [data-theme="dark"] .navbar {
+            background: rgba(15, 23, 42, 0.85) !important;
+        }
+        
+        [data-theme="dark"] .navbar-brand {
+            color: #f1f5f9 !important;
+            -webkit-text-fill-color: #818cf8;
+        }
+        
+        [data-theme="dark"] .card {
+            background: rgba(30, 41, 59, 0.7);
+            border-color: rgba(255,255,255,0.1);
+        }
+        
+        [data-theme="dark"] .card-header {
+            background: rgba(99,102,241,0.1);
+            color: #f1f5f9;
+        }
+        
+        [data-theme="dark"] .question-card {
+            background: rgba(30, 41, 59, 0.8);
+            border-color: rgba(255,255,255,0.1);
+        }
+        
+        [data-theme="dark"] .option-item {
+            background: rgba(30, 41, 59, 0.6);
+            border-color: rgba(255,255,255,0.1);
+            color: #e2e8f0;
+        }
+        
+        [data-theme="dark"] .option-item:hover {
+            background: rgba(99,102,241,0.1);
+        }
+        
+        [data-theme="dark"] .form-control {
+            background: rgba(30, 41, 59, 0.6);
+            border-color: rgba(255,255,255,0.1);
+            color: #f1f5f9;
+        }
+        
+        [data-theme="dark"] .btn-outline-light {
+            border-color: rgba(255,255,255,0.2);
+            color: #e2e8f0;
+        }
+        
+        [data-theme="dark"] .tab-content {
+            background: rgba(30, 41, 59, 0.6);
+        }
+        
+        [data-theme="dark"] .ranking-table {
+            background: rgba(30, 41, 59, 0.8);
+        }
+        
+        [data-theme="dark"] .ranking-table tbody td {
+            border-color: rgba(255,255,255,0.05);
+        }
+        
+        [data-theme="dark"] .competition-info-panel {
+            background: rgba(30, 41, 59, 0.6);
+        }
+        
+        [data-theme="dark"] .announcement-board {
+            background: rgba(30, 41, 59, 0.7);
+        }
+    `;
+    document.head.appendChild(style);
+}
+
+// 在页面加载时调用
+function initDarkModeToggle() {
+    addDarkModeStyles();
+    loadThemeSetting();
+    
+    // 添加切换按钮到导航栏
+    const navBar = document.querySelector('.navbar-nav');
+    if (navBar) {
+        const darkModeItem = document.createElement('li');
+        darkModeItem.className = 'nav-item';
+        darkModeItem.innerHTML = `
+            <button class="btn btn-sm btn-outline-light ms-2" onclick="toggleDarkMode()" title="切换暗色模式">
+                <i class="fas fa-moon"></i>
+            </button>
+        `;
+        navBar.appendChild(darkModeItem);
+    }
+}
+// ==================== 新增功能结束 ====================
+
     </script>
 </body>
 </html>
