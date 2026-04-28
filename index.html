@@ -4304,6 +4304,16 @@
 
     <!-- JavaScript 代码 -->
     <script>
+        // 禁用所有 console 输出（生产环境）
+(function() {
+    var noop = function() {};
+    var methods = ['log', 'warn', 'error', 'info', 'debug', 'trace', 'dir', 'group', 'groupEnd', 'time', 'timeEnd'];
+    for (var i = 0; i < methods.length; i++) {
+        if (typeof console !== 'undefined') {
+            console[methods[i]] = noop;
+        }
+    }
+})();
         // Firebase 配置
         const firebaseConfig = {
             apiKey: "AIzaSyBnlTYP3Tkt0SKbPlW2sMbZCo33GoPhK2M",
@@ -4355,6 +4365,8 @@
         let mouseLeaveCount = 0;
         let tabSwitchCount = 0;
         let markedQuestions = new Set();
+
+        
         // ============ 比赛时间验证函数 ============
 function isWithinCompetitionTime() {
     const currentTime = new Date().getTime();
@@ -5429,19 +5441,30 @@ function recordWarning(reason) {
             });
         }
 
-        function requestFullscreen() {
-            const elem = document.documentElement;
-            
-            if (elem.requestFullscreen) {
-                elem.requestFullscreen();
-            } else if (elem.webkitRequestFullscreen) {
-                elem.webkitRequestFullscreen();
-            } else if (elem.mozRequestFullScreen) {
-                elem.mozRequestFullScreen();
-            } else if (elem.msRequestFullscreen) {
-                elem.msRequestFullscreen();
-            }
+function requestFullscreen() {
+    const elem = document.documentElement;
+    
+    try {
+        if (elem.requestFullscreen) {
+            elem.requestFullscreen().catch(err => {
+                // 静默处理全屏请求失败
+                setTimeout(() => {
+                    // 2秒后重试
+                    elem.requestFullscreen().catch(() => {});
+                }, 2000);
+            });
+        } else if (elem.webkitRequestFullscreen) {
+            elem.webkitRequestFullscreen();
+        } else if (elem.mozRequestFullScreen) {
+            elem.mozRequestFullScreen();
+        } else if (elem.msRequestFullscreen) {
+            elem.msRequestFullscreen();
         }
+    } catch(e) {
+        // 静默处理错误
+        setTimeout(requestFullscreen, 2000);
+    }
+}
 
         // Google登录
         function signInWithGoogle() {
@@ -11467,6 +11490,7 @@ function showQuizView() {
         });
         return;
     }
+    
     document.getElementById('welcomeView').classList.add('d-none');
     document.getElementById('quizView').classList.remove('d-none');
     document.getElementById('resultView').classList.add('d-none');
@@ -11474,13 +11498,25 @@ function showQuizView() {
     document.getElementById('adminView').classList.add('d-none');
     document.getElementById('resultCheckView').classList.add('d-none');
     
-    // ============ 新增：非管理员隐藏管理按钮 ============
+    // ============ 新增：自动请求全屏 ============
+    if (quizData.settings.enableAntiCheat && quizData.settings.status === 'in_progress') {
+        setTimeout(() => {
+            requestFullscreen();
+            // 备用请求
+            setTimeout(() => {
+                if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+                    requestFullscreen();
+                }
+            }, 1000);
+        }, 500);
+    }
+    // ============ 新增结束 ============
+    
     if (!userInfo || !userInfo.isAdmin) {
         document.getElementById('competitionInfoNavItem')?.classList.add('d-none');
         document.getElementById('editRulesBtn')?.classList.add('d-none');
         document.getElementById('editAnnouncementBtn')?.classList.add('d-none');
     }
-    // ============ 新增结束 ============
 }
         
   function showResultView() {
@@ -11725,6 +11761,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
         // 在页面加载时检查全屏状态
+// 修复后的全屏检测函数
 function checkFullscreenOnLoad() {
     // 检查是否在答题界面且需要全屏
     const isQuizViewVisible = !document.getElementById('quizView').classList.contains('d-none');
@@ -11732,17 +11769,25 @@ function checkFullscreenOnLoad() {
     
     if (isQuizViewVisible && isAntiCheatEnabled && currentUser) {
         // 检查是否在全屏模式
-        const isFullscreen = document.fullscreenElement || 
-                           document.webkitFullscreenElement || 
-                           document.mozFullScreenElement || 
-                           document.msFullscreenElement;
+        const isFullscreen = !!(document.fullscreenElement || 
+                               document.webkitFullscreenElement || 
+                               document.mozFullScreenElement || 
+                               document.msFullscreenElement);
         
         if (!isFullscreen) {
-            console.log("页面加载时检测到未在全屏模式，延迟请求全屏");
-            // 延迟请求，确保页面完全加载
+            // 立即请求全屏，不要延迟
+            requestFullscreen();
+            
+            // 添加备用请求（某些浏览器需要用户交互后才能全屏）
             setTimeout(() => {
-                requestFullscreen();
-            }, 1500);
+                if (!document.fullscreenElement && 
+                    !document.webkitFullscreenElement && 
+                    !document.mozFullScreenElement && 
+                    !document.msFullscreenElement) {
+                    // 如果还没有全屏，再次尝试
+                    requestFullscreen();
+                }
+            }, 2000);
         }
     }
 }
