@@ -5399,6 +5399,62 @@ loadAnnouncements();
                     shortcutHint.classList.add('d-none');
                 }, 10000);
             }, 5000);
+
+            // ==================== 修复 SweetAlert2 遮罩层问题 ====================
+function fixSweetalert2Issues() {
+    // 监听 SweetAlert2 的关闭事件
+    const observer = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+            // 检查是否有 swal2 容器被移除
+            if (mutation.type === 'childList') {
+                const removedNodes = mutation.removedNodes;
+                for (let node of removedNodes) {
+                    if (node.classList && node.classList.contains('swal2-container')) {
+                        // 确保遮罩层也被移除
+                        document.body.style.overflow = '';
+                        document.body.style.paddingRight = '';
+                        break;
+                    }
+                }
+            }
+        });
+    });
+    
+    // 监听 body 的变化
+    observer.observe(document.body, {
+        childList: true,
+        subtree: false
+    });
+    
+    // 修复现有的 SweetAlert2 弹窗
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('.swal2-confirm') || 
+            e.target.closest('.swal2-cancel') || 
+            e.target.closest('.swal2-deny') ||
+            e.target.closest('.swal2-close')) {
+            
+            // 确保点击后遮罩层会消失
+            setTimeout(function() {
+                const containers = document.querySelectorAll('.swal2-container');
+                containers.forEach(function(container) {
+                    if (!container.querySelector('.swal2-popup')) {
+                        container.remove();
+                    }
+                });
+                
+                // 恢复页面滚动
+                document.body.style.overflow = '';
+                document.body.style.paddingRight = '';
+            }, 500);
+        }
+    });
+}
+
+// 在 init() 函数中调用
+// 或者直接在 DOMContentLoaded 中调用
+document.addEventListener('DOMContentLoaded', function() {
+    fixSweetalert2Issues();
+});
         }
 
         // 在init()函数中添加页面状态检查
