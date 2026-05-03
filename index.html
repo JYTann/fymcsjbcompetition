@@ -2974,24 +2974,12 @@ main, .container {
     }
 }
 
-/* ==================== SweetAlert2 美化 ==================== */
+/* ==================== SweetAlert2 美化 - 修复版 ==================== */
 .swal2-popup {
     border-radius: var(--radius-xl) !important;
     box-shadow: 0 35px 90px rgba(0, 0, 0, 0.3) !important;
     padding: 2.5rem !important;
     font-family: 'Noto Sans SC', sans-serif !important;
-    animation: swalIn 0.5s var(--ease-out-back) !important;
-}
-
-@keyframes swalIn {
-    from {
-        opacity: 0;
-        transform: scale(0.8) translateY(-30px);
-    }
-    to {
-        opacity: 1;
-        transform: scale(1) translateY(0);
-    }
 }
 
 .swal2-title {
@@ -3023,10 +3011,72 @@ main, .container {
     border-radius: var(--radius-full) !important;
     font-weight: 600 !important;
     padding: 14px 34px !important;
+    transition: all 0.3s ease !important;
+}
+
+.swal2-cancel:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15) !important;
 }
 
 .swal2-icon {
     border-radius: 50% !important;
+}
+
+/* 修复：确保按钮可点击 */
+.swal2-styled {
+    pointer-events: auto !important;
+    cursor: pointer !important;
+}
+
+/* 修复：移除可能干扰的动画 */
+.swal2-popup.swal2-show {
+    animation: swalIn 0.3s ease-out !important;
+}
+
+.swal2-popup.swal2-hide {
+    animation: swalOut 0.2s ease-in !important;
+}
+
+@keyframes swalIn {
+    from {
+        opacity: 0;
+        transform: scale(0.9);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+@keyframes swalOut {
+    from {
+        opacity: 1;
+        transform: scale(1);
+    }
+    to {
+        opacity: 0;
+        transform: scale(0.9);
+    }
+}
+
+/* 修复：确保覆盖层可以点击关闭 */
+.swal2-container {
+    pointer-events: auto !important;
+}
+
+.swal2-backdrop-show {
+    pointer-events: auto !important;
+}
+
+/* 修复：确保弹窗内容不会阻止点击 */
+.swal2-actions {
+    pointer-events: auto !important;
+}
+
+.swal2-actions .swal2-styled {
+    pointer-events: auto !important;
+    z-index: 10 !important;
 }
 
 /* ==================== 响应式设计 ==================== */
